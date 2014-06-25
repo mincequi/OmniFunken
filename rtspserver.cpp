@@ -3,6 +3,8 @@
 
 #include <QTcpSocket>
 
+#include <openssl/rsa.h>
+
 
 RtspServer::RtspServer(QObject *parent)
     : QObject(parent)
@@ -119,6 +121,15 @@ void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *r
         appleChallenge.resize(32);
 
     // Encrypt the buffer using the RSA private key extracted in shairport.
+    // https://www.openssl.org/docs/crypto/RSA_private_encrypt.html
+    RSA_private_encrypt();
+    // RSA Encrypt
+    RSA *rsa = loadKey();  // Free RSA
+    int tSize = RSA_size(rsa);
+    unsigned char tTo[tSize];
+    RSA_private_encrypt(tCurSize, (unsigned char *)tChalResp, tTo, rsa, RSA_PKCS1_PADDING);
+    
+    
     uint8_t *challresp = rsa_apply(buf, buflen, &resplen, RSA_MODE_AUTH);
     
     // Base64 encode the ciphertext

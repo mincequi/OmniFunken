@@ -39,6 +39,8 @@ void RtspServer::onRequest()
 
     RtspMessage request, response;
     request.parse(buffer);
+    
+    //tcpSocket.localAddress().toIPv4Address();
 
     response.insert("CSeq", request.header("CSeq"));
     response.insert("Audio-Jack-Status", "connected; type=analog");
@@ -86,7 +88,7 @@ void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *respons
 {
 }
 
-void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *response)
+void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress)
 {
     // from https://github.com/joelgibson/go-airplay
     //
@@ -105,32 +107,16 @@ void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *r
         qWarning("Apple-Challenge has illegal size: %d", appleChallenge.size());
         return;
     }
-
+    
     // Write in the 16-byte IPv6 or 4-byte IPv4 address (network byte order).
-    SOCKADDR fdsa;
-    socklen_t sa_len = sizeof(fdsa);
-    getsockname(fd, (struct sockaddr*)&fdsa, &sa_len);
+    appleChallenge.append(reinterpret_cast<const char*>(&localAddress), sizeof(localAddress));
 
-    int chall_len;
-    uint8_t *chall = base64_dec(hdr, &chall_len);
     uint8_t buf[48], *bp = buf;
     int i;
     memset(buf, 0, sizeof(buf));
-
-    if (chall_len > 16) {
-        qWarning("oversized Apple-Challenge!");
-        free(chall);
-        return;
-    }
     memcpy(bp, chall, chall_len);
     free(chall);
     bp += chall_len;
-
-    {
-        struct sockaddr_in *sa = (struct sockaddr_in*)(&fdsa);
-        memcpy(bp, &sa->sin_addr.s_addr, 4);
-        bp += 4;
-    }
 
     for (i=0; i<6; i++)
         *bp++ = config.hw_addr[i];

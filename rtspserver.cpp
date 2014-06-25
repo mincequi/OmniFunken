@@ -111,22 +111,17 @@ void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *r
     // Write in the 16-byte IPv6 or 4-byte IPv4 address (network byte order).
     appleChallenge.append(reinterpret_cast<const char*>(&localAddress), sizeof(localAddress));
 
-    uint8_t buf[48], *bp = buf;
-    int i;
-    memset(buf, 0, sizeof(buf));
-    memcpy(bp, chall, chall_len);
-    free(chall);
-    bp += chall_len;
+    // Write in the 6-byte Hardware address of the network interface (See note).
+    appleChallenge.append(reinterpret_cast<const char*>(&{ 1, 2, 3, 4, 5, 6 }), 6);
 
-    for (i=0; i<6; i++)
-        *bp++ = config.hw_addr[i];
+    // If the buffer has less than 32 bytes written, pad with 0's up to 32 bytes.
+    if (appleChallenge.size() < 32)
+        appleChallenge.resize(32);
 
-    int buflen, resplen;
-    buflen = bp-buf;
-    if (buflen < 0x20)
-        buflen = 0x20;
-
+    // Encrypt the buffer using the RSA private key extracted in shairport.
     uint8_t *challresp = rsa_apply(buf, buflen, &resplen, RSA_MODE_AUTH);
+    
+    // Base64 encode the ciphertext
     char *encoded = base64_enc(challresp, resplen);
 
     // strip the padding.

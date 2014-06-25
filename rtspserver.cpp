@@ -123,7 +123,16 @@ void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *r
     // Encrypt the buffer using the RSA private key extracted in shairport.
     // https://www.openssl.org/docs/crypto/RSA_private_encrypt.html
     RSA_private_encrypt();
+    
     // RSA Encrypt
+    static RSA *loadKey()
+    {
+      BIO *tBio = BIO_new_mem_buf(AIRPORT_PRIVATE_KEY, -1);
+      RSA *rsa = PEM_read_bio_RSAPrivateKey(tBio, NULL, NULL, NULL); //NULL, NULL, NULL);
+      BIO_free(tBio);
+      //__shairport_xprintf("RSA Key: %d\n", RSA_check_key(rsa));
+      return rsa;
+    }
     RSA *rsa = loadKey();  // Free RSA
     int tSize = RSA_size(rsa);
     unsigned char tTo[tSize];

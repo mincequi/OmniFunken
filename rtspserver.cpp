@@ -88,18 +88,25 @@ void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *respons
 
 void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *response)
 {
-    //Allocate a buffer.
-    //Write in the decoded Apple-Challenge bytes.
-    //Write in the 16-byte IPv6 or 4-byte IPv4 address (network byte order).
-    //Write in the 6-byte Hardware address of the network interface (See note).
-    //If the buffer has less than 32 bytes written, pad with 0's up to 32 bytes.
-    //Encrypt the buffer using the RSA private key extracted in shairport.
-    //Base64 encode the ciphertext, trim trailing '=' signs, and send back
+    // from https://github.com/joelgibson/go-airplay
+    //
+    // Allocate a buffer.
+    // Write in the decoded Apple-Challenge bytes.
+    // Write in the 16-byte IPv6 or 4-byte IPv4 address (network byte order).
+    // Write in the 6-byte Hardware address of the network interface (See note).
+    // If the buffer has less than 32 bytes written, pad with 0's up to 32 bytes.
+    // Encrypt the buffer using the RSA private key extracted in shairport.
+    // Base64 encode the ciphertext, trim trailing '=' signs, and send back
 
-    QString appleChallenge = request.header("Apple-Challenge");
-    if (appleChallenge.isEmpty())
+    // Write in the decoded Apple-Challenge bytes.
+    QByteArray appleChallenge = QByteArray:::fromBase64(request.header("Apple-Challenge").toAscii());
+    if (appleChallenge.isEmpty() || (appleChallenge.size() > 16))
+    {
+        qWarning("Apple-Challenge has illegal size: %d", appleChallenge.size());
         return;
+    }
 
+    // Write in the 16-byte IPv6 or 4-byte IPv4 address (network byte order).
     SOCKADDR fdsa;
     socklen_t sa_len = sizeof(fdsa);
     getsockname(fd, (struct sockaddr*)&fdsa, &sa_len);

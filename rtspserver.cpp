@@ -8,7 +8,6 @@ RtspServer::RtspServer(QObject *parent)
     : QObject(parent)
 {
     m_tcpServer = new QTcpServer(this);
-    //m_signalMapper = new QSignalMapper(this);
 }
 
 bool RtspServer::listen(const QHostAddress &address, quint16 port)
@@ -22,14 +21,6 @@ void RtspServer::onNewConnection()
     QTcpSocket *tcpSocket = m_tcpServer->nextPendingConnection();
     connect(tcpSocket, SIGNAL(readyRead()),
             this, SLOT(onRequest()));
-
-    /*
-    connect(tcpSocket, SIGNAL(readyRead()),
-            m_signalMapper, SLOT(map()));
-    m_signalMapper->setMapping(tcpSocket, tcpSocket);
-    connect(m_signalMapper, SIGNAL(mapped(QObject *)),
-            this, SLOT(onRequest(QObject *)));
-    */
 
     connect(tcpSocket, SIGNAL(disconnected()),
             tcpSocket, SLOT(deleteLater()));
@@ -97,8 +88,16 @@ void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *respons
 
 void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *response)
 {
-    QString hdr = request.header("Apple-Challenge");
-    if (hdr.isEmpty())
+    //Allocate a buffer.
+    //Write in the decoded Apple-Challenge bytes.
+    //Write in the 16-byte IPv6 or 4-byte IPv4 address (network byte order).
+    //Write in the 6-byte Hardware address of the network interface (See note).
+    //If the buffer has less than 32 bytes written, pad with 0's up to 32 bytes.
+    //Encrypt the buffer using the RSA private key extracted in shairport.
+    //Base64 encode the ciphertext, trim trailing '=' signs, and send back
+
+    QString appleChallenge = request.header("Apple-Challenge");
+    if (appleChallenge.isEmpty())
         return;
 
     SOCKADDR fdsa;

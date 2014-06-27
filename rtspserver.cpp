@@ -1,6 +1,7 @@
 #include "rtspserver.h"
 #include "rtspmessage.h"
 
+#include <QRegExp>
 #include <QTcpSocket>
 
 #include <openssl/pem.h>
@@ -97,6 +98,8 @@ void RtspServer::handleOptions(const RtspMessage &request, RtspMessage *response
 
 void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *response)
 {
+    //QRegExp rx("([A-Za-z-]+)\\:\\s(\\S*)\\r\\n");
+    QRegExp rx("a\=([A-Za-z-]+)\\:(\\S*)\\r\\n");
 }
 
 void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)

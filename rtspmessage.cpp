@@ -10,7 +10,6 @@ RtspMessage::RtspMessage(QObject *parent) :
 
 void RtspMessage::parse(const QByteArray &buffer)
 {
-    //QRegExp rx("([A-Za-z-]+)\\:\\s([.*])[\\r\\n]");
     QRegExp rx("([A-Za-z-]+)\\:\\s(\\S*)\\r\\n");
     QString str(buffer);
     int pos = 0;
@@ -39,7 +38,7 @@ QByteArray RtspMessage::data()
     QMap<QByteArray, QByteArray>::iterator it;
     for (it = m_headers.begin(); it != m_headers.end(); ++it)
         os << it.key() << ": " << it.value() << "\r\n";
-    os << "\r\n";   // import!!!
+    os << "\r\n";   // important!!!
     os.flush();
     return data;
 }

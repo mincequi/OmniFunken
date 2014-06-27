@@ -12,7 +12,7 @@ ZeroconfDnsSd::ZeroconfDnsSd(QObject *parent) :
 int ZeroconfDnsSd::registerService(const char *name, uint16_t port)
 {
     QByteArray mdnsName(name);
-    mdnsName.prepend("1234567890AB@");
+    mdnsName.prepend("010203040506@");
 
     const char *record[] = { MDNS_RECORD, NULL };
     uint16_t length = 0;

@@ -12,6 +12,7 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
+LIBS += -lcrypto #-lssl #-lcrypto -lz
 
 SOURCES += main.cpp \
     player.cpp \

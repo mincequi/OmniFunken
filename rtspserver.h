@@ -25,6 +25,8 @@ private:
     void handleRecord(const RtspMessage &request, RtspMessage *response);
     void handleFlush(const RtspMessage &request, RtspMessage *response);
     void handleTeardown(const RtspMessage &request, RtspMessage *response);
+    void handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress);
+
 
 private:
     QTcpServer *m_tcpServer;

@@ -13,11 +13,11 @@ public:
     void parse(const QByteArray &buffer);
     QByteArray data();
 
-    QString header(const QString &key);
-    void insert(const QString &key, const QString &value);
+    QByteArray header(const QByteArray &key) const;
+    void insert(const QByteArray &key, const QByteArray &value);
 
 private:
-    QMap<QString, QString> m_headers;
+    QMap<QByteArray, QByteArray> m_headers;
 
 };
 

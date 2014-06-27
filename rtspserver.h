@@ -14,7 +14,10 @@ public:
 
     bool listen(const QHostAddress &address = QHostAddress::Any, quint16 port = 0);
 
-public slots:
+signals:
+    void announce(int newValue);
+
+private slots:
     void onNewConnection();
     void onRequest();
 

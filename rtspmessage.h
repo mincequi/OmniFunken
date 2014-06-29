@@ -14,10 +14,13 @@ public:
     QByteArray data();
 
     QByteArray header(const QByteArray &key) const;
+    const QString & body() const;
     void insert(const QByteArray &key, const QByteArray &value);
 
 private:
     QMap<QByteArray, QByteArray> m_headers;
+    QString m_body;
+
 
 };
 

@@ -3,6 +3,7 @@
 
 #include <QRegExp>
 #include <QTcpSocket>
+#include <QtEndian>
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -60,7 +61,7 @@ void RtspServer::onRequest()
     QTcpSocket *tcpSocket = qobject_cast<QTcpSocket *>(sender());
     if (!tcpSocket)
     {
-        qWarning("onRequest: no valid sender");
+        qFatal("QTcpSocket::onRequest: invalid sender!");
         return;
     }
 
@@ -69,16 +70,18 @@ void RtspServer::onRequest()
     RtspMessage request, response;
     request.parse(buffer);
     
-    handleAppleChallenge(request, &response, htonl(tcpSocket->localAddress().toIPv4Address()));
+    handleAppleChallenge(request, &response, qToBigEndian(tcpSocket->localAddress().toIPv4Address()));
     response.insert("CSeq", request.header("CSeq"));
-    response.insert("Audio-Jack-Status", "connected; type=analog");
 
     if (buffer.startsWith("OPTIONS"))
         handleOptions(request, &response);
     else if (buffer.startsWith("ANNOUNCE"))
         handleAnnounce(request, &response);
     else if (buffer.startsWith("SETUP"))
-        handleSetup(request, &response);
+    {
+        handleSetupRequest(request, &response);
+        return;
+    }
     else if (buffer.startsWith("RECORD"))
         handleRecord(request, &response);
     else if (buffer.startsWith("FLUSH"))
@@ -86,23 +89,45 @@ void RtspServer::onRequest()
     else if (buffer.startsWith("TEARDOWN"))
         handleTeardown(request, &response);
     else
-        qWarning("unknown RtspRequest: \n%s", buffer.constData());
+        qWarning("RtspServer::onRequest: unknown RtspRequest: \n%s", buffer.constData());
 
     tcpSocket->write(response.data());
 }
 
 void RtspServer::handleOptions(const RtspMessage &request, RtspMessage *response)
 {
+    Q_UNUSED(request);
     response->insert("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, SET_PARAMETER");
 }
 
 void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *response)
 {
-    //QRegExp rx("([A-Za-z-]+)\\:\\s(\\S*)\\r\\n");
-    QRegExp rx("a\=([A-Za-z-]+)\\:(\\S*)\\r\\n");
+    Q_UNUSED(response);
+    Announcement announcement;
+
+    QRegExp rx("a=fmtp:96 (\\d+) 0 16 40 10 14 2 255 0 0 44100\\r\\n");
+    rx.indexIn(request.body());
+    announcement.framesPerPacket = rx.cap(1).toUInt();
+
+    rx.setPattern("a=rsaaeskey:(\\S*)\\r\\n");
+    rx.indexIn(request.body());
+    announcement.rsaAesKey = QByteArray::fromBase64(rx.cap(1).toLatin1());
+
+    rx.setPattern("a=aesiv:(\\S*)\\r\\n");
+    rx.indexIn(request.body());
+    announcement.aesIv = QByteArray::fromBase64(rx.cap(1).toLatin1());
+
+    if (!announcement.framesPerPacket ||
+        announcement.rsaAesKey.isEmpty() ||
+        announcement.aesIv.isEmpty()) {
+        qCritical("RtspServer::handleAnnounce: obtaining announcement failed!");
+        return;
+    }
+
+    emit announce(announcement);
 }
 
-void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
+void RtspServer::handleSetupRequest(const RtspMessage &request)
 {
 }
 

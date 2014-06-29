@@ -12,7 +12,7 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-LIBS += -lcrypto #-lssl #-lcrypto -lz
+LIBS += -lcrypto -ldns_sd #-lssl #-lcrypto -lz
 
 SOURCES += main.cpp \
     player.cpp \
@@ -20,7 +20,8 @@ SOURCES += main.cpp \
     audio_buffer.cpp \
     zeroconf_dns_sd.cpp \
     rtspmessage.cpp \
-    rtspserver.cpp
+    rtspserver.cpp \
+    rtpreceiver.cpp
 
 HEADERS += \
     player.h \
@@ -30,4 +31,5 @@ HEADERS += \
     zeroconf.h \
     zeroconf_dns_sd.h \
     rtspmessage.h \
-    rtspserver.h
+    rtspserver.h \
+    rtpreceiver.h

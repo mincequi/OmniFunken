@@ -10,8 +10,10 @@ public:
     explicit RtpReceiver(QObject *parent = 0);
 
 signals:
+    void newSocket();
 
 public slots:
+    //void
 
 };
 

@@ -2,6 +2,8 @@
 
 #include <dns_sd.h>
 
+#include <QtEndian>
+
 
 ZeroconfDnsSd::ZeroconfDnsSd(QObject *parent) :
     QObject(parent),
@@ -49,7 +51,7 @@ int ZeroconfDnsSd::registerService(const char *name, uint16_t port)
                                "_raop._tcp",
                                "",
                                NULL,
-                               htons((uint16_t)port),
+                               qToBigEndian(port),
                                length,
                                buf,
                                NULL,

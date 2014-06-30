@@ -145,17 +145,17 @@ void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
     
     quint16 receiverServerPort  = 0;
     quint16 receiverControlPort = 0;
-    quint16 receiverTiminigPort = 0;
+    quint16 receiverTimingPort  = 0;
     
     emit receiverSocketRequired(RtpReceiver::AudioData, &receiverServerPort);
     emit receiverSocketRequired(RtpReceiver::RetransmitResponse, &receiverControlPort);
-    emit receiverSocketRequired(RtpReceiver::TimingResponse, &receiverTiminigPort);
+    emit receiverSocketRequired(RtpReceiver::TimingResponse, &receiverTimingPort);
    
     QByteArray data;
     QTextStream os(&data);
     os << "RTP/AVP/UDP;unicast;mode=record;server_port=" << receiverServerPort;
     os << ";control_port=" << receiverControlPort;
-    os << ";timing_port=" << receiverTiminigPort << "";
+    os << ";timing_port=" << receiverTimingPort;
     os.flush();
 
     response->insert("Session", "1");

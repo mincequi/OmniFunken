@@ -2,15 +2,15 @@
 #define RTSPSERVER_H
 
 #include "rtspmessage.h"
+#include "rtpreceiver.h"
 
 #include <QTcpServer>
-
 
 
 class RtspServer : public QObject
 {
     Q_OBJECT
-
+    
 public:
     struct Announcement {
         uint framesPerPacket;
@@ -18,14 +18,16 @@ public:
         QByteArray aesIv;
     };
 
-public:
     RtspServer(QObject *parent = 0);
 
     bool listen(const QHostAddress &address = QHostAddress::Any, quint16 port = 0);
 
 signals:
     void announced(const Announcement &announcement);
-    void setup();
+    //void setup();
+    void senderSocketAvailable(RtpReceiver::PayloadType payloadType, quint16 port);
+    // note: does *probably* not work with queued connections
+    void receiverSocketRequired(RtpReceiver::PayloadType payloadType, quint16 *port);
 
 public slots:
 

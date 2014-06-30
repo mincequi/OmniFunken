@@ -2,6 +2,7 @@
 #define RTPRECEIVER_H
 
 #include <QObject>
+#include <QUdpSocket>
 
 
 struct RtspServer::Announcement;
@@ -27,6 +28,10 @@ signals:
 
 public slots:
     void announce(const RtspServer::Announcement &announcement);
+    void bindSocket(PayloadType payloadType, quint16 *port);
+    
+private:
+    QUdpSocket *m_udpSocket;
 };
 
 #endif // RTPRECEIVER_H

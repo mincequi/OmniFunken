@@ -127,8 +127,39 @@ void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *respons
     emit announce(announcement);
 }
 
-void RtspServer::handleSetupRequest(const RtspMessage &request)
+void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
 {
+    QRegExp rx("RTP\/AVP\/UDP;unicast;interleaved=0-1;mode=record;control_port=(\\d+);timing_port=(\\d+)\\r\\n");
+    rx.indexIn(QString(request.header("Transport")));
+    quint16 senderControlPort = rx.cap(1).toUInt();
+    if (controlPort)
+    {
+        emit senderSocketAvailable(RtpReceiver::RetransmitRequest, senderControlPort);
+        emit senderSocketAvailable(RtpReceiver::Sync, senderControlPort);
+    }
+    quint16 senderTimingPort = rx.cap(2).toUInt();
+    if (timingPort)
+    {
+        emit senderSocketAvailable(RtpReceiver::TimingRequest, senderTimingPort);
+    }    
+    
+    quint16 receiverServerPort  = 0;
+    quint16 receiverControlPort = 0;
+    quint16 receiverTiminigPort = 0;
+    
+    emit receiverSocketRequired(RtpReceiver::AudioData, &receiverServerPort);
+    emit receiverSocketRequired(RtpReceiver::RetransmitResponse, &receiverControlPort);
+    emit receiverSocketRequired(RtpReceiver::TimingResponse, &receiverTiminigPort);
+   
+    QByteArray data;
+    QTextStream os(&data);
+    os << "RTP/AVP/UDP;unicast;mode=record;server_port=" << receiverServerPort;
+    os << ";control_port=" << receiverControlPort;
+    os << ";timing_port=" << receiverTiminigPort << "";
+    os.flush();
+
+    response->insert("Session", "1");
+    response->insert("Transport", data);
 }
 
 void RtspServer::handleRecord(const RtspMessage &request, RtspMessage *response)

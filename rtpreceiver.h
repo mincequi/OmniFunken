@@ -22,8 +22,7 @@ signals:
     //void socketRequired();
 
 public slots:
-    void setup();
-
+    void announce(const Announcement &announcement);
 };
 
 #endif // RTPRECEIVER_H

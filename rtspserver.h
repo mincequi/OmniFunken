@@ -24,16 +24,9 @@ public:
 
 signals:
     void announced(const Announcement &announcement);
-    //void setup();
     void senderSocketAvailable(RtpReceiver::PayloadType payloadType, quint16 port);
     // note: does *probably* not work with queued connections
     void receiverSocketRequired(RtpReceiver::PayloadType payloadType, quint16 *port);
-
-public slots:
-
-private slots:
-    void onNewConnection();
-    void onRequest();
 
 private:
     void handleOptions(const RtspMessage &request, RtspMessage *response);

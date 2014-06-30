@@ -3,6 +3,10 @@
 
 #include <QObject>
 
+
+struct RtspServer::Announcement;
+
+
 class RtpReceiver : public QObject
 {
     Q_OBJECT
@@ -22,7 +26,7 @@ signals:
     //void socketRequired();
 
 public slots:
-    void announce(const Announcement &announcement);
+    void announce(const RtspServer::Announcement &announcement);
 };
 
 #endif // RTPRECEIVER_H

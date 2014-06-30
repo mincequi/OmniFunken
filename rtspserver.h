@@ -38,8 +38,7 @@ private slots:
 private:
     void handleOptions(const RtspMessage &request, RtspMessage *response);
     void handleAnnounce(const RtspMessage &request, RtspMessage *response);
-    void handleSetupRequest(const RtspMessage &request);
-    void handleSetupResponse(RtspMessage *response);
+    void handleSetup(const RtspMessage &request, RtspMessage *response);
     void handleRecord(const RtspMessage &request, RtspMessage *response);
     void handleFlush(const RtspMessage &request, RtspMessage *response);
     void handleTeardown(const RtspMessage &request, RtspMessage *response);

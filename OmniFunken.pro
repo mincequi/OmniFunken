@@ -12,7 +12,7 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-LIBS += -lcrypto -ldns_sd #-lssl #-lcrypto -lz
+LIBS += -lcrypto #-ldns_sd #-lssl #-lcrypto -lz
 
 SOURCES += main.cpp \
     player.cpp \

@@ -21,7 +21,6 @@ int ZeroconfDnsSd::registerService(const char *name, uint16_t port)
     const char **field;
 
     // Concatenate string contained i record into buf.
-
     for (field = record; *field; field ++)
     {
         length += strlen(*field) + 1; // One byte for length each time
@@ -70,5 +69,4 @@ int ZeroconfDnsSd::registerService(const char *name, uint16_t port)
 
 void ZeroconfDnsSd::unregisterService()
 {
-
 }

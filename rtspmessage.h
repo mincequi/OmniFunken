@@ -8,6 +8,12 @@ class RtspMessage : public QObject
 {
     Q_OBJECT
 public:
+    struct Announcement {
+        uint framesPerPacket;
+        QByteArray rsaAesKey;
+        QByteArray aesIv;
+    };
+
     explicit RtspMessage(QObject *parent = 0);
 
     void parse(const QByteArray &buffer);
@@ -20,7 +26,6 @@ public:
 private:
     QMap<QByteArray, QByteArray> m_headers;
     QString m_body;
-
 
 };
 

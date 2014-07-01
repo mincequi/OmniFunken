@@ -1,11 +1,10 @@
 #ifndef RTPRECEIVER_H
 #define RTPRECEIVER_H
 
+#include "rtspmessage.h"
+
 #include <QObject>
 #include <QUdpSocket>
-
-
-struct RtspServer::Announcement;
 
 
 class RtpReceiver : public QObject
@@ -27,8 +26,9 @@ signals:
     //void socketRequired();
 
 public slots:
-    void announce(const RtspServer::Announcement &announcement);
-    void bindSocket(PayloadType payloadType, quint16 *port);
+    void announce(const RtspMessage::Announcement &announcement);
+    void setSenderSocket();
+    void bindSocket(RtpReceiver::PayloadType payloadType, quint16 *port);
     
 private:
     QUdpSocket *m_udpSocket;

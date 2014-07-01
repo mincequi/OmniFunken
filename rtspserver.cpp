@@ -59,9 +59,8 @@ void RtspServer::onNewConnection()
 void RtspServer::onRequest()
 {
     QTcpSocket *tcpSocket = qobject_cast<QTcpSocket *>(sender());
-    if (!tcpSocket)
-    {
-        qFatal("QTcpSocket::onRequest: invalid sender!");
+    if (!tcpSocket) {
+        qFatal("onRequest: no valid sender");
         return;
     }
 
@@ -78,10 +77,7 @@ void RtspServer::onRequest()
     else if (buffer.startsWith("ANNOUNCE"))
         handleAnnounce(request, &response);
     else if (buffer.startsWith("SETUP"))
-    {
-        handleSetupRequest(request, &response);
-        return;
-    }
+        handleSetup(request, &response);
     else if (buffer.startsWith("RECORD"))
         handleRecord(request, &response);
     else if (buffer.startsWith("FLUSH"))
@@ -103,7 +99,7 @@ void RtspServer::handleOptions(const RtspMessage &request, RtspMessage *response
 void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
-    Announcement announcement;
+    RtspMessage::Announcement announcement;
 
     QRegExp rx("a=fmtp:96 (\\d+) 0 16 40 10 14 2 255 0 0 44100\\r\\n");
     rx.indexIn(request.body());
@@ -119,26 +115,27 @@ void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *respons
 
     if (!announcement.framesPerPacket ||
         announcement.rsaAesKey.isEmpty() ||
-        announcement.aesIv.isEmpty()) {
+        announcement.aesIv.isEmpty())
+    {
         qCritical("RtspServer::handleAnnounce: obtaining announcement failed!");
         return;
     }
 
-    emit announce(announcement);
+    emit announced(announcement);
 }
 
 void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
 {
-    QRegExp rx("RTP\/AVP\/UDP;unicast;interleaved=0-1;mode=record;control_port=(\\d+);timing_port=(\\d+)\\r\\n");
+    QRegExp rx("RTP\\/AVP\\/UDP;unicast;interleaved=0-1;mode=record;control_port=(\\d+);timing_port=(\\d+)");
     rx.indexIn(QString(request.header("Transport")));
     quint16 senderControlPort = rx.cap(1).toUInt();
-    if (controlPort)
+    if (senderControlPort)
     {
         emit senderSocketAvailable(RtpReceiver::RetransmitRequest, senderControlPort);
         emit senderSocketAvailable(RtpReceiver::Sync, senderControlPort);
     }
     quint16 senderTimingPort = rx.cap(2).toUInt();
-    if (timingPort)
+    if (senderTimingPort)
     {
         emit senderSocketAvailable(RtpReceiver::TimingRequest, senderTimingPort);
     }    

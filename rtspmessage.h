@@ -9,7 +9,7 @@ class RtspMessage : public QObject
     Q_OBJECT
 public:
     struct Announcement {
-        uint framesPerPacket;
+        QByteArray fmtp;
         QByteArray rsaAesKey;
         QByteArray aesIv;
     };

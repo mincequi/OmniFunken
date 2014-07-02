@@ -12,7 +12,14 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-LIBS += -lcrypto #-ldns_sd #-lssl #-lcrypto -lz
+macx {
+    INCLUDEPATH += "/usr/local/Cellar/libao/1.2.0/include/"
+    LIBS += -L/usr/local/Cellar/libao/1.2.0/lib
+}
+
+LIBS += -lcrypto -lao #-ldns_sd #-lssl #-lcrypto -lz
+
+
 
 SOURCES += main.cpp \
     player.cpp \
@@ -21,7 +28,8 @@ SOURCES += main.cpp \
     zeroconf_dns_sd.cpp \
     rtspmessage.cpp \
     rtspserver.cpp \
-    rtpreceiver.cpp
+    rtpreceiver.cpp \
+    alac.c
 
 HEADERS += \
     player.h \
@@ -32,4 +40,5 @@ HEADERS += \
     zeroconf_dns_sd.h \
     rtspmessage.h \
     rtspserver.h \
-    rtpreceiver.h
+    rtpreceiver.h \
+    alac.h

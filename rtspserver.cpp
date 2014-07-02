@@ -84,6 +84,8 @@ void RtspServer::onRequest()
         handleFlush(request, &response);
     else if (buffer.startsWith("TEARDOWN"))
         handleTeardown(request, &response);
+    else if (buffer.startsWith("SET_PARAMETER"))
+        handleSetParameter(request, &response);
     else
         qWarning("RtspServer::onRequest: unknown RtspRequest: \n%s", buffer.constData());
 
@@ -101,19 +103,34 @@ void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *respons
     Q_UNUSED(response);
     RtspMessage::Announcement announcement;
 
-    QRegExp rx("a=fmtp:96 (\\d+) 0 16 40 10 14 2 255 0 0 44100\\r\\n");
+    QRegExp rx("a=fmtp:([\\S ]+)"); // match printable characters and space
     rx.indexIn(request.body());
-    announcement.framesPerPacket = rx.cap(1).toUInt();
+    announcement.fmtp = rx.cap(1).toLatin1();
 
     rx.setPattern("a=rsaaeskey:(\\S*)\\r\\n");
     rx.indexIn(request.body());
-    announcement.rsaAesKey = QByteArray::fromBase64(rx.cap(1).toLatin1());
+    QByteArray buffer = QByteArray::fromBase64(rx.cap(1).toLatin1());
+
+    // init RSA
+    BIO *bio = BIO_new_mem_buf(airportRsaPrivateKey, -1);
+    RSA *rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
+    BIO_free(bio);
+    qDebug("RSA Key: %d\n", RSA_check_key(rsa));
+
+    // need memory for signature
+    announcement.rsaAesKey.fill(0, RSA_size(rsa));
+    int size = RSA_private_decrypt(buffer.size(),
+                                   reinterpret_cast<const unsigned char*>(buffer.data()),
+                                   reinterpret_cast<unsigned char*>(announcement.rsaAesKey.data()),
+                                   rsa, RSA_PKCS1_OAEP_PADDING);
+    RSA_free(rsa);
+    announcement.rsaAesKey.resize(size);
 
     rx.setPattern("a=aesiv:(\\S*)\\r\\n");
     rx.indexIn(request.body());
     announcement.aesIv = QByteArray::fromBase64(rx.cap(1).toLatin1());
 
-    if (!announcement.framesPerPacket ||
+    if (announcement.fmtp.isEmpty() ||
         announcement.rsaAesKey.isEmpty() ||
         announcement.aesIv.isEmpty())
     {
@@ -161,14 +178,33 @@ void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
 
 void RtspServer::handleRecord(const RtspMessage &request, RtspMessage *response)
 {
+    Q_UNUSED(request);
+    Q_UNUSED(response);
 }
 
 void RtspServer::handleFlush(const RtspMessage &request, RtspMessage *response)
 {
+    Q_UNUSED(request);
+    Q_UNUSED(response);
+
+    emit flushed();
 }
 
 void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *response)
 {
+    Q_UNUSED(request);
+    Q_UNUSED(response);
+
+    emit teareddown();
+}
+
+void RtspServer::handleSetParameter(const RtspMessage &request, RtspMessage *response)
+{
+    Q_UNUSED(response);
+    bool ok = false;
+    float volume = request.header("volume").toFloat(&ok);
+    if (ok)
+        emit volumeChanged(volume);
 }
 
 void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress)

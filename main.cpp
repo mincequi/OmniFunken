@@ -16,6 +16,8 @@ int main(int argc, char *argv[])
                      &rtpReceiver, SLOT(setSenderSocket()));
     QObject::connect(&rtspServer, SIGNAL(receiverSocketRequired(RtpReceiver::PayloadType, quint16*)),
                      &rtpReceiver, SLOT(bindSocket(RtpReceiver::PayloadType, quint16*)));
+    QObject::connect(&rtspServer, SIGNAL(teareddown()),
+                     &rtpReceiver, SLOT(teardown()));
 
     rtspServer.listen(QHostAddress::AnyIPv4, 5002);
 

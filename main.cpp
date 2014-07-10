@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 
+#include "player.h"
 #include "rtspserver.h"
 #include "zeroconf_dns_sd.h"
 
@@ -7,8 +8,13 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    RtpReceiver rtpReceiver;
     RtspServer  rtspServer;
+    RtpBuffer   rtpBuffer;
+    RtpReceiver rtpReceiver(&rtpBuffer);
+    Player      player(&rtpBuffer);
+    QThread     thread;
+    player.moveToThread(&thread);
+    thread.start();
 
     QObject::connect(&rtspServer, SIGNAL(announced(RtspMessage::Announcement)),
                      &rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
@@ -22,7 +28,7 @@ int main(int argc, char *argv[])
     rtspServer.listen(QHostAddress::AnyIPv4, 5002);
 
     ZeroconfDnsSd dnsSd;
-    int error = dnsSd.registerService("MINZIII", 5002);
+    dnsSd.registerService("MINZIII", 5002);
 
     return a.exec();
 }

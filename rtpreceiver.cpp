@@ -5,13 +5,12 @@
 
 #include <QtEndian>
 
-RtpReceiver::RtpReceiver(QObject *parent) :
+RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, QObject *parent) :
     QObject(parent),
     m_alac(NULL),
-    m_aoDevice(NULL)
-{
+    m_rtpBuffer(rtpBuffer)
+{   
     connect(&m_udpSocket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
-    init();
 }
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
@@ -19,6 +18,7 @@ void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
     m_announcement = announcement;
     AES_set_decrypt_key(reinterpret_cast<const unsigned char*>(announcement.rsaAesKey.data()), 128, &m_aesKey);
     initAlac(announcement.fmtp);
+    m_rtpBuffer->setPacketSize(352);
 }
 
 void RtpReceiver::setSenderSocket()
@@ -69,12 +69,13 @@ void RtpReceiver::readPendingDatagrams()
         {
             unsigned char packet[2048];
             unsigned char dest[1408];
+            int outsize;
             decrypt(payload, packet, payloadSize);
 
-            int outsize;
-            alac_decode_frame(m_alac, packet, dest, &outsize);
-            play(reinterpret_cast<char*>(dest), 352);
-
+            RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->putPacket(header.sequenceNumber);
+            alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
+            //alac_decode_frame(m_alac, packet, dest, &outsize);
+            //play(reinterpret_cast<char*>(dest), 352);
             break;
         }
         default:
@@ -129,37 +130,5 @@ void RtpReceiver::decrypt(const char *in, unsigned char *out, int length)
     memcpy(out+encryptedSize, in+encryptedSize, length-encryptedSize);
 }
 
-
-int RtpReceiver::init()
-{
-    ao_initialize();
-    int driver = ao_default_driver_id();
-    ao_option *ao_opts = NULL;
-
-    ao_sample_format fmt;
-    memset(&fmt, 0, sizeof(fmt));
-
-    fmt.bits = 16;
-    fmt.rate = 44100;
-    fmt.channels = 2;
-    fmt.byte_format = AO_FMT_NATIVE;
-
-    m_aoDevice = ao_open_live(driver, &fmt, ao_opts);
-
-    return m_aoDevice ? 0 : 1;
-}
-
-void RtpReceiver::deinit()
-{
-    if (m_aoDevice)
-        ao_close(m_aoDevice);
-    m_aoDevice = NULL;
-    ao_shutdown();
-}
-
-void RtpReceiver::play(char buf[], int samples)
-{
-    ao_play(m_aoDevice, (char*)buf, samples*4);
-}
 
 

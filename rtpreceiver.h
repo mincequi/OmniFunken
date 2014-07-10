@@ -2,11 +2,14 @@
 #define RTPRECEIVER_H
 
 #include "rtspmessage.h"
+#include "rtpbuffer.h"
+
 #include "alac.h"
 
-#include <ao/ao.h>
 #include <openssl/aes.h>
 
+#include <QFile>
+#include <QList>
 #include <QObject>
 #include <QUdpSocket>
 
@@ -50,7 +53,9 @@ public:
         quint32 ssrc;
     };
 
-    explicit RtpReceiver(QObject *parent = 0);
+
+
+    explicit RtpReceiver(RtpBuffer *rtpBuffer, QObject *parent = 0);
 
 signals:
 
@@ -71,15 +76,15 @@ private:
     void initAlac(const QByteArray &fmtp);
     void decodeAlac();
 
-    int init();
-    void play(char buf[], int samples);
-    void deinit();
+    //svoid requestResend(quint16 firstSequenceNumber, );
+
 
     QUdpSocket  m_udpSocket;
     AES_KEY     m_aesKey;
     alac_file   *m_alac;
     RtspMessage::Announcement m_announcement;
-    ao_device *m_aoDevice;
+
+    RtpBuffer           *m_rtpBuffer;
 };
 
 #endif // RTPRECEIVER_H

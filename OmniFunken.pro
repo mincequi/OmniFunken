@@ -29,7 +29,8 @@ SOURCES += main.cpp \
     rtspmessage.cpp \
     rtspserver.cpp \
     rtpreceiver.cpp \
-    alac.c
+    alac.c \
+    rtpbuffer.cpp
 
 HEADERS += \
     player.h \
@@ -41,4 +42,5 @@ HEADERS += \
     rtspmessage.h \
     rtspserver.h \
     rtpreceiver.h \
-    alac.h
+    alac.h \
+    rtpbuffer.h

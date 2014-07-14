@@ -49,11 +49,8 @@ bool RtspServer::listen(const QHostAddress &address, quint16 port)
 void RtspServer::onNewConnection()
 {
     QTcpSocket *tcpSocket = m_tcpServer->nextPendingConnection();
-    connect(tcpSocket, SIGNAL(readyRead()),
-            this, SLOT(onRequest()));
-
-    connect(tcpSocket, SIGNAL(disconnected()),
-            tcpSocket, SLOT(deleteLater()));
+    connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(onRequest()));
+    connect(tcpSocket, SIGNAL(disconnected()), tcpSocket, SLOT(deleteLater()));
 }
 
 void RtspServer::onRequest()
@@ -87,7 +84,7 @@ void RtspServer::onRequest()
     else if (buffer.startsWith("SET_PARAMETER"))
         handleSetParameter(request, &response);
     else
-        qWarning("RtspServer::onRequest: unknown RtspRequest: \n%s", buffer.constData());
+        qCritical("RtspServer::onRequest: unknown RtspRequest: \n%s", buffer.constData());
 
     tcpSocket->write(response.data());
 }
@@ -130,28 +127,44 @@ void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *respons
     rx.indexIn(request.body());
     announcement.aesIv = QByteArray::fromBase64(rx.cap(1).toLatin1());
 
+    rx.setPattern("o=\\S+ \\d+ 0 IN IP4 (\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})\\r\\n");
+    rx.indexIn(request.body());
+    announcement.senderAddress = rx.cap(1);
+
     if (announcement.fmtp.isEmpty() ||
         announcement.rsaAesKey.isEmpty() ||
-        announcement.aesIv.isEmpty())
-    {
-        qCritical("RtspServer::handleAnnounce: obtaining announcement failed!");
+        announcement.aesIv.isEmpty() ||
+        announcement.senderAddress.isNull()) {
+        qFatal("RtspServer::handleAnnounce: obtaining announcement failed!");
         return;
     }
 
-    emit announced(announcement);
+    emit announce(announcement);
 }
 
 void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
 {
-    QRegExp rx("RTP\\/AVP\\/UDP;unicast;interleaved=0-1;mode=record;control_port=(\\d+);timing_port=(\\d+)");
-    rx.indexIn(QString(request.header("Transport")));
-    quint16 senderControlPort = rx.cap(1).toUInt();
+    quint16 senderControlPort = 0;
+    quint16 senderTimingPort = 0;
+    QString str(request.header("Transport"));
+    QStringList transportList = str.split(";");
+    foreach(const QString &item, transportList) {
+        if (item.contains("control_port")) {
+            QRegExp rx("control_port=(\\d+)");
+            rx.indexIn(item);
+            senderControlPort = rx.cap(1).toUInt();
+        } else if (item.contains("timing_port")) {
+            QRegExp rx("timing_port=(\\d+)");
+            rx.indexIn(item);
+            senderTimingPort = rx.cap(1).toUInt();
+        }
+    }
+
     if (senderControlPort)
     {
         emit senderSocketAvailable(RtpReceiver::RetransmitRequest, senderControlPort);
         emit senderSocketAvailable(RtpReceiver::Sync, senderControlPort);
     }
-    quint16 senderTimingPort = rx.cap(2).toUInt();
     if (senderTimingPort)
     {
         emit senderSocketAvailable(RtpReceiver::TimingRequest, senderTimingPort);
@@ -187,7 +200,7 @@ void RtspServer::handleFlush(const RtspMessage &request, RtspMessage *response)
     Q_UNUSED(request);
     Q_UNUSED(response);
 
-    emit flushed();
+    emit flush();
 }
 
 void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *response)
@@ -195,16 +208,16 @@ void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *respons
     Q_UNUSED(request);
     Q_UNUSED(response);
 
-    emit teareddown();
+    emit teardown();
 }
 
 void RtspServer::handleSetParameter(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
     bool ok = false;
-    float volume = request.header("volume").toFloat(&ok);
+    float db = request.header("volume").toFloat(&ok);
     if (ok)
-        emit volumeChanged(volume);
+        emit volume(db);
 }
 
 void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress)

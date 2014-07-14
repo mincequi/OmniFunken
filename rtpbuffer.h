@@ -29,15 +29,14 @@ public:
 
     explicit RtpBuffer(int latency = 500, QObject *parent = 0);
 
-    void reset();
-
-    RtpPacket* putPacket(quint16 index);
-    const RtpPacket* takePacket();
-
-    // fill
-
     // packetSize (bytes per frame = packetSize * numChannels * numBitsPerChannel)
     void setPacketSize(uint frames);
+
+    RtpPacket* putPacket(quint16 index);
+    RtpPacket* putLatePacket(quint16 index);
+    const RtpPacket* takePacket();
+
+    void reset();
 
 
 signals:
@@ -47,6 +46,7 @@ signals:
 public slots:
 
 private:
+    quint16 size();
     void alloc();
     void free();
 
@@ -58,15 +58,14 @@ private:
 
     int m_latency;
     int m_capacity;
-    int m_size;
     int m_first;
     int m_last;
     quint16 m_lastIndex;
     int m_fillCount;
 
-    RtpPacket* m_data;
-    int m_packetSize;
-    void*       m_silence;
+    RtpPacket   *m_data;
+    int         m_packetSize;
+    char        *m_silence;
 
     mutable QMutex m_mutex;
 };

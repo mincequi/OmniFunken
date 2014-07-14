@@ -17,13 +17,13 @@ public:
     bool listen(const QHostAddress &address = QHostAddress::Any, quint16 port = 0);
 
 signals:
-    void announced(const RtspMessage::Announcement & announcement);
+    void announce(const RtspMessage::Announcement & announcement);
     void senderSocketAvailable(RtpReceiver::PayloadType payloadType, quint16 port);
     // note: does *probably* not work with queued connections
     void receiverSocketRequired(RtpReceiver::PayloadType payloadType, quint16 *port);
-    void volumeChanged(float volume);
-    void flushed();
-    void teareddown();
+    void volume(float db);
+    void flush();
+    void teardown();
 
 private slots:
     void onNewConnection();

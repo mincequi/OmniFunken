@@ -1,6 +1,7 @@
 #ifndef RTSPMESSAGE_H
 #define RTSPMESSAGE_H
 
+#include <QHostAddress>
 #include <QMap>
 #include <QObject>
 
@@ -12,6 +13,7 @@ public:
         QByteArray fmtp;
         QByteArray rsaAesKey;
         QByteArray aesIv;
+        QHostAddress senderAddress;
     };
 
     explicit RtspMessage(QObject *parent = 0);

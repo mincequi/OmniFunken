@@ -28,7 +28,7 @@ private:
 
 private:
     QTimer           *m_pullTimer;
-    QThread m_thread;
+    QThread     m_thread;
     AudioOutAbstract *m_audioOut;
     RtpBuffer *m_rtpBuffer;
     ao_device *m_aoDevice;

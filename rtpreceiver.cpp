@@ -7,10 +7,13 @@
 
 RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, QObject *parent) :
     QObject(parent),
+    m_senderControlPort(0),
     m_alac(NULL),
     m_rtpBuffer(rtpBuffer)
+
 {   
     connect(&m_udpSocket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
+    connect(m_rtpBuffer, SIGNAL(missingSequence(quint16,quint16)), this, SLOT(requestRetransmit(quint16,quint16)));
 }
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
@@ -21,8 +24,16 @@ void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
     m_rtpBuffer->setPacketSize(352);
 }
 
-void RtpReceiver::setSenderSocket()
+void RtpReceiver::setSenderSocket(RtpReceiver::PayloadType payloadType, quint16 controlPort)
 {
+    switch (payloadType)
+    {
+    case RetransmitRequest:
+        m_senderControlPort = controlPort;
+        break;
+    default:
+        break;
+    }
 }
 
 void RtpReceiver::bindSocket(RtpReceiver::PayloadType payloadType, quint16 *port)
@@ -39,8 +50,7 @@ void RtpReceiver::teardown()
 {
     m_udpSocket.close();
 
-    if (m_alac)
-    {
+    if (m_alac) {
         alac_free(m_alac);
         m_alac = NULL;
     }
@@ -55,7 +65,7 @@ void RtpReceiver::readPendingDatagrams()
         quint16 senderPort;
         m_udpSocket.readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
         RtpHeader header;
-        decodeHeader(datagram.data(), &header);
+        readHeader(datagram.data(), &header);
         const char* payload = (datagram.data()+12);
         int payloadSize = datagram.size()-12;
 
@@ -63,19 +73,21 @@ void RtpReceiver::readPendingDatagrams()
         {
         case Sync:
             break;
-        case RetransmitResponse:
-            break;
-        case AudioData:
-        {
+        case RetransmitResponse: {
+            header.sequenceNumber = qFromBigEndian(*((quint16*)(datagram.data()+6)));
+            payload = payload+4;
+            payloadSize = payloadSize-4;
             unsigned char packet[2048];
-            unsigned char dest[1408];
-            int outsize;
             decrypt(payload, packet, payloadSize);
-
+            RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->putLatePacket(header.sequenceNumber);
+            alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
+            break;
+        }
+        case AudioData: {
+            unsigned char packet[2048];
+            decrypt(payload, packet, payloadSize);
             RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->putPacket(header.sequenceNumber);
             alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
-            //alac_decode_frame(m_alac, packet, dest, &outsize);
-            //play(reinterpret_cast<char*>(dest), 352);
             break;
         }
         default:
@@ -85,7 +97,19 @@ void RtpReceiver::readPendingDatagrams()
     }
 }
 
-void RtpReceiver::decodeHeader(const char* data, RtpHeader *header)
+void RtpReceiver::requestRetransmit(quint16 first, quint16 num)
+{
+    char req[8];    // *not* a standard RTCP NACK
+    req[0] = 0x80;
+    req[1] = 0x55|0x80;  // Apple 'resend'
+    *(unsigned short *)(req+2) = htons(1);  // our seqnum
+    *(unsigned short *)(req+4) = htons(first);  // missed seqnum
+    *(unsigned short *)(req+6) = htons(num);  // count
+
+    m_udpSocket.writeDatagram(req, 8, m_announcement.senderAddress, m_senderControlPort);
+}
+
+void RtpReceiver::readHeader(const char* data, RtpHeader *header)
 {
     header->version     = (data[0] >> 6) & 0x03;
     header->padding     = (data[0] >> 5) & 0x01;
@@ -99,12 +123,21 @@ void RtpReceiver::decodeHeader(const char* data, RtpHeader *header)
     header->ssrc            = qFromBigEndian(*((quint32*)(data+8)));
 }
 
+void RtpReceiver::readHeader(const char* data, RtpHeaderBitfield *header)
+{
+    quint16 value = ntohs(*((quint16*)data));
+    memcpy(header, data, 2);
+
+    header->sequenceNumber  = qFromBigEndian(*((quint16*)(data+2)));
+    header->timestamp       = qFromBigEndian(*((quint32*)(data+4)));
+    header->ssrc            = qFromBigEndian(*((quint32*)(data+8)));
+}
+
 void RtpReceiver::initAlac(const QByteArray &fmtp)
 {
     QList<QByteArray> fmtpList = fmtp.split(' ');
 
-    if (!m_alac)
-    {
+    if (!m_alac) {
         m_alac = alac_create(16, 2);
         m_alac->setinfo_max_samples_per_frame   = fmtpList.at(1).toUInt();
         m_alac->setinfo_7a                      = fmtpList.at(2).toUInt();

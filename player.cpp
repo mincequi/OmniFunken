@@ -4,15 +4,15 @@ Player::Player(RtpBuffer* rtpBuffer, QObject *parent) :
     QObject(parent),
     m_rtpBuffer(rtpBuffer)
 {
-    //this->moveToThread(&m_thread);
     connect(m_rtpBuffer, SIGNAL(ready()), this, SLOT(play()));
     init();
 }
 
 void Player::play()
 {
-    while(const RtpBuffer::RtpPacket *packet = m_rtpBuffer->takePacket())
+    while(const RtpBuffer::RtpPacket *packet = m_rtpBuffer->takePacket()) {
         ao_play(m_aoDevice, packet->payload, packet->payloadSize);
+    }
 }
 
 void Player::stop()

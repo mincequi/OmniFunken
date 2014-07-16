@@ -2,8 +2,6 @@
 #define RTPBUFFER_H
 
 #include <QObject>
-#include <QQueue>
-#include <QPair>
 
 // need intrusive, (avoid copying)
 // thread safe, (producer-, consumer-thread)
@@ -43,7 +41,6 @@ signals:
     void ready();
     void missingSequence(quint16 first, quint16 num);
 
-public slots:
 
 private:
     quint16 size();

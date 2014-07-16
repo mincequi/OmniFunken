@@ -9,7 +9,8 @@ RtpBuffer::RtpBuffer(int latency, QObject *parent) :
     m_latency(latency),
     m_first(0),
     m_last(0),
-    m_data(NULL)
+    m_data(NULL),
+    m_packetSize(0)
 {
 }
 
@@ -95,7 +96,7 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
         packet = NULL;
         break;
     case PacketMissing:
-        qCritical("takePacket: missing packet: %d", packet->sequenceNumber);
+        qCritical("RtpBuffer::takePacket: missing packet: %d", packet->sequenceNumber);
         memcpy(packet->payload, m_silence, packet->payloadSize);
     case PacketOk:
         m_first = (m_first+1) % m_capacity;
@@ -103,7 +104,7 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
         packet->requestCount = 0;
         break;
     default:
-        qCritical("takePacket: invalid packet status");
+        qFatal("RtpBuffer::takePacket: invalid packet status");
         packet = NULL;
     }
 

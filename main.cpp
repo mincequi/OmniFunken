@@ -17,31 +17,27 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("OmniFunken");
     QCoreApplication::setApplicationVersion("0.0.1");
 
-
     // command line options
     QString defaultName("OmniFunken@"); defaultName.append(QHostInfo::localHostName());
-    QString defaultPort("5002");
     QCommandLineParser parser;
     parser.setApplicationDescription("OmniFunken aims to be a general purpose media renderer.");
     parser.addVersionOption();
     parser.addHelpOption();
-
     QCommandLineOption verboseOption(QStringList() << "v" << "verbose", "Set verbose mode.");
     parser.addOption(verboseOption);
     QCommandLineOption nameOption(QStringList() << "n" << "name", "Set propagated name.", "name", defaultName);
     parser.addOption(nameOption);
-    QCommandLineOption portOption(QStringList() << "p" << "port", "Set RTSP port.", "port", defaultPort);
+    QCommandLineOption portOption(QStringList() << "p" << "port", "Set RTSP port.", "port", "5002");
     parser.addOption(portOption);
     QCommandLineOption latencyOption(QStringList() << "l" << "latency", "Set latency in milliseconds.");
     parser.addOption(latencyOption);
     QCommandLineOption daemonOption(QStringList() << "d" << "daemon", "Start as daemon.");
     parser.addOption(daemonOption);
-
     parser.process(a);
-
 
     // settings
     QSettings settings("/etc/omnifunken.conf", QSettings::IniFormat);
+
 
     RtspServer  rtspServer;
     RtpBuffer   rtpBuffer;

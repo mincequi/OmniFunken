@@ -24,19 +24,19 @@ LIBS += -lcrypto -lao #-ldns_sd #-lssl #-lcrypto -lz
 SOURCES += main.cpp \
     player.cpp \
     audio_out_alsa.cpp \
-    audio_buffer.cpp \
     zeroconf_dns_sd.cpp \
     rtspmessage.cpp \
     rtspserver.cpp \
     rtpreceiver.cpp \
     alac.c \
     rtpbuffer.cpp \
-    daemon.c
+    daemon.c \
+    ratecontrol.cpp \
+    rtpbufferalt.cpp
 
 HEADERS += \
     player.h \
     audio_out_alsa.h \
-    audio_buffer.h \
     audio_out.h \
     zeroconf.h \
     zeroconf_dns_sd.h \
@@ -45,7 +45,9 @@ HEADERS += \
     rtpreceiver.h \
     alac.h \
     rtpbuffer.h \
-    daemon.h
+    daemon.h \
+    ratecontrol.h \
+    rtpbufferalt.h
 
 OTHER_FILES += \
     omnifunken.conf

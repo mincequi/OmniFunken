@@ -2,6 +2,7 @@
 
 #include <QThread>
 
+/*
 RtpBuffer::RtpBuffer(int latency, QObject *parent) :
     QObject(parent),
     m_init(true),
@@ -187,3 +188,4 @@ void RtpBuffer::free()
     m_data = NULL;
     m_silence = NULL;
 }
+*/

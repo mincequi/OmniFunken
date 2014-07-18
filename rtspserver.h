@@ -21,8 +21,9 @@ signals:
     void senderSocketAvailable(RtpReceiver::PayloadType payloadType, quint16 port);
     // note: does *probably* not work with queued connections
     void receiverSocketRequired(RtpReceiver::PayloadType payloadType, quint16 *port);
+    void record(quint16 seq);
+    void flush(quint16 seq);
     void volume(float db);
-    void flush();
     void teardown();
 
 private slots:

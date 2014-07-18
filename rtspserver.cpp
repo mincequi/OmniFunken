@@ -160,13 +160,11 @@ void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
         }
     }
 
-    if (senderControlPort)
-    {
+    if (senderControlPort) {
         emit senderSocketAvailable(RtpReceiver::RetransmitRequest, senderControlPort);
         emit senderSocketAvailable(RtpReceiver::Sync, senderControlPort);
     }
-    if (senderTimingPort)
-    {
+    if (senderTimingPort) {
         emit senderSocketAvailable(RtpReceiver::TimingRequest, senderTimingPort);
     }    
     
@@ -191,22 +189,45 @@ void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
 
 void RtspServer::handleRecord(const RtspMessage &request, RtspMessage *response)
 {
-    Q_UNUSED(request);
     Q_UNUSED(response);
+
+    quint16 seq = 0;
+    QString str(request.header("RTP-Info"));
+    QStringList rtpInfoList = str.split(";");
+    foreach(const QString &item, rtpInfoList) {
+        if (item.contains("seq")) {
+            QRegExp rx("seq=(\\d+)");
+            rx.indexIn(item);
+            seq = rx.cap(1).toUInt();
+        }
+    }
+    qDebug() << __FUNCTION__ << ": " << seq;
+    emit record(seq);
 }
 
 void RtspServer::handleFlush(const RtspMessage &request, RtspMessage *response)
 {
-    Q_UNUSED(request);
     Q_UNUSED(response);
 
-    emit flush();
+    quint16 seq = 0;
+    QString str(request.header("RTP-Info"));
+    QStringList rtpInfoList = str.split(";");
+    foreach(const QString &item, rtpInfoList) {
+        if (item.contains("seq")) {
+            QRegExp rx("seq=(\\d+)");
+            rx.indexIn(item);
+            seq = rx.cap(1).toUInt();
+        }
+    }
+    qDebug() << __FUNCTION__ << ": " << seq;
+    emit flush(seq);
 }
 
 void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(request);
     Q_UNUSED(response);
+    qDebug(__FUNCTION__);
 
     emit teardown();
 }
@@ -214,6 +235,7 @@ void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *respons
 void RtspServer::handleSetParameter(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
+    qDebug(__FUNCTION__);
     bool ok = false;
     float db = request.header("volume").toFloat(&ok);
     if (ok)
@@ -239,7 +261,7 @@ void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *r
     // Write in the decoded Apple-Challenge bytes.
     QByteArray buffer = QByteArray::fromBase64(appleChallenge);
     if (buffer.size() > 16) {
-        qWarning("Apple-Challenge has illegal size: %d", buffer.size());
+        qCritical("Apple-Challenge has illegal size: %d", buffer.size());
         return;
     }
     
@@ -261,7 +283,7 @@ void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *r
     BIO *bio = BIO_new_mem_buf(airportRsaPrivateKey, -1);
     RSA *rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
     BIO_free(bio);
-    qDebug("RSA Key: %d\n", RSA_check_key(rsa));
+    //qDebug("RSA Key: %d\n", RSA_check_key(rsa));
 
     // need memory for signature
     QByteArray to(RSA_size(rsa), 0);

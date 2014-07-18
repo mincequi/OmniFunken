@@ -47,14 +47,11 @@ int main(int argc, char *argv[])
     player.moveToThread(&thread);
     thread.start();
 
-    QObject::connect(&rtspServer, SIGNAL(announce(RtspMessage::Announcement)),
-                     &rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
-    QObject::connect(&rtspServer, SIGNAL(senderSocketAvailable(RtpReceiver::PayloadType, quint16)),
-                     &rtpReceiver, SLOT(setSenderSocket(RtpReceiver::PayloadType, quint16)));
-    QObject::connect(&rtspServer, SIGNAL(receiverSocketRequired(RtpReceiver::PayloadType, quint16*)),
-                     &rtpReceiver, SLOT(bindSocket(RtpReceiver::PayloadType, quint16*)));
-    QObject::connect(&rtspServer, SIGNAL(teardown()),
-                     &rtpReceiver, SLOT(teardown()));
+    QObject::connect(&rtspServer, SIGNAL(announce(RtspMessage::Announcement)), &rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
+    QObject::connect(&rtspServer, SIGNAL(senderSocketAvailable(RtpReceiver::PayloadType, quint16)), &rtpReceiver, SLOT(setSenderSocket(RtpReceiver::PayloadType, quint16)));
+    QObject::connect(&rtspServer, SIGNAL(receiverSocketRequired(RtpReceiver::PayloadType, quint16*)), &rtpReceiver, SLOT(bindSocket(RtpReceiver::PayloadType, quint16*)));
+    QObject::connect(&rtspServer, SIGNAL(teardown()), &rtpReceiver, SLOT(teardown()));
+    QObject::connect(&rtspServer, SIGNAL(flush(quint16)), &rtpBuffer, SLOT(flush(quint16)));
 
     rtspServer.listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());
 

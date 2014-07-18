@@ -7,6 +7,7 @@
 // thread safe, (producer-, consumer-thread)
 // circular buffer (fixed memory size)
 
+/*
 class RtpBuffer : public QObject
 {
     Q_OBJECT
@@ -66,5 +67,6 @@ private:
 
     mutable QMutex m_mutex;
 };
+*/
 
 #endif // RTPBUFFER_H

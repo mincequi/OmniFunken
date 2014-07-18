@@ -26,8 +26,7 @@ void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
 
 void RtpReceiver::setSenderSocket(RtpReceiver::PayloadType payloadType, quint16 controlPort)
 {
-    switch (payloadType)
-    {
+    switch (payloadType) {
     case RetransmitRequest:
         m_senderControlPort = controlPort;
         break;
@@ -40,8 +39,9 @@ void RtpReceiver::bindSocket(RtpReceiver::PayloadType payloadType, quint16 *port
 {
     Q_UNUSED(payloadType);
 
-    if (!m_udpSocket.localPort())
+    if (!m_udpSocket.localPort()) {
         m_udpSocket.bind();
+    }
 
     *port = m_udpSocket.localPort();
 }
@@ -69,8 +69,7 @@ void RtpReceiver::readPendingDatagrams()
         const char* payload = (datagram.data()+12);
         int payloadSize = datagram.size()-12;
 
-        switch (header.payloadType)
-        {
+        switch (header.payloadType) {
         case Sync:
             break;
         case RetransmitResponse: {
@@ -79,15 +78,16 @@ void RtpReceiver::readPendingDatagrams()
             payloadSize = payloadSize-4;
             unsigned char packet[2048];
             decrypt(payload, packet, payloadSize);
-            RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->putLatePacket(header.sequenceNumber);
-            alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
+            //RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->putLatePacket(header.sequenceNumber);
+            //alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
             break;
         }
         case AudioData: {
             unsigned char packet[2048];
             decrypt(payload, packet, payloadSize);
-            RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->putPacket(header.sequenceNumber);
+            RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->obtainPacket(header.sequenceNumber);
             alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
+            m_rtpBuffer->commitPacket();
             break;
         }
         default:

@@ -9,6 +9,7 @@
 
 #include "audio_out.h"
 #include "rtpbuffer.h"
+#include "rtpbufferalt.h"
 
 class Player : public QObject
 {

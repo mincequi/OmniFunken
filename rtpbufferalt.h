@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-class RtpBufferAlt : public QObject
+class RtpBuffer : public QObject
 {
     Q_OBJECT
 public:
@@ -32,8 +32,8 @@ public:
         char            *payload;
     };
 
-    explicit RtpBufferAlt(int latency = 500, QObject *parent = 0);
-    ~RtpBufferAlt();
+    explicit RtpBuffer(int latency = 500, QObject *parent = 0);
+    ~RtpBuffer();
     // packetSize (bytes per frame = packetSize * numChannels * numBitsPerChannel)
     void setPacketSize(int frames);
 
@@ -43,10 +43,16 @@ public:
     // consumer thread
     const RtpPacket* takePacket();
 
+    void silence(char **silence, int *size) const;
+
 signals:
     void ready();
     void full();
     void missingSequence(quint16 first, quint16 num);
+
+public slots:
+    void init();
+    void flush(quint16 seq);
 
 private:
     void alloc();
@@ -55,13 +61,18 @@ private:
     bool isFull();
     bool isEmpty();
 
-    const int m_latency;
-    int m_capacity;
-    int m_first;
-    int m_last;
+    const int   m_latency;
+    int         m_capacity;
+    int         m_first;
+    int         m_last;
+    bool        m_init;
+    bool        m_ready;
     RtpPacket   *m_data;
     char        *m_silence;
-    int m_packetSize;
+    int         m_packetSize;
+    int         m_flushSeq;
+
+    mutable QMutex m_mutex;
 };
 
 #endif // RTPBUFFERALT_H

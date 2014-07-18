@@ -13,6 +13,11 @@ void Player::play()
     while(const RtpBuffer::RtpPacket *packet = m_rtpBuffer->takePacket()) {
         ao_play(m_aoDevice, packet->payload, packet->payloadSize);
     }
+
+    char *silence = NULL;
+    int size;
+    m_rtpBuffer->silence(&silence, &size);
+    ao_play(m_aoDevice, silence, size);
 }
 
 void Player::stop()

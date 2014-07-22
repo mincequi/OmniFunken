@@ -1,10 +1,13 @@
 #include "player.h"
 
+#include <QDebug>
+
 Player::Player(RtpBuffer* rtpBuffer, QObject *parent) :
     QObject(parent),
     m_rtpBuffer(rtpBuffer)
 {
     connect(m_rtpBuffer, SIGNAL(ready()), this, SLOT(play()));
+    connect(m_rtpBuffer, SIGNAL(notify(quint16)), this, SLOT(updateRateControl(quint16)));
     init();
 }
 
@@ -22,6 +25,11 @@ void Player::play()
 
 void Player::stop()
 {
+}
+
+void Player::updateRateControl(quint16 size)
+{
+    qDebug() << __func__ << ": buffer size: " << size;
 }
 
 int Player::init()

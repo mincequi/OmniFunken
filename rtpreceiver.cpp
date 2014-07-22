@@ -76,18 +76,15 @@ void RtpReceiver::readPendingDatagrams()
             header.sequenceNumber = qFromBigEndian(*((quint16*)(datagram.data()+6)));
             payload = payload+4;
             payloadSize = payloadSize-4;
-            unsigned char packet[2048];
-            decrypt(payload, packet, payloadSize);
-            //RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->putLatePacket(header.sequenceNumber);
-            //alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
-            break;
         }
         case AudioData: {
             unsigned char packet[2048];
             decrypt(payload, packet, payloadSize);
             RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->obtainPacket(header.sequenceNumber);
-            alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
-            m_rtpBuffer->commitPacket();
+            if (bufferItem) {
+                alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
+                m_rtpBuffer->commitPacket();
+            }
             break;
         }
         default:

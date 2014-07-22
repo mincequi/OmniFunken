@@ -2,6 +2,7 @@
 #define RTPBUFFERALT_H
 
 #include <QObject>
+#include <QTimer>
 
 class RtpBuffer : public QObject
 {
@@ -49,30 +50,32 @@ signals:
     void ready();
     void full();
     void missingSequence(quint16 first, quint16 num);
+    void notify(quint16 size);
 
 public slots:
-    void init();
-    void flush(quint16 seq);
+    void init(quint16 seq);
+
+private slots:
+    void timeout();
 
 private:
     void alloc();
     void free();
 
-    bool isFull();
-    bool isEmpty();
+    void requestMissingPackets();
 
     const int   m_latency;
     int         m_capacity;
     int         m_first;
     int         m_last;
-    bool        m_init;
     bool        m_ready;
     RtpPacket   *m_data;
     char        *m_silence;
     int         m_packetSize;
-    int         m_flushSeq;
+    int         m_initSeq;
 
-    mutable QMutex m_mutex;
+    mutable QMutex  m_mutex;
+    QTimer          m_timer;
 };
 
 #endif // RTPBUFFERALT_H

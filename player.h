@@ -23,6 +23,9 @@ public slots:
     void play();
     void stop();
 
+private slots:
+    void updateRateControl(quint16 size);
+
 private:
     int init();
     void deinit();

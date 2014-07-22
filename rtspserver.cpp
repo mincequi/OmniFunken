@@ -191,7 +191,7 @@ void RtspServer::handleRecord(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
 
-    quint16 seq = 0;
+    qint32 seq = -1;
     QString str(request.header("RTP-Info"));
     QStringList rtpInfoList = str.split(";");
     foreach(const QString &item, rtpInfoList) {
@@ -202,7 +202,9 @@ void RtspServer::handleRecord(const RtspMessage &request, RtspMessage *response)
         }
     }
     qDebug() << __FUNCTION__ << ": " << seq;
-    emit record(seq);
+    if (seq != -1) {
+        emit record(seq);
+    }
 }
 
 void RtspServer::handleFlush(const RtspMessage &request, RtspMessage *response)

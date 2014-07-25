@@ -35,7 +35,8 @@ static char airportRsaPrivateKey[] = "-----BEGIN RSA PRIVATE KEY-----\n"
 
 
 RtspServer::RtspServer(QObject *parent)
-    : QObject(parent)
+    : QObject(parent),
+      m_isRunning(false)
 {
     m_tcpServer = new QTcpServer(this);
 }
@@ -84,9 +85,11 @@ void RtspServer::onRequest()
     else if (buffer.startsWith("SET_PARAMETER"))
         handleSetParameter(request, &response);
     else
-        qCritical("RtspServer::onRequest: unknown RtspRequest: \n%s", buffer.constData());
+        qWarning("RtspServer::onRequest: unknown RtspRequest: \n%s", buffer.constData());
 
-    tcpSocket->write(response.data());
+    if (response.valid()) {
+        tcpSocket->write(response.data());
+    }
 }
 
 void RtspServer::handleOptions(const RtspMessage &request, RtspMessage *response)
@@ -98,6 +101,16 @@ void RtspServer::handleOptions(const RtspMessage &request, RtspMessage *response
 void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
+    qDebug() << __func__;
+
+    // if we are already running, we play dead
+    if (m_isRunning) {
+        response->setValid(false);
+        return;
+    } else {
+        m_isRunning = true;
+    }
+
     RtspMessage::Announcement announcement;
 
     QRegExp rx("a=fmtp:([\\S ]+)"); // match printable characters and space
@@ -112,7 +125,7 @@ void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *respons
     BIO *bio = BIO_new_mem_buf(airportRsaPrivateKey, -1);
     RSA *rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
     BIO_free(bio);
-    qDebug("RSA Key: %d\n", RSA_check_key(rsa));
+    //qDebug("RSA Key: %d\n", RSA_check_key(rsa));
 
     // need memory for signature
     announcement.rsaAesKey.fill(0, RSA_size(rsa));
@@ -144,6 +157,8 @@ void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *respons
 
 void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
 {
+    qDebug() << __func__;
+
     quint16 senderControlPort = 0;
     quint16 senderTimingPort = 0;
     QString str(request.header("Transport"));
@@ -230,18 +245,19 @@ void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *respons
     Q_UNUSED(request);
     Q_UNUSED(response);
     qDebug(__FUNCTION__);
-
+    m_isRunning = false;
     emit teardown();
 }
 
 void RtspServer::handleSetParameter(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
-    qDebug(__FUNCTION__);
     bool ok = false;
     float db = request.header("volume").toFloat(&ok);
-    if (ok)
+    if (ok) {
+        qDebug() << __func__ << ": volume: " << db;
         emit volume(db);
+    }
 }
 
 void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress)

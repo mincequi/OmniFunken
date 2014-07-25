@@ -80,7 +80,6 @@ public:
     };
 
 
-
     explicit RtpReceiver(RtpBuffer *rtpBuffer, QObject *parent = 0);
 
 signals:

@@ -30,9 +30,10 @@ SOURCES += main.cpp \
     rtpreceiver.cpp \
     alac.c \
     rtpbuffer.cpp \
-    daemon.c \
     ratecontrol.cpp \
-    rtpbufferalt.cpp
+    rtpbufferalt.cpp \
+    daemon.cpp \
+    omnifunken.cpp
 
 HEADERS += \
     player.h \
@@ -45,9 +46,10 @@ HEADERS += \
     rtpreceiver.h \
     alac.h \
     rtpbuffer.h \
-    daemon.h \
     ratecontrol.h \
-    rtpbufferalt.h
+    rtpbufferalt.h \
+    daemon.h \
+    omnifunken.h
 
 OTHER_FILES += \
     omnifunken.conf

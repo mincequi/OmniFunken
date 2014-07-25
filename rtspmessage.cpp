@@ -4,7 +4,8 @@
 #include <QTextStream>
 
 RtspMessage::RtspMessage(QObject *parent) :
-    QObject(parent)
+    QObject(parent),
+    m_valid(true)
 {
 }
 
@@ -36,6 +37,16 @@ const QString & RtspMessage::body() const
 void RtspMessage::insert(const QByteArray &key, const QByteArray &value)
 {
     m_headers.insert(key, value);
+}
+
+bool RtspMessage::valid() const
+{
+    return m_valid;
+}
+
+void RtspMessage::setValid(bool valid)
+{
+    m_valid = valid;
 }
 
 QByteArray RtspMessage::data()

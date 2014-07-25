@@ -25,10 +25,13 @@ public:
     const QString & body() const;
     void insert(const QByteArray &key, const QByteArray &value);
 
+    void setValid(bool valid);
+    bool valid() const;
+
 private:
     QMap<QByteArray, QByteArray> m_headers;
     QString m_body;
-
+    bool m_valid;
 };
 
 #endif // RTSPMESSAGE_H

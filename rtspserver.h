@@ -43,6 +43,7 @@ private:
 
 private:
     QTcpServer *m_tcpServer;
+    bool        m_isRunning;
 };
 
 #endif // RTSPSERVER_H

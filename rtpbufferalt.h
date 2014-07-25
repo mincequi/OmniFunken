@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTimer>
 
+
 class RtpBuffer : public QObject
 {
     Q_OBJECT
@@ -18,16 +19,19 @@ public:
         RtpPacket() :
             sequenceNumber(0),
             status(PacketFree),
+            flush(false),
             requestCount(0),
             payloadSize(0),
             payload(NULL) {}
         void init() {
             status = PacketFree;
             requestCount = 0;
+            flush = false;
         }
 
         quint16         sequenceNumber;
         RtpPacketStatus status;
+        bool            flush;
         quint16         requestCount;
         int             payloadSize;
         char            *payload;
@@ -53,7 +57,8 @@ signals:
     void notify(quint16 size);
 
 public slots:
-    void init(quint16 seq);
+    void init(quint16 sequenceNumber);
+    void teardown();
 
 private slots:
     void timeout();
@@ -62,17 +67,33 @@ private:
     void alloc();
     void free();
 
+    enum PacketOrder {
+        Discard,    // packet is too late
+        Early,      // missing packets
+        Expected,   // packet is in expected order
+        Late,       // packet is late (eventually from request resend)
+        Twice       // packet with this seqno has been sent twice
+    };
+    PacketOrder orderPacket(quint16);
+
     void requestMissingPackets();
+
+    enum Status {
+        Init,
+        Filling,
+        Ready,
+        Flushing
+    };
+    Status      m_status;
 
     const int   m_latency;
     int         m_capacity;
     int         m_first;
     int         m_last;
-    bool        m_ready;
     RtpPacket   *m_data;
     char        *m_silence;
     int         m_packetSize;
-    int         m_initSeq;
+    int         m_initSequenceNumber;
 
     mutable QMutex  m_mutex;
     QTimer          m_timer;

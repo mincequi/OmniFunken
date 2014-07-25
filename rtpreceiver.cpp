@@ -20,8 +20,8 @@ void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
 {
     m_announcement = announcement;
     AES_set_decrypt_key(reinterpret_cast<const unsigned char*>(announcement.rsaAesKey.data()), 128, &m_aesKey);
-    initAlac(announcement.fmtp);
     m_rtpBuffer->setPacketSize(352);
+    initAlac(announcement.fmtp);
 }
 
 void RtpReceiver::setSenderSocket(RtpReceiver::PayloadType payloadType, quint16 controlPort)
@@ -68,6 +68,9 @@ void RtpReceiver::readPendingDatagrams()
         readHeader(datagram.data(), &header);
         const char* payload = (datagram.data()+12);
         int payloadSize = datagram.size()-12;
+        if (payloadSize < 16) {
+            return;
+        }
 
         switch (header.payloadType) {
         case Sync:

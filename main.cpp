@@ -9,6 +9,9 @@
 #include "zeroconf_dns_sd.h"
 
 
+#include <unistd.h>
+#include <sys/stat.h>
+
 
 int main(int argc, char *argv[])
 {
@@ -35,29 +38,34 @@ int main(int argc, char *argv[])
     parser.addOption(daemonOption);
     parser.process(a);
 
+    if (parser.isSet(daemonOption)) {
+        daemon_init();
+    }
+
+
     // settings
     QSettings settings("/etc/omnifunken.conf", QSettings::IniFormat);
 
+    RtspServer  *rtspServer = new RtspServer();
+    RtpBuffer   *rtpBuffer = new RtpBuffer();
+    RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
+    Player      *player = new Player(rtpBuffer);
+    QThread     *thread = new QThread();
+    player->moveToThread(thread);
+    thread->start();
 
-    RtspServer  rtspServer;
-    RtpBuffer   rtpBuffer;
-    RtpReceiver rtpReceiver(&rtpBuffer);
-    Player      player(&rtpBuffer);
-    QThread     thread;
-    player.moveToThread(&thread);
-    thread.start();
+    QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
+    QObject::connect(rtspServer, SIGNAL(senderSocketAvailable(RtpReceiver::PayloadType, quint16)), rtpReceiver, SLOT(setSenderSocket(RtpReceiver::PayloadType, quint16)));
+    QObject::connect(rtspServer, SIGNAL(receiverSocketRequired(RtpReceiver::PayloadType, quint16*)), rtpReceiver, SLOT(bindSocket(RtpReceiver::PayloadType, quint16*)));
+    QObject::connect(rtspServer, SIGNAL(teardown()), rtpReceiver, SLOT(teardown()));
+    QObject::connect(rtspServer, SIGNAL(record(quint16)), rtpBuffer, SLOT(init(quint16)));
+    QObject::connect(rtspServer, SIGNAL(flush(quint16)), rtpBuffer, SLOT(init(quint16)));
+    QObject::connect(rtspServer, SIGNAL(teardown()), rtpBuffer, SLOT(teardown()));
 
-    QObject::connect(&rtspServer, SIGNAL(announce(RtspMessage::Announcement)), &rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
-    QObject::connect(&rtspServer, SIGNAL(senderSocketAvailable(RtpReceiver::PayloadType, quint16)), &rtpReceiver, SLOT(setSenderSocket(RtpReceiver::PayloadType, quint16)));
-    QObject::connect(&rtspServer, SIGNAL(receiverSocketRequired(RtpReceiver::PayloadType, quint16*)), &rtpReceiver, SLOT(bindSocket(RtpReceiver::PayloadType, quint16*)));
-    QObject::connect(&rtspServer, SIGNAL(teardown()), &rtpReceiver, SLOT(teardown()));
-    QObject::connect(&rtspServer, SIGNAL(record(quint16)), &rtpBuffer, SLOT(init(quint16)));
-    QObject::connect(&rtspServer, SIGNAL(flush(quint16)), &rtpBuffer, SLOT(init(quint16)));
+    rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());
 
-    rtspServer.listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());
-
-    ZeroconfDnsSd dnsSd;
-    dnsSd.registerService(parser.value(nameOption).toLatin1(), parser.value(portOption).toInt());
+    ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd();
+    dnsSd->registerService(parser.value(nameOption).toLatin1(), parser.value(portOption).toInt());
 
     return a.exec();
 }

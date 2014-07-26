@@ -45,7 +45,7 @@ private:
 
 private:
     QTcpServer *m_tcpServer;
-    bool        m_isRunning;
+    ulong       m_dacpId;
 };
 
 #endif // RTSPSERVER_H

@@ -36,7 +36,7 @@ static char airportRsaPrivateKey[] = "-----BEGIN RSA PRIVATE KEY-----\n"
 
 RtspServer::RtspServer(QObject *parent)
     : QObject(parent),
-      m_isRunning(false)
+      m_dacpId(0)
 {
     m_tcpServer = new QTcpServer(this);
 }
@@ -52,7 +52,6 @@ void RtspServer::reset()
     if (m_tcpServer->isListening()) {
         m_tcpServer->close();
     }
-    m_isRunning = false;
 }
 
 void RtspServer::onNewConnection()
@@ -111,13 +110,8 @@ void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *respons
     Q_UNUSED(response);
     qDebug() << __func__;
 
-    // if we are already running, we play dead
-    if (m_isRunning) {
-        response->setValid(false);
-        return;
-    } else {
-        m_isRunning = true;
-    }
+    bool ok;
+    m_dacpId = request.header("dacp-id").toULong(&ok, 16);
 
     RtspMessage::Announcement announcement;
 
@@ -250,11 +244,14 @@ void RtspServer::handleFlush(const RtspMessage &request, RtspMessage *response)
 
 void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *response)
 {
-    Q_UNUSED(request);
     Q_UNUSED(response);
     qDebug(__FUNCTION__);
-    m_isRunning = false;
-    emit teardown();
+
+    // only teardown if it is announced client
+    bool ok;
+    if (m_dacpId == request.header("dacp-id").toULong(&ok, 16) && ok) {
+        emit teardown();
+    }
 }
 
 void RtspServer::handleSetParameter(const RtspMessage &request, RtspMessage *response)
@@ -282,7 +279,9 @@ void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *r
 
     // Obtain apple challenge header
     QByteArray appleChallenge = request.header("Apple-Challenge");
-    if (appleChallenge.isEmpty()) return;
+    if (appleChallenge.isEmpty()) {
+        return;
+    }
 
     // Write in the decoded Apple-Challenge bytes.
     QByteArray buffer = QByteArray::fromBase64(appleChallenge);
@@ -299,8 +298,9 @@ void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *r
     buffer.append(reinterpret_cast<const char*>(&hwAddress), sizeof(hwAddress));
 
     // If the buffer has less than 32 bytes written, pad with 0's up to 32 bytes.
-    while (buffer.size() < 32)
+    while (buffer.size() < 32) {
         buffer.append('\0');
+    }
 
     // Encrypt the buffer using the RSA private key extracted in shairport.
     // https://www.openssl.org/docs/crypto/RSA_private_encrypt.html

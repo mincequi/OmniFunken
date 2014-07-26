@@ -13,6 +13,7 @@
 class Player : public QObject
 {
     Q_OBJECT
+    friend class PlayWorker;
 public:
     explicit Player(RtpBuffer *rtpBuffer, QObject *parent = 0);
 
@@ -28,17 +29,14 @@ private slots:
 private:
     class PlayWorker : public QThread
     {
-        //Q_OBJECT
     public:
-        explicit PlayWorker(RtpBuffer *rtpBuffer, ao_device *dev, QObject *parent = 0);
-
+        explicit PlayWorker(Player *player);
     private:
         void run() Q_DECL_OVERRIDE;
-        RtpBuffer *m_rtpBuffer;
-        ao_device *m_aoDevice;
+        Player *m_player;
     };
 
-    int init();
+    void init();
     void deinit();
 
 private:
@@ -46,9 +44,9 @@ private:
     QTimer      *m_pullTimer;
     QThread     m_thread;
     AudioOutAbstract *m_audioOut;
-    PlayWorker  *m_playWorker;
-    ao_device   *m_aoDevice;
     RtpBuffer   *m_rtpBuffer;
+    ao_device   *m_aoDevice;
+    PlayWorker  *m_playWorker;
 };
 
 #endif // PLAYER_H

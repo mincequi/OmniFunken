@@ -8,7 +8,6 @@
 #include "rtspserver.h"
 #include "zeroconf_dns_sd.h"
 
-
 #include <unistd.h>
 #include <sys/stat.h>
 

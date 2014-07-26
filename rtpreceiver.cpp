@@ -18,6 +18,8 @@ RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, QObject *parent) :
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
 {
+    teardown();
+
     m_announcement = announcement;
     AES_set_decrypt_key(reinterpret_cast<const unsigned char*>(announcement.rsaAesKey.data()), 128, &m_aesKey);
     m_rtpBuffer->setPacketSize(352);

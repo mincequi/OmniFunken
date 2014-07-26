@@ -26,6 +26,9 @@ signals:
     void volume(float db);
     void teardown();
 
+public slots:
+    void reset();
+
 private slots:
     void onNewConnection();
     void onRequest();
@@ -39,7 +42,6 @@ private:
     void handleTeardown(const RtspMessage &request, RtspMessage *response);
     void handleSetParameter(const RtspMessage &request, RtspMessage *response);
     void handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress);
-
 
 private:
     QTcpServer *m_tcpServer;

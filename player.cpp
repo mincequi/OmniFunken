@@ -4,27 +4,27 @@
 
 Player::Player(RtpBuffer* rtpBuffer, QObject *parent) :
     QObject(parent),
+    m_aoDevice(NULL),
     m_rtpBuffer(rtpBuffer)
 {
     connect(m_rtpBuffer, SIGNAL(ready()), this, SLOT(play()));
     connect(m_rtpBuffer, SIGNAL(notify(quint16)), this, SLOT(updateRateControl(quint16)));
-    init();
+
+    m_timeoutTimer = new QTimer(this);
+    m_timeoutTimer->setSingleShot(true);
+    connect(m_timeoutTimer, &QTimer::timeout, [this]() { deinit(); emit timeout(); } );
 }
 
 void Player::play()
 {
-    while(const RtpBuffer::RtpPacket *packet = m_rtpBuffer->takePacket()) {
-        ao_play(m_aoDevice, packet->payload, packet->payloadSize);
+    if (!m_aoDevice) {
+        init();
     }
+    m_playWorker = new PlayWorker(m_rtpBuffer, m_aoDevice, this);
 
-    char *silence = NULL;
-    int size;
-    m_rtpBuffer->silence(&silence, &size);
-    ao_play(m_aoDevice, silence, size);
-}
-
-void Player::stop()
-{
+    m_timeoutTimer->stop();
+    m_playWorker->start();
+    m_timeoutTimer->start(5000);
 }
 
 void Player::updateRateControl(quint16 size)
@@ -57,4 +57,23 @@ void Player::deinit()
         ao_close(m_aoDevice);
     m_aoDevice = NULL;
     ao_shutdown();
+}
+
+Player::PlayWorker::PlayWorker(RtpBuffer *rtpBuffer, ao_device *dev, QObject *parent)
+    : QThread(parent),
+      m_rtpBuffer(rtpBuffer),
+      m_aoDevice(dev)
+{
+}
+
+void Player::PlayWorker::run()
+{
+    while(const RtpBuffer::RtpPacket *packet = m_rtpBuffer->takePacket()) {
+        ao_play(m_aoDevice, packet->payload, packet->payloadSize);
+    }
+
+    char *silence = NULL;
+    int size;
+    m_rtpBuffer->silence(&silence, &size);
+    ao_play(m_aoDevice, silence, size);
 }

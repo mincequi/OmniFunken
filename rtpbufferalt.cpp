@@ -2,6 +2,7 @@
 
 #include <QtDebug>
 
+/*
 RtpBuffer::RtpBuffer(int latency, QObject *parent) :
     QObject(parent),
     m_status(Init),
@@ -11,7 +12,7 @@ RtpBuffer::RtpBuffer(int latency, QObject *parent) :
     m_data(NULL),
     m_silence(NULL),
     m_packetSize(0),
-    m_initSequenceNumber(-1)
+    m_initSequenceNumber(0)
 {
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(timeout()));
 }
@@ -147,7 +148,7 @@ void RtpBuffer::teardown()
     m_status = Init;
     m_first = 0;
     m_last = 0;
-    m_initSequenceNumber = -1;
+    m_initSequenceNumber = 0;
 
     for (int i = 0; i < m_capacity; ++i) {
         m_data[i].init();
@@ -159,7 +160,7 @@ void RtpBuffer::timeout()
     m_mutex.lock();
     quint16 size = m_data[m_last].sequenceNumber-m_data[m_first].sequenceNumber;
     m_mutex.unlock();
-    //emit notify(size);
+    emit notify(size);
 }
 
 void RtpBuffer::alloc()
@@ -205,10 +206,10 @@ RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
             m_first = m_initSequenceNumber % m_capacity;
             m_data[m_first].sequenceNumber   = m_initSequenceNumber;
             // mark missing
-            for (quint16 i = m_data[m_first].sequenceNumber; i != sequenceNumber; ++i) {
-                m_data[i%m_capacity].status = PacketMissing;
-                m_data[i%m_capacity].sequenceNumber = i;
-            }
+//            for (quint16 i = m_data[m_first].sequenceNumber; i != sequenceNumber; ++i) {
+//                m_data[i%m_capacity].status = PacketMissing;
+//                m_data[i%m_capacity].sequenceNumber = i;
+//            }
             return Early;
         } else {
             qCritical() << __func__ << ": unexpected init packet " << sequenceNumber << ", shall be " << m_initSequenceNumber;
@@ -237,8 +238,8 @@ RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
             qWarning() << __func__ << ": packet sent twice: " << sequenceNumber;
             // TODO memcmp packets
             return Twice;
-        } else /*if (diff < 0)*/ {
-            qDebug() << __func__ << ": late packet/eventually from retransmit";
+        } else /*if (diff < 0)*//* {
+            //qDebug() << __func__ << ": late packet/eventually from retransmit";
             return Late;
         }
     }
@@ -266,7 +267,7 @@ void RtpBuffer::requestMissingPackets()
 
             // increment counter
             for (quint16 j = startOfSequence; j != endOfSequence+1; ++j) {
-                m_data[j].requestCount++;
+                m_data[j%m_capacity].requestCount++;
             }
 
             startOfSequence = -1;
@@ -277,3 +278,4 @@ void RtpBuffer::requestMissingPackets()
         qFatal(__func__, "impossible");
     }
 }
+*/

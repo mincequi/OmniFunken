@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QTimer>
 
-
+/*
 class RtpBuffer : public QObject
 {
     Q_OBJECT
@@ -24,9 +24,10 @@ public:
             payloadSize(0),
             payload(NULL) {}
         void init() {
+            sequenceNumber = 0;
             status = PacketFree;
-            requestCount = 0;
             flush = false;
+            requestCount = 0;
         }
 
         quint16         sequenceNumber;
@@ -37,7 +38,7 @@ public:
         char            *payload;
     };
 
-    explicit RtpBuffer(int latency = 500, QObject *parent = 0);
+    explicit RtpBuffer(int latency = 1000, QObject *parent = 0);
     ~RtpBuffer();
     // packetSize (bytes per frame = packetSize * numChannels * numBitsPerChannel)
     void setPacketSize(int frames);
@@ -98,5 +99,6 @@ private:
     mutable QMutex  m_mutex;
     QTimer          m_timer;
 };
+*/
 
 #endif // RTPBUFFERALT_H

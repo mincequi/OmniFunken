@@ -47,6 +47,14 @@ bool RtspServer::listen(const QHostAddress &address, quint16 port)
     return m_tcpServer->listen(address, port);
 }
 
+void RtspServer::reset()
+{
+    if (m_tcpServer->isListening()) {
+        m_tcpServer->close();
+    }
+    m_isRunning = false;
+}
+
 void RtspServer::onNewConnection()
 {
     QTcpSocket *tcpSocket = m_tcpServer->nextPendingConnection();

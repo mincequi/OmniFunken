@@ -6,11 +6,13 @@
 
 QT       += core network gui
 
-TARGET = OmniFunken
+TARGET = omnifunken
 CONFIG   += console
 CONFIG   -= app_bundle
 
 TEMPLATE = app
+
+QMAKE_CXXFLAGS += -std=c++11
 
 macx {
     INCLUDEPATH += "/usr/local/Cellar/libao/1.2.0/include/"
@@ -18,8 +20,6 @@ macx {
 }
 
 LIBS += -lcrypto -lao #-ldns_sd #-lssl #-lcrypto -lz
-
-
 
 SOURCES += main.cpp \
     player.cpp \
@@ -29,11 +29,11 @@ SOURCES += main.cpp \
     rtspserver.cpp \
     rtpreceiver.cpp \
     alac.c \
-    rtpbuffer.cpp \
     ratecontrol.cpp \
     rtpbufferalt.cpp \
-    daemon.cpp \
-    omnifunken.cpp
+    omnifunken.cpp \
+    rtpbuffer.cpp \
+    daemon.c
 
 HEADERS += \
     player.h \
@@ -45,11 +45,11 @@ HEADERS += \
     rtspserver.h \
     rtpreceiver.h \
     alac.h \
-    rtpbuffer.h \
     ratecontrol.h \
     rtpbufferalt.h \
     daemon.h \
-    omnifunken.h
+    omnifunken.h \
+    rtpbuffer.h
 
 OTHER_FILES += \
     omnifunken.conf

@@ -51,6 +51,5 @@ void Player::PlayWorker::run()
     int size;
     m_player->m_rtpBuffer->silence(&silence, &size);
     m_player->m_audioOut->play(silence, size);
-
     m_player->m_audioOutTimer->start(15000);
 }

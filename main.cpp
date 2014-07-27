@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
     QObject::connect(rtspServer, SIGNAL(teardown()), rtpReceiver, SLOT(teardown()));
     QObject::connect(rtspServer, SIGNAL(teardown()), rtpBuffer, SLOT(teardown()));
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
+    QObject::connect(rtspServer, &RtspServer::volume, audioOut, &AudioOutAbstract::setVolume);
 
     rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());
 

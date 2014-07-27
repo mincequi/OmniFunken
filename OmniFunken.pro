@@ -50,10 +50,11 @@ HEADERS += \
     daemon.h \
     omnifunken.h \
     rtpbuffer.h \
-    #audioout_abstract.h \
+    audioout_abstract.h \
     audioout_alsa.h \
     audiooutfactory.h \
     audioout_ao.h
 
 OTHER_FILES += \
-    omnifunken.conf
+    etc/init.d/omnifunken \
+    etc/omnifunken.conf

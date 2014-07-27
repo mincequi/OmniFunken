@@ -6,11 +6,11 @@
 class AudioOutAlsa : public AudioOutAbstract
 {
 public:
-    AudioOutAlsa();
+    AudioOutAlsa(QObject *parent = 0);
 
     virtual const char *name() const;
     virtual void init();
-    virtual void play(void *data, int samples);
+    virtual void play(char *data, int samples);
     virtual void deinit();
 };
 

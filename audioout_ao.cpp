@@ -1,8 +1,10 @@
 #include "audioout_ao.h"
 #include "audiooutfactory.h"
 
-AudioOutAo::AudioOutAo() :
-    m_aoDevice(NULL)
+AudioOutAo::AudioOutAo(QObject *parent) :
+    AudioOutAbstract(parent),
+    m_aoDevice(NULL),
+    m_volume(1.0f)
 {
     AudioOutFactory::registerAudioOut(this);
 }
@@ -30,9 +32,16 @@ void AudioOutAo::init()
     }
 }
 
-void AudioOutAo::play(void *data, int samples)
+void AudioOutAo::play(char *data, int samples)
 {
-    ao_play(m_aoDevice, reinterpret_cast<char*>(data), samples);
+    m_mutex.lock();
+    int shift = abs(m_volume/5.625f);
+    m_mutex.unlock();
+    for (int i = 0; i < samples/2; ++i) {
+        *(qint16 *)(data+(i*2)) >>= shift;
+    }
+
+    ao_play(m_aoDevice, data, samples);
 }
 
 void AudioOutAo::deinit()
@@ -42,6 +51,12 @@ void AudioOutAo::deinit()
         m_aoDevice = NULL;
         ao_shutdown();
     }
+}
+
+void AudioOutAo::setVolume(float volume)
+{
+    QMutexLocker locker(&m_mutex);
+    m_volume = volume;
 }
 
 static AudioOutAo s_instance;

@@ -8,7 +8,7 @@ class AudioOutDummy : public AudioOutAbstract {
 public:
     virtual const char *name() const { return "dummy"; }
     virtual void init() {}
-    virtual void play(void *data, int samples) { Q_UNUSED(data) QThread::sleep(samples/44.1); }
+    virtual void play(char *data, int samples) { Q_UNUSED(data) Q_UNUSED(samples) QThread::sleep(1); }
     virtual void deinit() {}
 };
 Q_GLOBAL_STATIC(AudioOutDummy, dummy)

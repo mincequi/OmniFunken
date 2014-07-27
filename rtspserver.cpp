@@ -218,7 +218,7 @@ void RtspServer::handleRecord(const RtspMessage &request, RtspMessage *response)
             seq = rx.cap(1).toUInt();
         }
     }
-    qDebug() << __FUNCTION__ << ": " << seq;
+    qDebug() << __func__ << ": " << seq;
     if (seq != -1) {
         emit record(seq);
     }
@@ -238,14 +238,14 @@ void RtspServer::handleFlush(const RtspMessage &request, RtspMessage *response)
             seq = rx.cap(1).toUInt();
         }
     }
-    qDebug() << __FUNCTION__ << ": " << seq;
+    qDebug() << __func__ << ": " << seq;
     emit flush(seq);
 }
 
 void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
-    qDebug(__FUNCTION__);
+    qDebug(__func__);
 
     // only teardown if it is announced client
     bool ok;

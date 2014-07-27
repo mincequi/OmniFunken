@@ -2,7 +2,8 @@
 #include "audiooutfactory.h"
 
 
-AudioOutAlsa::AudioOutAlsa()
+AudioOutAlsa::AudioOutAlsa(QObject *parent) :
+    AudioOutAbstract(parent)
 {
     AudioOutFactory::registerAudioOut(this);
 }
@@ -16,7 +17,7 @@ void AudioOutAlsa::init()
 {
 }
 
-void AudioOutAlsa::play(void *data, int samples)
+void AudioOutAlsa::play(char *data, int samples)
 {
 }
 

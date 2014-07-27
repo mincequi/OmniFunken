@@ -7,7 +7,7 @@
 
 #include <ao/ao.h>
 
-#include "audio_out.h"
+#include "audioout_abstract.h"
 #include "rtpbuffer.h"
 
 class Player : public QObject
@@ -15,13 +15,11 @@ class Player : public QObject
     Q_OBJECT
     friend class PlayWorker;
 public:
-    explicit Player(RtpBuffer *rtpBuffer, QObject *parent = 0);
-
-signals:
-    void timeout();
+    explicit Player(RtpBuffer *rtpBuffer, AudioOutAbstract *audioOut, QObject *parent = 0);
 
 public slots:
     void play();
+    void teardown();
 
 private slots:
     void updateRateControl(quint16 size);
@@ -36,16 +34,11 @@ private:
         Player *m_player;
     };
 
-    void init();
-    void deinit();
-
 private:
-    QTimer      *m_timeoutTimer;
     QTimer      *m_pullTimer;
-    QThread     m_thread;
-    AudioOutAbstract *m_audioOut;
     RtpBuffer   *m_rtpBuffer;
-    ao_device   *m_aoDevice;
+    AudioOutAbstract *m_audioOut;
+    QTimer      *m_audioOutTimer;
     PlayWorker  *m_playWorker;
 };
 

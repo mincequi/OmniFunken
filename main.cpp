@@ -3,6 +3,7 @@
 #include <QHostInfo>
 #include <QSettings>
 
+#include "audiooutfactory.h"
 #include "daemon.h"
 #include "player.h"
 #include "rtspserver.h"
@@ -48,16 +49,17 @@ int main(int argc, char *argv[])
     RtspServer  *rtspServer = new RtspServer();
     RtpBuffer   *rtpBuffer = new RtpBuffer();
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
-    Player      *player = new Player(rtpBuffer);
+    AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut("ao");
+    Player      *player = new Player(rtpBuffer, audioOut);
 
     QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
     QObject::connect(rtspServer, SIGNAL(senderSocketAvailable(RtpReceiver::PayloadType, quint16)), rtpReceiver, SLOT(setSenderSocket(RtpReceiver::PayloadType, quint16)));
     QObject::connect(rtspServer, SIGNAL(receiverSocketRequired(RtpReceiver::PayloadType, quint16*)), rtpReceiver, SLOT(bindSocket(RtpReceiver::PayloadType, quint16*)));
-    QObject::connect(rtspServer, SIGNAL(teardown()), rtpReceiver, SLOT(teardown()));
     QObject::connect(rtspServer, SIGNAL(record(quint16)), rtpBuffer, SLOT(flush(quint16)));
     QObject::connect(rtspServer, SIGNAL(flush(quint16)), rtpBuffer, SLOT(flush(quint16)));
+    QObject::connect(rtspServer, SIGNAL(teardown()), rtpReceiver, SLOT(teardown()));
     QObject::connect(rtspServer, SIGNAL(teardown()), rtpBuffer, SLOT(teardown()));
-    QObject::connect(player, &Player::timeout, []() { qDebug() << "player timed out"; } );
+    QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
 
     rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());
 

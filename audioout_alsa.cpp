@@ -1,13 +1,30 @@
-#include "audio_out_alsa.h"
+#include "audioout_alsa.h"
+#include "audiooutfactory.h"
 
-AudioOutAlsa::AudioOutAlsa(QObject *parent) :
-    QObject(parent)
+
+AudioOutAlsa::AudioOutAlsa()
+{
+    AudioOutFactory::registerAudioOut(this);
+}
+
+const char *AudioOutAlsa::name() const
+{
+    return "alsa";
+}
+
+void AudioOutAlsa::init()
 {
 }
 
 void AudioOutAlsa::play(void *data, int samples)
 {
 }
+
+void AudioOutAlsa::deinit()
+{
+}
+
+static AudioOutAlsa s_instance;
 
 /*
 #include <QtCore/qcoreapplication.h>

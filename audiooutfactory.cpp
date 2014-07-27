@@ -1,0 +1,29 @@
+#include "audiooutfactory.h"
+//#include "audioout_alsa.h"
+//#include "audioout_ao.h"
+
+#include <QDebug>
+
+class AudioOutDummy : public AudioOutAbstract {
+public:
+    virtual const char *name() const { return "dummy"; }
+    virtual void init() {}
+    virtual void play(void *data, int samples) { Q_UNUSED(data) QThread::sleep(samples/44.1); }
+    virtual void deinit() {}
+};
+Q_GLOBAL_STATIC(AudioOutDummy, dummy)
+
+typedef QMap<QString, AudioOutAbstract*> registryType;
+Q_GLOBAL_STATIC(registryType, registry)
+
+
+void AudioOutFactory::registerAudioOut(AudioOutAbstract* audioOut)
+{
+    qDebug() << __func__ << ": " << audioOut->name();
+    registry->insert(audioOut->name(), audioOut);
+}
+
+AudioOutAbstract* AudioOutFactory::createAudioOut(const QString &key)
+{
+    return registry->value(key, dummy);
+}

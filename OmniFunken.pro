@@ -20,7 +20,11 @@ macx {
     LIBS += -L/usr/local/Cellar/libao/1.2.0/lib
 }
 
-LIBS += -lcrypto -lao #-ldns_sd #-lssl #-lcrypto -lz
+LIBS += -lcrypto -lao
+
+unix:!macx {
+LIBS += -ldns_sd
+}
 
 SOURCES += main.cpp \
     player.cpp \

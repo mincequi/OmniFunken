@@ -10,6 +10,7 @@ Features
 Build Requirements
 ------------------
 Required:
+* Qt 5.2
 * OpenSSL
 * avahi (w/ Apple Bonjour compatibility layer)
 

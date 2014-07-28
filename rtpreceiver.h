@@ -97,7 +97,6 @@ private slots:
 private:
     void readHeader(const char* data, RtpHeader *header);
     void writeHeader(const RtpHeader *header, char* data);
-    void readHeader(const char* data, RtpHeaderBitfield *header);
     void decrypt(const char *in, unsigned char *out, int length);
 
     void initAlac(const QByteArray &fmtp);

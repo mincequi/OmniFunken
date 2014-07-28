@@ -1,6 +1,7 @@
 #ifndef RTPBUFFER_H
 #define RTPBUFFER_H
 
+#include <QMutex>
 #include <QObject>
 #include <QTimer>
 

@@ -104,9 +104,13 @@ void RtpReceiver::requestRetransmit(quint16 first, quint16 num)
     char req[8];    // *not* a standard RTCP NACK
     req[0] = 0x80;
     req[1] = 0x55|0x80;  // Apple 'resend'
-    *(unsigned short *)(req+2) = htons(1);  // our seqnum
-    *(unsigned short *)(req+4) = htons(first);  // missed seqnum
-    *(unsigned short *)(req+6) = htons(num);  // count
+//    *(unsigned short *)(req+2) = htons(1);  // our seqnum
+//    *(unsigned short *)(req+4) = htons(first);  // missed seqnum
+//    *(unsigned short *)(req+6) = htons(num);  // count
+
+    *(unsigned short *)(req+2) = qToBigEndian(1);  // our seqnum
+    *(unsigned short *)(req+4) = qToBigEndian(first);  // missed seqnum
+    *(unsigned short *)(req+6) = qToBigEndian(num);  // count
 
     m_udpSocket.writeDatagram(req, 8, m_announcement.senderAddress, m_senderControlPort);
 }
@@ -119,16 +123,6 @@ void RtpReceiver::readHeader(const char* data, RtpHeader *header)
     header->csrcCount   = (data[0] >> 0) & 0x0f;
     header->marker      = (data[1] >> 7) & 0x01;
     header->payloadType = static_cast<PayloadType>((data[1] >> 0) & 0x7f);
-
-    header->sequenceNumber  = qFromBigEndian(*((quint16*)(data+2)));
-    header->timestamp       = qFromBigEndian(*((quint32*)(data+4)));
-    header->ssrc            = qFromBigEndian(*((quint32*)(data+8)));
-}
-
-void RtpReceiver::readHeader(const char* data, RtpHeaderBitfield *header)
-{
-    quint16 value = ntohs(*((quint16*)data));
-    memcpy(header, data, 2);
 
     header->sequenceNumber  = qFromBigEndian(*((quint16*)(data+2)));
     header->timestamp       = qFromBigEndian(*((quint32*)(data+4)));

@@ -1,8 +1,8 @@
 #include "audioout_ao.h"
 #include "audiooutfactory.h"
 
-AudioOutAo::AudioOutAo(QObject *parent) :
-    AudioOutAbstract(parent),
+AudioOutAo::AudioOutAo() :
+    AudioOutAbstract(),
     m_aoDevice(NULL),
     m_volume(1.0f)
 {

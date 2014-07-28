@@ -3,12 +3,15 @@
 
 #include "audioout_abstract.h"
 
+#include <QMutex>
+
 #include <ao/ao.h>
+
 
 class AudioOutAo : public AudioOutAbstract
 {
 public:
-    AudioOutAo(QObject *parent = 0);
+    AudioOutAo();
 
     virtual const char *name() const;
     virtual void init();

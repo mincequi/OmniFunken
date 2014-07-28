@@ -2,8 +2,8 @@
 #include "audiooutfactory.h"
 
 
-AudioOutAlsa::AudioOutAlsa(QObject *parent) :
-    AudioOutAbstract(parent)
+AudioOutAlsa::AudioOutAlsa() :
+    AudioOutAbstract()
 {
     AudioOutFactory::registerAudioOut(this);
 }

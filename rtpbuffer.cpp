@@ -58,7 +58,7 @@ RtpBuffer::RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
         }
         break;
     default:
-        qFatal(__func__, ": illegal packet order status");
+        qFatal(__func__);
     }
 
     RtpPacket* packet = &(m_data[sequenceNumber % m_capacity]);
@@ -106,7 +106,7 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
         return NULL;
         break;
     case PacketMissing:
-        qWarning() << __func__ << ": missing packet: ", packet->sequenceNumber;
+        qWarning() << __func__ << ": missing packet: " << packet->sequenceNumber;
         memcpy(packet->payload, m_silence, packet->payloadSize);
     case PacketOk:
         m_first = (m_first+1) % m_capacity;
@@ -253,6 +253,6 @@ void RtpBuffer::requestMissingPackets()
         }
     }
     if (startOfSequence != -1 || endOfSequence != -1) {
-        qFatal(__func__, "impossible");
+        qFatal(__func__);
     }
 }

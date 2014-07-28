@@ -7,7 +7,7 @@ class AudioOutAbstract : public QObject
 {
     Q_OBJECT
 public:
-    AudioOutAbstract(QObject *parent = NULL) : QObject(parent) {}
+    AudioOutAbstract() : QObject() {}
 
     virtual const char *name() const = 0;
     virtual void init() = 0;

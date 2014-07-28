@@ -6,7 +6,7 @@
 class AudioOutAlsa : public AudioOutAbstract
 {
 public:
-    AudioOutAlsa(QObject *parent = 0);
+    AudioOutAlsa();
 
     virtual const char *name() const;
     virtual void init();

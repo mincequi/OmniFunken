@@ -4,7 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core network gui
+QT      += core network
+QT      -= gui
 
 TARGET = omnifunken
 CONFIG   += console

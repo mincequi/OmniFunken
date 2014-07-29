@@ -90,10 +90,11 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
     // take from top, until free packet or flush
     RtpPacket* packet = &(m_data[m_first]);
 
+    // we might catch a packet which is marked as flush but is not received yet
     if (packet->flush) {
         qDebug() << __func__ << ": flush packet: " << packet->sequenceNumber;
         m_timer.stop();
-        m_status = Init;
+        m_status = (packet->status == PacketFree) ? Init : Flushing;
         packet->flush = false;
         return NULL;
     }

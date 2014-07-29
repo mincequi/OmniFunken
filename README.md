@@ -1,6 +1,6 @@
 OmniFunken
 ==========
-OmniFunken aims to be a multi purpose media renderer.
+OmniFunken aims to be a general purpose media render daemon.
 
 Features
 --------
@@ -12,12 +12,12 @@ Build Requirements
 Required:
 * Qt 5.2
 * OpenSSL
-* avahi (w/ Apple Bonjour compatibility layer)
+* Avahi (w/ Apple Bonjour compatibility layer)
 
 Optionally:
 * libao
-* alsa
-* sdl
+* ALSA
+* SDL
 
 
 Audio Outputs

@@ -4,7 +4,10 @@ OmniFunken aims to be a general purpose media render daemon.
 
 Features
 --------
-* RS232 device control
+* Apple AirPlay
+* Bluetooth A2DP (planned)
+* Google Chromecast (planned)
+* RS232 device control (planned)
 
 
 Build Requirements

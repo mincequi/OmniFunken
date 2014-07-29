@@ -2,7 +2,6 @@
 #include "audiooutfactory.h"
 
 AudioOutAo::AudioOutAo() :
-    AudioOutAbstract(),
     m_aoDevice(NULL),
     m_volume(1.0f)
 {

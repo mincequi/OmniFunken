@@ -2,8 +2,7 @@
 #include "audiooutfactory.h"
 
 
-AudioOutAlsa::AudioOutAlsa() :
-    AudioOutAbstract()
+AudioOutAlsa::AudioOutAlsa()
 {
     AudioOutFactory::registerAudioOut(this);
 }

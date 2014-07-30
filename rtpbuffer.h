@@ -4,6 +4,7 @@
 #include <QMutex>
 #include <QObject>
 #include <QTimer>
+#include <QVector>
 
 class RtpBuffer : public QObject
 {
@@ -93,6 +94,7 @@ private:
     int         m_first;
     int         m_last;
     RtpPacket   *m_data;
+    QVector<RtpPacket> m_qdata;
     char        *m_silence;
     int         m_packetSize;
 

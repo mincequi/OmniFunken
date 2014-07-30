@@ -55,6 +55,9 @@ RtpBuffer::RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
         if (m_status == Init) {
             qDebug() << __func__ << ": buffer now filling";
             m_status = Filling;
+        } else if (m_status == Flushing) {
+            //qDebug() << __func__ << ": late while flushing";
+            m_status = Filling;
         }
         break;
     default:
@@ -71,8 +74,8 @@ RtpBuffer::RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
 void RtpBuffer::commitPacket()
 {
     quint16 fill = (m_data[m_last].sequenceNumber-m_data[m_first].sequenceNumber);
-    if ((m_status == Filling) && (fill >= m_desiredFill)) {
-        qDebug() << __func__ << ": buffer size: " << fill << ", now ready for playing at: " << m_data[m_first].sequenceNumber;
+    if (((m_status == Filling) || (m_status == Flushing)) && (fill >= m_desiredFill)) {
+        qDebug() << __func__ << ": start playing at: " << m_data[m_first].sequenceNumber << ", last: " << m_last << ": " << m_data[m_last].sequenceNumber;
         m_status = Ready;
         m_timer.start(1000);
         m_mutex.unlock();
@@ -87,13 +90,17 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
 {
     QMutexLocker locker(&m_mutex);
 
+    if (m_status == Init || m_status == Filling) {
+        return NULL;
+    }
+
     // take from top, until free packet or flush
     RtpPacket* packet = &(m_data[m_first]);
 
     if (packet->flush) {
         qDebug() << __func__ << ": flush packet: " << packet->sequenceNumber;
         m_timer.stop();
-        m_status = Init;
+        m_status = Flushing;
         packet->flush = false;
         return NULL;
     }
@@ -109,7 +116,13 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
         qWarning() << __func__ << ": missing packet: " << packet->sequenceNumber;
         memcpy(packet->payload, m_silence, packet->payloadSize);
     case PacketOk:
-        m_first = (m_first+1) % m_capacity;
+        if (m_first == m_last) {
+            qDebug() << __func__ << ": buffer empty";
+            m_timer.stop();
+            m_status = Init;
+        } else {
+            m_first = (m_first+1) % m_capacity;
+        }
         packet->init();
         break;
     default:
@@ -131,8 +144,9 @@ void RtpBuffer::flush(quint16 sequenceNumber)
     QMutexLocker locker(&m_mutex);
 
     // if flush
-    if (m_status != Init) {
-        qDebug() << __func__ << ": flush: " << sequenceNumber;
+    if (m_status == Ready) {
+        qDebug() << __func__ << ": flush at: " << sequenceNumber;
+        m_timer.stop();
         m_data[sequenceNumber%m_capacity].sequenceNumber = sequenceNumber;
         m_data[sequenceNumber%m_capacity].flush = true;
     }
@@ -142,6 +156,7 @@ void RtpBuffer::teardown()
 {
     QMutexLocker locker(&m_mutex);
 
+    m_timer.stop();
     m_status = Init;
     m_first = 0;
     m_last = 0;
@@ -191,7 +206,6 @@ RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
 {
     if (m_status == Init) {
         m_first = sequenceNumber % m_capacity;
-        //m_status = Filling;
         return Expected;
     } else {
         // compute sequence diff from previous packet
@@ -217,7 +231,7 @@ RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
             // TODO memcmp packets
             return Twice;
         } else /*if (diff < 0)*/ {
-            //qDebug() << __func__ << ": late packet/eventually from retransmit";
+            qDebug() << __func__ << ": late packet: " << sequenceNumber << ", last: " << m_data[m_last].sequenceNumber;
             return Late;
         }
     }

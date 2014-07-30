@@ -26,6 +26,10 @@ unix:!macx {
 LIBS += -ldns_sd
 }
 
+CONFIG(release, debug|release) {
+    DEFINES += QT_NO_DEBUG_OUTPUT
+}
+
 SOURCES += main.cpp \
     player.cpp \
     zeroconf_dns_sd.cpp \

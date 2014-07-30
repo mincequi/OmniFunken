@@ -101,11 +101,7 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
     if (packet->flush) {
         qDebug() << __func__ << ": flush packet: " << packet->sequenceNumber;
         m_timer.stop();
-<<<<<<< HEAD
         m_status = Flushing;
-=======
-        m_status = (packet->status == PacketFree) ? Init : Flushing;
->>>>>>> 09041980513b23589ea3317e7a5d3e223a26be45
         packet->flush = false;
         return NULL;
     }

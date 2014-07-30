@@ -66,8 +66,16 @@ private slots:
     void timeout();
 
 private:
+    enum Status {
+        Init,
+        Filling,
+        Ready,
+        Flushing
+    };
+
     void alloc();
     void free();
+    void setStatus(Status status);
 
     enum PacketOrder {
         Discard,    // packet is too late
@@ -80,12 +88,6 @@ private:
 
     void requestMissingPackets();
 
-    enum Status {
-        Init,
-        Filling,
-        Ready,
-        Flushing
-    };
     Status      m_status;
 
     const int   m_latency;

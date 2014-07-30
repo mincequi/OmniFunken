@@ -57,7 +57,7 @@ RtpBuffer::RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
             m_status = Filling;
         } else if (m_status == Flushing) {
             //qDebug() << __func__ << ": late while flushing";
-            m_status = Filling;
+            //m_status = Filling;
         }
         break;
     default:
@@ -74,7 +74,7 @@ RtpBuffer::RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
 void RtpBuffer::commitPacket()
 {
     quint16 fill = (m_data[m_last].sequenceNumber-m_data[m_first].sequenceNumber);
-    if (((m_status == Filling) || (m_status == Flushing)) && (fill >= m_desiredFill)) {
+    if ((m_status == Filling) && (fill >= m_desiredFill)) {
         qDebug() << __func__ << ": start playing at: " << m_data[m_first].sequenceNumber << ", last: " << m_last << ": " << m_data[m_last].sequenceNumber;
         m_status = Ready;
         m_timer.start(1000);
@@ -101,7 +101,7 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
     if (packet->flush) {
         qDebug() << __func__ << ": flush packet: " << packet->sequenceNumber;
         m_timer.stop();
-        m_status = Flushing;
+        m_status = Filling;
         packet->flush = false;
         return NULL;
     }
@@ -148,8 +148,14 @@ void RtpBuffer::flush(quint16 sequenceNumber)
     if (m_status == Ready) {
         qDebug() << __func__ << ": flush at: " << sequenceNumber;
         m_timer.stop();
-        m_data[sequenceNumber%m_capacity].sequenceNumber = sequenceNumber;
-        m_data[sequenceNumber%m_capacity].flush = true;
+        m_status = Flushing;
+
+        RtpPacket* packet = &(m_data[sequenceNumber%m_capacity]);
+        packet->sequenceNumber = sequenceNumber;
+        packet->flush = true;
+        if (packet->status != PacketOk) {
+            packet->status = PacketMissing;
+        }
     }
 }
 
@@ -201,6 +207,21 @@ void RtpBuffer::free()
         delete[] m_silence;
         m_silence = NULL;
     }
+}
+
+void RtpBuffer::setStatus(Status status)
+{
+    if (m_status == status) {
+        return;
+    }
+
+    if (status == Ready) {
+        m_timer.start(1000);
+    } else {
+        m_timer.stop();
+    }
+
+    m_status = status;
 }
 
 RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)

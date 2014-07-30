@@ -108,7 +108,7 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
 
     switch (packet->status) {
     case PacketFree:
-        qDebug() << __func__ << ": free packet: " << packet->sequenceNumber;
+        qWarning() << __func__ << ": free packet: " << packet->sequenceNumber;
         m_timer.stop();
         m_status = Init;
         return NULL;

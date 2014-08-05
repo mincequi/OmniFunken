@@ -23,7 +23,7 @@ macx {
 LIBS += -lcrypto -lao
 
 unix:!macx {
-    LIBS += -ldns_sd
+    LIBS += -ldns_sd -lasound
 }
 
 CONFIG(release, debug|release) {

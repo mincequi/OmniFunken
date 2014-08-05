@@ -1,6 +1,8 @@
 #include "audioout_ao.h"
 #include "audiooutfactory.h"
 
+#include <QtMath>
+
 AudioOutAo::AudioOutAo() :
     m_aoDevice(NULL),
     m_volume(1.0f)
@@ -13,11 +15,16 @@ const char *AudioOutAo::name() const
     return "ao";
 }
 
-void AudioOutAo::init()
+void AudioOutAo::init(const char *deviceName)
 {
     if (!m_aoDevice) {
         ao_initialize();
-        int driver = ao_default_driver_id();
+        int driver;
+        if (deviceName) {
+            driver = ao_driver_id(deviceName);
+        } else {
+            driver = ao_default_driver_id();
+        }
 
         ao_sample_format format;
         memset(&format, 0, sizeof(format));
@@ -35,9 +42,11 @@ void AudioOutAo::play(char *data, int samples)
 {
     m_mutex.lock();
     int shift = abs(m_volume/5.625f);
+    //float volume = qPow(10.0f, m_volume/20.0f);
     m_mutex.unlock();
     for (int i = 0; i < samples/2; ++i) {
         *(qint16 *)(data+(i*2)) >>= shift;
+        //*(qint16 *)(data+(i*2)) *= volume;
     }
 
     ao_play(m_aoDevice, data, samples);

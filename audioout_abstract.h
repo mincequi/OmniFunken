@@ -10,7 +10,7 @@ public:
     AudioOutAbstract() : QObject() {}
 
     virtual const char *name() const = 0;
-    virtual void init() = 0;
+    virtual void init(const char *deviceName = NULL) = 0;
     virtual void play(char *data, int samples) = 0;
     virtual void deinit() = 0;
 

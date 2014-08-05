@@ -23,7 +23,7 @@ macx {
 LIBS += -lcrypto -lao
 
 unix:!macx {
-LIBS += -ldns_sd
+    LIBS += -ldns_sd
 }
 
 CONFIG(release, debug|release) {
@@ -42,9 +42,12 @@ SOURCES += main.cpp \
     omnifunken.cpp \
     rtpbuffer.cpp \
     daemon.c \
-    audioout_alsa.cpp \
     audiooutfactory.cpp \
     audioout_ao.cpp
+
+unix:!macx {
+    SOURCES += audioout_alsa.cpp
+}
 
 HEADERS += \
     player.h \
@@ -60,9 +63,12 @@ HEADERS += \
     omnifunken.h \
     rtpbuffer.h \
     audioout_abstract.h \
-    audioout_alsa.h \
     audiooutfactory.h \
     audioout_ao.h
+
+unix:!macx {
+    HEADERS += audioout_alsa.h
+}
 
 OTHER_FILES += \
     etc/init.d/omnifunken \

@@ -14,7 +14,7 @@ public:
     AudioOutAo();
 
     virtual const char *name() const;
-    virtual void init();
+    virtual void init(const char *deviceName = NULL) override;
     virtual void play(char *data, int samples);
     virtual void deinit();
     virtual void setVolume(float volume);

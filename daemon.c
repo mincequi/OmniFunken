@@ -27,6 +27,8 @@ void daemon_init()
         exit(EXIT_FAILURE);
     }
 
+    setenv("AVAHI_COMPAT_NOWARN", "1", 1);
+
     //close(STDIN_FILENO);
     //close(STDOUT_FILENO);
     //close(STDERR_FILENO);

@@ -2,7 +2,9 @@
 #include "audiooutfactory.h"
 
 
-AudioOutAlsa::AudioOutAlsa()
+AudioOutAlsa::AudioOutAlsa() :
+    m_pcm(0),
+    m_block(true)
 {
     AudioOutFactory::registerAudioOut(this);
 }
@@ -12,8 +14,17 @@ const char *AudioOutAlsa::name() const
     return "alsa";
 }
 
-void AudioOutAlsa::init()
+void AudioOutAlsa::init(const char* deviceName)
 {
+    if (m_pcm) {
+        return;
+    }
+
+    int error = 0;
+    if (error = snd_pcm_open(&m_pcm, deviceName, SND_PCM_STREAM_PLAYBACK, m_block ? 0 : SND_PCM_NONBLOCK) < 0) {
+        //qCritical() <<
+        return;
+    }
 }
 
 void AudioOutAlsa::play(char *data, int samples)
@@ -22,6 +33,11 @@ void AudioOutAlsa::play(char *data, int samples)
 
 void AudioOutAlsa::deinit()
 {
+    if (m_pcm) {
+        snd_pcm_drain(m_pcm);
+        snd_pcm_close(m_pcm);
+        m_pcm = 0;
+    }
 }
 
 static AudioOutAlsa s_instance;
@@ -70,26 +86,6 @@ QAlsaAudioOutput::~QAlsaAudioOutput()
     disconnect(timer, SIGNAL(timeout()));
     QCoreApplication::processEvents();
     delete timer;
-}
-
-void QAlsaAudioOutput::setVolume(qreal vol)
-{
-    m_volume = vol;
-}
-
-qreal QAlsaAudioOutput::volume() const
-{
-    return m_volume;
-}
-
-QAudio::Error QAlsaAudioOutput::error() const
-{
-    return errorState;
-}
-
-QAudio::State QAlsaAudioOutput::state() const
-{
-    return deviceState;
 }
 
 void QAlsaAudioOutput::async_callback(snd_async_handler_t *ahandler)
@@ -243,9 +239,6 @@ void QAlsaAudioOutput::stop()
 
 bool QAlsaAudioOutput::open()
 {
-    if(opened)
-        return true;
-
     timeStamp.restart();
     elapsedTimeOffset = 0;
 
@@ -253,15 +246,6 @@ bool QAlsaAudioOutput::open()
     int err = 0;
     int count=0;
     unsigned int sampleRate=settings.sampleRate();
-
-    if (!settings.isValid()) {
-        qWarning("QAudioOutput: open error, invalid format.");
-    } else if (settings.sampleRate() <= 0) {
-        qWarning("QAudioOutput: open error, invalid sample rate (%d).",
-                 settings.sampleRate());
-    } else {
-        err = -1;
-    }
 
     if (err == 0) {
         errorState = QAudio::OpenError;
@@ -273,30 +257,12 @@ bool QAlsaAudioOutput::open()
     QString dev = QString(QLatin1String(m_device.constData()));
     QList<QByteArray> devices = QAlsaAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
     if(dev.compare(QLatin1String("default")) == 0) {
-#if(SND_LIB_MAJOR == 1 && SND_LIB_MINOR == 0 && SND_LIB_SUBMINOR >= 14)
         if (devices.size() > 0)
             dev = QLatin1String(devices.first());
         else
             return false;
-#else
-        dev = QLatin1String("hw:0,0");
-#endif
     } else {
-#if(SND_LIB_MAJOR == 1 && SND_LIB_MINOR == 0 && SND_LIB_SUBMINOR >= 14)
         dev = QLatin1String(m_device);
-#else
-        int idx = 0;
-        char *name;
-
-        QString shortName = QLatin1String(m_device.mid(m_device.indexOf('=',0)+1).constData());
-
-        while (snd_card_get_name(idx,&name) == 0) {
-            if(qstrncmp(shortName.toLocal8Bit().constData(),name,shortName.length()) == 0)
-                break;
-            idx++;
-        }
-        dev = QString(QLatin1String("hw:%1,0")).arg(idx);
-#endif
     }
 
     // Step 1: try and open the device
@@ -379,10 +345,6 @@ bool QAlsaAudioOutput::open()
             errMessage = QString::fromLatin1("QAudioOutput: buffer/period min and max: err = %1").arg(err);
         } else {
             if (maxBufferTime < buffer_time || buffer_time < minBufferTime || maxPeriodTime < period_time || minPeriodTime > period_time) {
-#ifdef DEBUG_AUDIO
-                qDebug()<<"defaults out of range";
-                qDebug()<<"pmin="<<minPeriodTime<<", pmax="<<maxPeriodTime<<", bmin="<<minBufferTime<<", bmax="<<maxBufferTime;
-#endif
                 period_time = minPeriodTime;
                 if (period_time*4 <= maxBufferTime) {
                     // Use 4 periods if possible
@@ -396,9 +358,6 @@ bool QAlsaAudioOutput::open()
                     qWarning()<<"QAudioOutput: alsa only supports single period!";
                     fatal = true;
                 }
-#ifdef DEBUG_AUDIO
-                qDebug()<<"used: buffer_time="<<buffer_time<<", period_time="<<period_time;
-#endif
             }
         }
     }
@@ -491,7 +450,6 @@ void QAlsaAudioOutput::close()
         delete audioSource;
         audioSource = 0;
     }
-    opened = false;
 }
 
 int QAlsaAudioOutput::bytesFree() const

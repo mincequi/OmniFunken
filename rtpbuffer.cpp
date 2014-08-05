@@ -236,7 +236,7 @@ RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
 
         // if packet is too late. this should happen rarely.
         if (firstDiff > 0) {
-            qCritical() << __func__ << ": packet too late: " << sequenceNumber;
+            qDebug() << __func__ << ": packet too late: " << sequenceNumber;
             return Discard;
         } else if (diff == 1) {
             return Expected;

@@ -7,7 +7,7 @@
 class AudioOutDummy : public AudioOutAbstract {
 public:
     virtual const char *name() const { return "dummy"; }
-    virtual void init() {}
+    virtual void init(const char *deviceName = NULL) { Q_UNUSED(deviceName) }
     virtual void play(char *data, int samples) { Q_UNUSED(data) Q_UNUSED(samples) QThread::sleep(1); }
     virtual void deinit() {}
 };

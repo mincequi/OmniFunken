@@ -3,8 +3,6 @@
 
 #include "audioout_abstract.h"
 
-#include <QMutex>
-
 #include <ao/ao.h>
 
 
@@ -13,16 +11,17 @@ class AudioOutAo : public AudioOutAbstract
 public:
     AudioOutAo();
 
-    virtual const char *name() const;
-    virtual void init(const char *deviceName = NULL) override;
-    virtual void play(char *data, int samples);
-    virtual void deinit();
-    virtual void setVolume(float volume);
+    virtual const char *name() const override;
+    virtual void init(const QSettings::SettingsMap &settings) override;
+    virtual void deinit() override;
+    virtual void start() override;
+    virtual void stop() override;
+    virtual void play(char *data, int samples) override;
 
 private:
+    int         m_driverId;
     ao_device   *m_aoDevice;
-    float       m_volume;
-    QMutex      m_mutex;
+    ao_option   *m_aoOptions;
 };
 
 #endif // AUDIOOUT_AO_H

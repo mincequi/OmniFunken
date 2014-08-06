@@ -3,6 +3,7 @@
 
 
 AudioOutAlsa::AudioOutAlsa() :
+    m_deviceName(NULL),
     m_pcm(0),
     m_block(true)
 {
@@ -14,30 +15,38 @@ const char *AudioOutAlsa::name() const
     return "alsa";
 }
 
-void AudioOutAlsa::init(const char* deviceName)
+void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
+{
+}
+
+void AudioOutAlsa::deinit()
+{
+}
+
+void AudioOutAlsa::start()
 {
     if (m_pcm) {
         return;
     }
 
     int error = 0;
-    if (error = snd_pcm_open(&m_pcm, deviceName, SND_PCM_STREAM_PLAYBACK, m_block ? 0 : SND_PCM_NONBLOCK) < 0) {
+    if (error = snd_pcm_open(&m_pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, m_block ? 0 : SND_PCM_NONBLOCK) < 0) {
         //qCritical() <<
         return;
     }
 }
 
-void AudioOutAlsa::play(char *data, int samples)
-{
-}
-
-void AudioOutAlsa::deinit()
+void AudioOutAlsa::stop()
 {
     if (m_pcm) {
         snd_pcm_drain(m_pcm);
         snd_pcm_close(m_pcm);
         m_pcm = 0;
     }
+}
+
+void AudioOutAlsa::play(char *data, int samples)
+{
 }
 
 static AudioOutAlsa s_instance;
@@ -480,13 +489,6 @@ int QAlsaAudioOutput::bytesFree() const
 
 qint64 QAlsaAudioOutput::write( const char *data, qint64 len )
 {
-    // Write out some audio data
-    if ( !handle )
-        return 0;
-#ifdef DEBUG_AUDIO
-    qDebug()<<"frames to write out = "<<
-        snd_pcm_bytes_to_frames( handle, (int)len )<<" ("<<len<<") bytes";
-#endif
     int frames, err;
     int space = bytesFree();
 
@@ -625,10 +627,6 @@ void QAlsaAudioOutput::feedback()
 
 void QAlsaAudioOutput::updateAvailable()
 {
-#ifdef DEBUG_AUDIO
-    QTime now(QTime::currentTime());
-    qDebug()<<now.second()<<"s "<<now.msec()<<"ms :updateAvailable()";
-#endif
     bytesAvailable = bytesFree();
 }
 

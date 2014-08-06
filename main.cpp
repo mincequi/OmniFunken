@@ -20,6 +20,18 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("OmniFunken");
     QCoreApplication::setApplicationVersion("0.0.1");
 
+    // settings
+    QSettings settings("/etc/omnifunken.conf", QSettings::IniFormat);
+
+    // audio settings
+    QSettings::SettingsMap audioSettings;
+    settings.beginGroup("audio_out");
+    QStringList keys = settings.childKeys();
+    for (const QString &key : keys) {
+        audioSettings.insert(key, settings.value(key));
+    }
+    settings.endGroup();
+
     // command line options
     QString defaultName("OmniFunken@"); defaultName.append(QHostInfo::localHostName());
     QCommandLineParser parser;
@@ -42,26 +54,36 @@ int main(int argc, char *argv[])
         daemon_init();
     }
 
-
-    // settings
-    QSettings settings("/etc/omnifunken.conf", QSettings::IniFormat);
-
+    // init rtsp/rtp components
     RtspServer  *rtspServer = new RtspServer();
     RtpBuffer   *rtpBuffer = new RtpBuffer();
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
+
+    // init audio driver
     AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut("ao");
+    audioOut->init(audioSettings);
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->deinit(); } );
+
+    // init device control
+    //DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl("rs232");
+    //deviceControl->init(deviceControlSettings);
+    //QObject::connect()
+
+    // init player
     Player      *player = new Player(rtpBuffer, audioOut);
 
+    // wire components
     QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
     QObject::connect(rtspServer, SIGNAL(senderSocketAvailable(RtpReceiver::PayloadType, quint16)), rtpReceiver, SLOT(setSenderSocket(RtpReceiver::PayloadType, quint16)));
     QObject::connect(rtspServer, SIGNAL(receiverSocketRequired(RtpReceiver::PayloadType, quint16*)), rtpReceiver, SLOT(bindSocket(RtpReceiver::PayloadType, quint16*)));
     QObject::connect(rtspServer, SIGNAL(record(quint16)), rtpBuffer, SLOT(flush(quint16)));
     QObject::connect(rtspServer, SIGNAL(flush(quint16)), rtpBuffer, SLOT(flush(quint16)));
-    QObject::connect(rtspServer, SIGNAL(teardown()), rtpReceiver, SLOT(teardown()));
     QObject::connect(rtspServer, SIGNAL(teardown()), rtpBuffer, SLOT(teardown()));
+    QObject::connect(rtspServer, SIGNAL(teardown()), rtpReceiver, SLOT(teardown()));
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
-    QObject::connect(rtspServer, &RtspServer::volume, audioOut, &AudioOutAbstract::setVolume);
+    QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
 
+    // startup
     rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());
 
     ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd();

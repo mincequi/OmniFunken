@@ -2,6 +2,7 @@
 #define AUDIOOUT_ABSTRACT_H
 
 #include <QObject>
+#include <QSettings>
 
 class AudioOutAbstract : public QObject
 {
@@ -9,10 +10,23 @@ class AudioOutAbstract : public QObject
 public:
     AudioOutAbstract() : QObject() {}
 
+    // name of output plugin
     virtual const char *name() const = 0;
-    virtual void init(const char *deviceName = NULL) = 0;
+
+    // called at startup
+    virtual void init(const QSettings::SettingsMap &settings) { Q_UNUSED(settings) }
+    // called at shutdown
+    virtual void deinit() {}
+
+    // called before playing
+    virtual void start() {}
+    // called after playing
+    virtual void stop() {}
+    // play samples
     virtual void play(char *data, int samples) = 0;
-    virtual void deinit() = 0;
+
+    // if no volume control available, we apply soft volume
+    virtual bool hasVolumeControl() { return false; }
 
 public slots:
     virtual void setVolume(float volume) { Q_UNUSED(volume) }

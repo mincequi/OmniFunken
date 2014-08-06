@@ -20,6 +20,7 @@ public:
 public slots:
     void play();
     void teardown();
+    void setVolume(float volume);
 
 private slots:
     void updateRateControl(quint16 size);
@@ -40,6 +41,8 @@ private:
     AudioOutAbstract *m_audioOut;
     QTimer      *m_audioOutTimer;
     PlayWorker  *m_playWorker;
+    float       m_volume;
+    QMutex      m_mutex;
 };
 
 #endif // PLAYER_H

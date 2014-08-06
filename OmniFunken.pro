@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT      += core network serialport
+QT      += core network #serialport
 QT      -= gui
 
 TARGET = omnifunken
@@ -64,7 +64,8 @@ HEADERS += \
     rtpbuffer.h \
     audioout_abstract.h \
     audiooutfactory.h \
-    audioout_ao.h
+    audioout_ao.h \
+    devicecontrolabstract.h
 
 unix:!macx {
     HEADERS += audioout_alsa.h

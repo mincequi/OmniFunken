@@ -1,0 +1,34 @@
+#!/bin/sh
+### BEGIN INIT INFO
+#
+# Provides:          omnifunken
+# Required-Start:    $local_fs $network $named $time $syslog
+# Required-Stop:     $local_fs $network $named $time $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+#
+### END INIT INFO
+
+
+NAME=omnifunken
+DAEMON=/usr/bin/$NAME
+DAEMON_ARGS="--daemon"
+USER=omnifunken
+GROUP=nogroup
+LOGFILE=/var/log/$NAME.log
+
+
+case "$1" in
+  start)
+    start-stop-daemon --start --quiet --chuid $USER:$GROUP --exec $DAEMON -- $DAEMON_ARGS
+    ;;
+  stop)
+    start-stop-daemon --stop --quiet --exec $DAEMON --name $NAME --user $USER --retry=TERM/10/KILL/5
+    ;;
+  retart)
+    stop
+    start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+esac

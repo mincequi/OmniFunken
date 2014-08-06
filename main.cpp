@@ -35,11 +35,11 @@ int main(int argc, char *argv[])
     // command line options
     QString defaultName("OmniFunken@"); defaultName.append(QHostInfo::localHostName());
     QCommandLineParser parser;
-    parser.setApplicationDescription("OmniFunken aims to be a general purpose media renderer.");
+    parser.setApplicationDescription("OmniFunken aims to be a general purpose media render daemon.");
     parser.addVersionOption();
     parser.addHelpOption();
-    QCommandLineOption verboseOption(QStringList() << "v" << "verbose", "Set verbose mode.");
-    parser.addOption(verboseOption);
+    //QCommandLineOption verboseOption(QStringList() << "v" << "verbose", "Set verbose mode.");
+    //parser.addOption(verboseOption);
     QCommandLineOption nameOption(QStringList() << "n" << "name", "Set propagated name.", "name", defaultName);
     parser.addOption(nameOption);
     QCommandLineOption portOption(QStringList() << "p" << "port", "Set RTSP port.", "port", "5002");
@@ -62,12 +62,12 @@ int main(int argc, char *argv[])
     // init audio driver
     AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut("ao");
     audioOut->init(audioSettings);
-    QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->deinit(); } );
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->stop(); audioOut->deinit(); } );
 
     // init device control
     //DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl("rs232");
     //deviceControl->init(deviceControlSettings);
-    //QObject::connect()
+    //QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->stop(); deviceControl->deinit(); } );
 
     // init player
     Player      *player = new Player(rtpBuffer, audioOut);

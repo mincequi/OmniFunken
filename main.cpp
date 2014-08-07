@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     parser.addOption(nameOption);
     QCommandLineOption portOption(QStringList() << "p" << "port", "Set RTSP port.", "port", "5002");
     parser.addOption(portOption);
-    QCommandLineOption latencyOption(QStringList() << "l" << "latency", "Set latency in milliseconds.");
+    QCommandLineOption latencyOption(QStringList() << "l" << "latency", "Set latency in milliseconds.", "latency", "500");
     parser.addOption(latencyOption);
     QCommandLineOption daemonOption(QStringList() << "d" << "daemon", "Start as daemon.");
     parser.addOption(daemonOption);
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
     // init rtsp/rtp components
     RtspServer  *rtspServer = new RtspServer();
-    RtpBuffer   *rtpBuffer = new RtpBuffer();
+    RtpBuffer   *rtpBuffer = new RtpBuffer(parser.value(latencyOption).toInt());
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
 
     // init audio driver

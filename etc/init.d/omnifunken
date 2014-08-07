@@ -11,8 +11,11 @@
 
 
 NAME=omnifunken
+AIRPLAY_NAME=$NAME@$HOSTNAME
+LATENCY=500
+PORT=5002
 DAEMON=/usr/bin/$NAME
-DAEMON_ARGS="--daemon"
+DAEMON_ARGS="--daemon --latency $LATENCY --name $AIRPLAY_NAME --port $PORT"
 USER=omnifunken
 GROUP=nogroup
 LOGFILE=/var/log/$NAME.log

@@ -29,7 +29,7 @@ void daemon_init()
 
     setenv("AVAHI_COMPAT_NOWARN", "1", 1);
 
-    //close(STDIN_FILENO);
-    //close(STDOUT_FILENO);
-    //close(STDERR_FILENO);
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
 }

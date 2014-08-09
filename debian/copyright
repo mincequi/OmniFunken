@@ -33,3 +33,6 @@ License: GPL-3+
 Files: debian/*
 Copyright: 2014 Manuel Weichselbaumer
 License: GPL-3+
+
+On Debian systems, you can find the full text of the GNU General Public
+License v3 in `/usr/share/common-licenses/GPL-3'

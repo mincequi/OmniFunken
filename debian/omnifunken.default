@@ -5,5 +5,5 @@ START_DAEMON=false
 USER=omnifunken
 GROUP=nogroup
 
-AIRPLAY_NAME=Wohnzimmer
+AIRPLAY_NAME=OmniFunken
 LATENCY=500

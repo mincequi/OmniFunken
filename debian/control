@@ -2,8 +2,8 @@ Source: omnifunken
 Section: unknown
 Priority: optional
 Maintainer: Manuel Weichselbaumer <mincequi@web.de>
-Build-Depends:	debhelper (>= 8.0.0),
-		qtbase5-dev (>= 5.2),
+Build-Depends:	debhelper (>= 9.0.0),
+		qtbase5-dev (>= 5.2.0),
 		qt5-default,
 		libavahi-compat-libdnssd-dev,
 		libssl-dev,

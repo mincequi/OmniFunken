@@ -1,6 +1,6 @@
 OmniFunken
 ==========
-OmniFunken aims to be a general purpose media render daemon.
+OmniFunken aims to be a general purpose media render daemon. Currently it only supports Apple AirPlay.
 
 
 Features
@@ -22,7 +22,8 @@ Optionally:
 * SDL (planned)
 
 
-## Get started
+Get started
+-----------
 ```
 qmake
 make
@@ -34,5 +35,18 @@ Command line syntax
 -------------------
 For command line options run `omnifunken -h`.
 
+
+TODO
+----
+* RS232 device control
+* ALSA audio output
+* init scripts (write pidfile)
+* audio device selection
+* timing/synchronisation
+
+
+Thanks to
+---------
+Thanks to James Laird for his [shairport](https://github.com/abrasive/shairport) project on which this project is heavily based.
 
 

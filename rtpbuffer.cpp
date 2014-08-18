@@ -33,6 +33,8 @@ void RtpBuffer::setPacketSize(int frames)
 
 RtpBuffer::RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
 {
+    if (sequenceNumber > 65534 || sequenceNumber < 1)
+        qDebug() << __func__ << ": sequenceNumber: " << sequenceNumber;
     // producer wants to put a packet
     m_mutex.lock();
 
@@ -40,6 +42,7 @@ RtpBuffer::RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
 
     switch (orderPacket(sequenceNumber)) {
     case Twice:
+        // TODO memcmp
     case Discard:
         m_mutex.unlock();
         return NULL;

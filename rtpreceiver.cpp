@@ -87,6 +87,14 @@ void RtpReceiver::readPendingDatagrams()
             decrypt(payload, packet, payloadSize);
             RtpPacket* bufferItem = m_rtpBuffer->obtainPacket(header.sequenceNumber);
             if (bufferItem) {
+                if (bufferItem->twice) {
+                    char* twice = new char[bufferItem->payloadSize];
+                    alac_decode_frame(m_alac, packet, twice, &(bufferItem->payloadSize));
+                    int result = memcmp(twice, bufferItem->payload, bufferItem->payloadSize);
+                    qWarning() << __func__ << ": memcmp: " << result;
+                    delete[] twice;
+                    m_rtpBuffer->commitPacket();
+                }
                 alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
                 m_rtpBuffer->commitPacket();
             }

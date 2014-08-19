@@ -39,12 +39,12 @@ RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
     requestMissingPackets();
 
     switch (orderPacket(sequenceNumber)) {
-    case Twice:
-        // TODO memcmp
     case Discard:
         m_mutex.unlock();
         return NULL;
         break;
+    case Twice:
+        // TODO memcmp
     case Early:
     case Expected:
         m_last = sequenceNumber % m_capacity;

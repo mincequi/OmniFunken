@@ -10,7 +10,6 @@ struct RtpPacket {
         sequenceNumber(0),
         status(PacketFree),
         flush(false),
-        twice(false),
         requestCount(0),
         payloadSize(0),
         payload(NULL) {}
@@ -18,7 +17,6 @@ struct RtpPacket {
         sequenceNumber = 0;
         status = PacketFree;
         flush = false;
-        twice = false;
         requestCount = 0;
     }
 
@@ -29,7 +27,6 @@ struct RtpPacket {
         PacketMissing
     }               status;
     bool            flush;
-    bool            twice;
     quint16         requestCount;
     int             payloadSize;
     char            *payload;

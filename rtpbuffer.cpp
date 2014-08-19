@@ -44,6 +44,7 @@ RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
         return NULL;
         break;
     case Twice:
+        m_data[sequenceNumber % m_capacity].twice = true;
         // TODO memcmp
     case Early:
     case Expected:

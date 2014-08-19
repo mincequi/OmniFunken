@@ -80,7 +80,7 @@ void RtpBuffer::commitPacket()
     if ((m_status == Filling) && (fill >= m_desiredFill)) {
         qDebug() << __func__ << ": start playing at: " << m_data[m_first].sequenceNumber << ", last: " << m_last << ": " << m_data[m_last].sequenceNumber;
         m_status = Ready;
-        m_timer.start(1000);
+        m_timer.start(10000);
         m_mutex.unlock();
         emit ready();
         return;

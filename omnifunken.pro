@@ -61,6 +61,7 @@ HEADERS += \
     rtpbufferalt.h \
     daemon.h \
     omnifunken.h \
+    rtppacket.h \
     rtpbuffer.h \
     audioout_abstract.h \
     audiooutfactory.h \

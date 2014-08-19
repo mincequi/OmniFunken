@@ -55,7 +55,7 @@ Player::PlayWorker::PlayWorker(Player *player)
 
 void Player::PlayWorker::run()
 {
-    while(const RtpBuffer::RtpPacket *packet = m_player->m_rtpBuffer->takePacket()) {
+    while(const RtpPacket *packet = m_player->m_rtpBuffer->takePacket()) {
         m_player->m_mutex.lock();
         int shift = abs(m_player->m_volume/5.625f);
         //float volume = qPow(10.0f, m_volume/20.0f);

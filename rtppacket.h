@@ -2,6 +2,9 @@
 #define RTPPACKET_H
 
 
+#include <QtGlobal>
+
+
 struct RtpPacket {
     RtpPacket() :
         sequenceNumber(0),

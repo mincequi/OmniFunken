@@ -85,7 +85,7 @@ void RtpReceiver::readPendingDatagrams()
         case AudioData: {
             unsigned char packet[2048];
             decrypt(payload, packet, payloadSize);
-            RtpBuffer::RtpPacket* bufferItem = m_rtpBuffer->obtainPacket(header.sequenceNumber);
+            RtpPacket* bufferItem = m_rtpBuffer->obtainPacket(header.sequenceNumber);
             if (bufferItem) {
                 alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
                 m_rtpBuffer->commitPacket();

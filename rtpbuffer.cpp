@@ -31,9 +31,9 @@ void RtpBuffer::setPacketSize(int frames)
     alloc();
 }
 
-RtpBuffer::RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
+RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
 {
-    if (sequenceNumber > 65534 || sequenceNumber < 1)
+    if (sequenceNumber == 0)
         qDebug() << __func__ << ": sequenceNumber: " << sequenceNumber;
     // producer wants to put a packet
     m_mutex.lock();
@@ -69,7 +69,7 @@ RtpBuffer::RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
 
     RtpPacket* packet = &(m_data[sequenceNumber % m_capacity]);
     packet->sequenceNumber  = sequenceNumber;
-    packet->status          = PacketOk;
+    packet->status          = RtpPacket::PacketOk;
 
     return packet;
 }
@@ -89,7 +89,7 @@ void RtpBuffer::commitPacket()
     }
 }
 
-const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
+const RtpPacket* RtpBuffer::takePacket()
 {
     QMutexLocker locker(&m_mutex);
 
@@ -110,16 +110,16 @@ const RtpBuffer::RtpPacket* RtpBuffer::takePacket()
     }
 
     switch (packet->status) {
-    case PacketFree:
+    case RtpPacket::PacketFree:
         qWarning() << __func__ << ": free packet: " << packet->sequenceNumber;
         m_timer.stop();
         m_status = Init;
         return NULL;
         break;
-    case PacketMissing:
+    case RtpPacket::PacketMissing:
         qWarning() << __func__ << ": missing packet: " << packet->sequenceNumber;
         memcpy(packet->payload, m_silence, packet->payloadSize);
-    case PacketOk:
+    case RtpPacket::PacketOk:
         if (m_first == m_last) {
             qDebug() << __func__ << ": buffer empty";
             m_timer.stop();
@@ -156,8 +156,8 @@ void RtpBuffer::flush(quint16 sequenceNumber)
         RtpPacket* packet = &(m_data[sequenceNumber%m_capacity]);
         packet->sequenceNumber = sequenceNumber;
         packet->flush = true;
-        if (packet->status != PacketOk) {
-            packet->status = PacketMissing;
+        if (packet->status != RtpPacket::PacketOk) {
+            packet->status = RtpPacket::PacketMissing;
         }
     }
 }
@@ -247,7 +247,7 @@ RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
             qDebug() << __func__ << ": early packet/lost packets";
             // mark missing
             for (quint16 i = m_data[m_last].sequenceNumber+1; i != sequenceNumber; ++i) {
-                m_data[i%m_capacity].status = PacketMissing;
+                m_data[i%m_capacity].status = RtpPacket::PacketMissing;
                 m_data[i%m_capacity].sequenceNumber = i;
             }
             return Early;
@@ -269,11 +269,11 @@ void RtpBuffer::requestMissingPackets()
 
     for (int i = m_first; i != m_last; i = (i+1)%m_capacity) {
         // find startOfSequence of missing packets
-        if (m_data[i].status == PacketMissing && startOfSequence == -1) {
+        if (m_data[i].status == RtpPacket::PacketMissing && startOfSequence == -1) {
             startOfSequence = m_data[i].sequenceNumber;
         }
         // find endOfSequence of missing packets
-        if ((m_data[(i+1)%m_capacity].status != PacketMissing) && startOfSequence != -1) {
+        if ((m_data[(i+1)%m_capacity].status != RtpPacket::PacketMissing) && startOfSequence != -1) {
             endOfSequence = m_data[i].sequenceNumber;
 
             // request every fifth time

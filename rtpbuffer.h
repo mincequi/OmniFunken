@@ -1,44 +1,19 @@
 #ifndef RTPBUFFER_H
 #define RTPBUFFER_H
 
+
+#include "rtppacket.h"
+
 #include <QMutex>
 #include <QObject>
 #include <QTimer>
 #include <QVector>
 
+
 class RtpBuffer : public QObject
 {
     Q_OBJECT
 public:
-    enum RtpPacketStatus {
-        PacketFree,
-        PacketOk,
-        PacketMissing
-    };
-
-    struct RtpPacket {
-        RtpPacket() :
-            sequenceNumber(0),
-            status(PacketFree),
-            flush(false),
-            requestCount(0),
-            payloadSize(0),
-            payload(NULL) {}
-        void init() {
-            sequenceNumber = 0;
-            status = PacketFree;
-            flush = false;
-            requestCount = 0;
-        }
-
-        quint16         sequenceNumber;
-        RtpPacketStatus status;
-        bool            flush;
-        quint16         requestCount;
-        int             payloadSize;
-        char            *payload;
-    };
-
     explicit RtpBuffer(int latency = 500, QObject *parent = 0);
     ~RtpBuffer();
     // packetSize (bytes per frame = packetSize * numChannels * numBitsPerChannel)

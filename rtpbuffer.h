@@ -50,6 +50,8 @@ private:
 
     void alloc();
     void free();
+    int  roundToPowerOfTwo(int x);
+
     void setStatus(Status status);
 
     enum PacketOrder {

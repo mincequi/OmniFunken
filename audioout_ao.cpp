@@ -35,10 +35,12 @@ void AudioOutAo::init(const QSettings::SettingsMap &settings)
     for (auto it = settings.constBegin(); it != settings.constEnd(); ++it) {
         ao_append_option(&m_aoOptions, it.key().toLatin1(), it.value().toByteArray());
     }
+    start();
 }
 
 void AudioOutAo::deinit()
 {
+    stop();
     ao_shutdown();
 }
 

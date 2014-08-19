@@ -27,14 +27,12 @@ void RtpBuffer::setPacketSize(int frames)
 
     m_packetSize = frames;
     m_desiredFill = (44100*m_latency)/(m_packetSize*1000);
-    m_capacity = 2*m_desiredFill;
+    m_capacity = roundToPowerOfTwo(m_desiredFill*2);
     alloc();
 }
 
 RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
 {
-    if (sequenceNumber == 0)
-        qDebug() << __func__ << ": sequenceNumber: " << sequenceNumber;
     // producer wants to put a packet
     m_mutex.lock();
 
@@ -210,6 +208,21 @@ void RtpBuffer::free()
         delete[] m_silence;
         m_silence = NULL;
     }
+}
+
+int RtpBuffer::roundToPowerOfTwo(int x)
+{
+    if (x < 0) {
+        return 0;
+    }
+
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return x+1;
 }
 
 void RtpBuffer::setStatus(Status status)

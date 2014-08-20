@@ -12,7 +12,7 @@ class RtspServer : public QObject
     Q_OBJECT
     
 public:
-    RtspServer(QObject *parent = 0);
+    RtspServer(const QString &macAddress, QObject *parent = 0);
 
     bool listen(const QHostAddress &address = QHostAddress::Any, quint16 port = 0);
 
@@ -44,6 +44,8 @@ private:
     void handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress);
 
 private:
+    //QString     m_macAddress;
+    quint8      m_macAddress[6];
     QTcpServer *m_tcpServer;
     ulong       m_dacpId;
 };

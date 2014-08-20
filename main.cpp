@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QHostInfo>
+#include <QNetworkInterface>
 #include <QSettings>
 
 #include "audiooutfactory.h"
@@ -19,6 +20,16 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("OmniFunken");
     QCoreApplication::setApplicationVersion("0.0.1");
+
+    // MAC address
+    QString macAddress;
+    foreach(QNetworkInterface networkInterface, QNetworkInterface::allInterfaces()) {
+        // Return only the first non-loopback MAC Address
+        if (!(networkInterface.flags() & QNetworkInterface::IsLoopBack)) {
+            macAddress = networkInterface.hardwareAddress();
+        }
+    }
+    qDebug() << "MAC address: " << macAddress;
 
     // settings
     QSettings settings("/etc/omnifunken.conf", QSettings::IniFormat);
@@ -55,7 +66,7 @@ int main(int argc, char *argv[])
     }
 
     // init rtsp/rtp components
-    RtspServer  *rtspServer = new RtspServer();
+    RtspServer  *rtspServer = new RtspServer(macAddress);
     RtpBuffer   *rtpBuffer = new RtpBuffer(parser.value(latencyOption).toInt());
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
 
@@ -86,7 +97,7 @@ int main(int argc, char *argv[])
     // startup
     rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());
 
-    ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd();
+    ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd(macAddress);
     dnsSd->registerService(parser.value(nameOption).toLatin1(), parser.value(portOption).toInt());
 
     return a.exec();

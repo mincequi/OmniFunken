@@ -12,7 +12,7 @@ class ZeroconfDnsSd : public QObject, public ZeroconfInterface
 {
     Q_OBJECT
 public:
-    explicit ZeroconfDnsSd(QObject *parent = 0);
+    explicit ZeroconfDnsSd(const QString &macAddress, QObject *parent = 0);
 
     int registerService(const char *name, uint16_t port);
     void unregisterService();
@@ -22,7 +22,8 @@ signals:
 public slots:
 
 private:
-    DNSServiceRef m_dnssref;
+    QString         m_macAddress;
+    DNSServiceRef   m_dnssref;
 
 };
 

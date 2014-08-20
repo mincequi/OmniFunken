@@ -34,10 +34,16 @@ static char airportRsaPrivateKey[] = "-----BEGIN RSA PRIVATE KEY-----\n"
 "-----END RSA PRIVATE KEY-----";
 
 
-RtspServer::RtspServer(QObject *parent)
+RtspServer::RtspServer(const QString &macAddress, QObject *parent)
     : QObject(parent),
       m_dacpId(0)
 {
+    QStringList stringList = macAddress.split(":");
+    for (int i = 0; i < stringList.size(); ++i) {
+        bool ok = false;
+        m_macAddress[i] = stringList.at(i).toInt(&ok, 16);
+    }
+
     m_tcpServer = new QTcpServer(this);
 }
 
@@ -294,8 +300,8 @@ void RtspServer::handleAppleChallenge(const RtspMessage &request, RtspMessage *r
     buffer.append(reinterpret_cast<const char*>(&localAddress), sizeof(localAddress));
 
     // Write in the 6-byte Hardware address of the network interface (See note).
-    quint8 hwAddress[] = { 1, 2, 3, 4, 5, 6 };
-    buffer.append(reinterpret_cast<const char*>(&hwAddress), sizeof(hwAddress));
+    //quint8 hwAddress[] = { 1, 2, 3, 4, 5, 6 };
+    buffer.append(reinterpret_cast<const char*>(&m_macAddress), sizeof(m_macAddress));
 
     // If the buffer has less than 32 bytes written, pad with 0's up to 32 bytes.
     while (buffer.size() < 32) {

@@ -5,16 +5,19 @@
 #include <QtEndian>
 
 
-ZeroconfDnsSd::ZeroconfDnsSd(QObject *parent) :
+ZeroconfDnsSd::ZeroconfDnsSd(const QString &macAddress, QObject *parent) :
     QObject(parent),
+    m_macAddress(macAddress),
     m_dnssref(0)
 {
+    m_macAddress.remove(QChar(':'));
 }
 
 int ZeroconfDnsSd::registerService(const char *name, uint16_t port)
 {
-    QByteArray mdnsName(name);
-    mdnsName.prepend("010203040506@");
+    QByteArray mdnsName(m_macAddress.toLatin1());
+    mdnsName.append("@");
+    mdnsName.append(name);
 
     const char *record[] = { MDNS_RECORD, NULL };
     uint16_t length = 0;

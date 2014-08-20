@@ -1,6 +1,9 @@
 #include "audiooutfactory.h"
 
 #include <QDebug>
+#include <QMap>
+#include <QThread>
+
 
 class AudioOutDummy : public AudioOutAbstract {
 public:

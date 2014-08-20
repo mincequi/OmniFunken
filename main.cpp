@@ -6,6 +6,7 @@
 
 #include "audiooutfactory.h"
 #include "daemon.h"
+#include "devicecontrolfactory.h"
 #include "player.h"
 #include "rtspserver.h"
 #include "zeroconf_dns_sd.h"
@@ -75,11 +76,6 @@ int main(int argc, char *argv[])
     audioOut->init(audioSettings);
     QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->stop(); audioOut->deinit(); } );
 
-    // init device control
-    //DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl("rs232");
-    //deviceControl->init(deviceControlSettings);
-    //QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->stop(); deviceControl->deinit(); } );
-
     // init player
     Player      *player = new Player(rtpBuffer, audioOut);
 
@@ -93,6 +89,12 @@ int main(int argc, char *argv[])
     QObject::connect(rtspServer, SIGNAL(teardown()), rtpReceiver, SLOT(teardown()));
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
     QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
+
+    // init device control
+    DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl("rs232");
+    //deviceControl->init(deviceControlSettings);
+    //QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->stop(); deviceControl->deinit(); } );
+
 
     // startup
     rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());

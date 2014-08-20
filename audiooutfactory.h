@@ -3,8 +3,6 @@
 
 #include "audioout_abstract.h"
 
-#include <QMap>
-#include <QThread>
 
 class AudioOutFactory
 {

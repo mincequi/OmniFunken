@@ -43,7 +43,8 @@ SOURCES += main.cpp \
     rtpbuffer.cpp \
     daemon.c \
     audiooutfactory.cpp \
-    audioout_ao.cpp
+    audioout_ao.cpp \
+    devicecontrolfactory.cpp
 
 unix:!macx {
     SOURCES += audioout_alsa.cpp
@@ -66,7 +67,8 @@ HEADERS += \
     audioout_abstract.h \
     audiooutfactory.h \
     audioout_ao.h \
-    devicecontrolabstract.h
+    devicecontrolabstract.h \
+    devicecontrolfactory.h
 
 unix:!macx {
     HEADERS += audioout_alsa.h

@@ -35,17 +35,9 @@ void AudioOutAo::init(const QSettings::SettingsMap &settings)
     for (auto it = settings.constBegin(); it != settings.constEnd(); ++it) {
         ao_append_option(&m_aoOptions, it.key().toLatin1(), it.value().toByteArray());
     }
-    start();
-}
 
-void AudioOutAo::deinit()
-{
-    stop();
-    ao_shutdown();
-}
-
-void AudioOutAo::start()
-{
+// MACOS wants the audio device to be opened from the main thread
+#ifdef Q_OS_MAC
     if (!m_aoDevice) {
         ao_sample_format format;
         memset(&format, 0, sizeof(format));
@@ -57,14 +49,45 @@ void AudioOutAo::start()
 
         m_aoDevice = ao_open_live(m_driverId, &format, m_aoOptions);
     }
+#endif
 }
 
-void AudioOutAo::stop()
+void AudioOutAo::deinit()
 {
+#ifdef Q_OS_MAC
     if (m_aoDevice) {
         ao_close(m_aoDevice);
         m_aoDevice = NULL;
     }
+#endif
+    ao_shutdown();
+}
+
+void AudioOutAo::start()
+{
+#ifndef Q_OS_MAC
+    if (!m_aoDevice) {
+        ao_sample_format format;
+        memset(&format, 0, sizeof(format));
+
+        format.bits = 16;
+        format.rate = 44100;
+        format.channels = 2;
+        format.byte_format = AO_FMT_NATIVE;
+
+        m_aoDevice = ao_open_live(m_driverId, &format, m_aoOptions);
+    }
+#endif
+}
+
+void AudioOutAo::stop()
+{
+#ifndef Q_OS_MAC
+    if (m_aoDevice) {
+        ao_close(m_aoDevice);
+        m_aoDevice = NULL;
+    }
+#endif
 }
 
 void AudioOutAo::play(char *data, int samples)

@@ -24,22 +24,19 @@ int ZeroconfDnsSd::registerService(const char *name, uint16_t port)
     const char **field;
 
     // Concatenate string contained i record into buf.
-    for (field = record; *field; field ++)
-    {
+    for (field = record; *field; ++field) {
         length += strlen(*field) + 1; // One byte for length each time
     }
 
     char *buf = new char[length * sizeof(char)];
-    if (buf == NULL)
-    {
+    if (buf == NULL) {
         qWarning("dns_sd: buffer record allocation failed");
         return -1;
     }
 
     char *p = buf;
 
-    for (field = record; *field; field ++)
-    {
+    for (field = record; *field; ++field) {
         char * newp = stpcpy(p + 1, *field);
         *p = newp - p - 1;
         p = newp;
@@ -61,10 +58,9 @@ int ZeroconfDnsSd::registerService(const char *name, uint16_t port)
 
     free(buf);
 
-    if (error == kDNSServiceErr_NoError)
+    if (error == kDNSServiceErr_NoError) {
         return 0;
-    else
-    {
+    } else {
         qWarning("dns-sd: DNSServiceRegister error %d", error);
         return -1;
     }

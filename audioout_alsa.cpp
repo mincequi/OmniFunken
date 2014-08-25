@@ -20,6 +20,7 @@ const char *AudioOutAlsa::name() const
 void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
     probeNativeFormat();
+    start();
 }
 
 void AudioOutAlsa::deinit()
@@ -74,6 +75,9 @@ void AudioOutAlsa::start()
         qCritical("cannot set parameters (%s)\n", snd_strerror(error));
         return;
     }
+
+    int bits = snd_pcm_hw_params_get_sbits(hw_params);
+    qWarning("significant bits: %d\n", bits);
 
     snd_pcm_hw_params_free(hw_params);
 

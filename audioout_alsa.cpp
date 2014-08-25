@@ -17,6 +17,7 @@ const char *AudioOutAlsa::name() const
 
 void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
+    // probe for native format
 }
 
 void AudioOutAlsa::deinit()
@@ -47,6 +48,100 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int samples)
 {
+}
+
+bool AudioOutAlsa::probeNativeFormat()
+{
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof *(a))
+
+    static const snd_pcm_format_t formats[] = {
+        SND_PCM_FORMAT_S16_LE, /** Signed 16 bit Little Endian */
+        SND_PCM_FORMAT_S16_BE, /** Signed 16 bit Big Endian */
+        SND_PCM_FORMAT_U16_LE, /** Unsigned 16 bit Little Endian */
+        SND_PCM_FORMAT_U16_BE, /** Unsigned 16 bit Big Endian */
+        SND_PCM_FORMAT_S24_LE, /** Signed 24 bit Little Endian */
+        SND_PCM_FORMAT_S24_BE, /** Signed 24 bit Big Endian */
+        SND_PCM_FORMAT_U24_LE, /** Unsigned 24 bit Little Endian */
+        SND_PCM_FORMAT_U24_BE, /** Unsigned 24 bit Big Endian */
+        SND_PCM_FORMAT_S32_LE, /** Signed 32 bit Little Endian */
+        SND_PCM_FORMAT_S32_BE, /** Signed 32 bit Big Endian */
+        SND_PCM_FORMAT_U32_LE, /** Unsigned 32 bit Little Endian */
+        SND_PCM_FORMAT_U32_BE, /** Unsigned 32 bit Big Endian */
+        SND_PCM_FORMAT_FLOAT_LE, /** Float 32 bit Little Endian, Range -1.0 to 1.0 */
+        SND_PCM_FORMAT_FLOAT_BE, /** Float 32 bit Big Endian, Range -1.0 to 1.0 */
+        SND_PCM_FORMAT_FLOAT64_LE, /** Float 64 bit Little Endian, Range -1.0 to 1.0 */
+        SND_PCM_FORMAT_FLOAT64_BE, /** Float 64 bit Big Endian, Range -1.0 to 1.0 */
+        SND_PCM_FORMAT_S24_3LE, /** Signed 24bit Little Endian in 3bytes format */
+        SND_PCM_FORMAT_S24_3BE, /** Signed 24bit Big Endian in 3bytes format */
+        SND_PCM_FORMAT_U24_3LE, /** Unsigned 24bit Little Endian in 3bytes format */
+        SND_PCM_FORMAT_U24_3BE, /** Unsigned 24bit Big Endian in 3bytes format */
+    };
+
+    static const unsigned int rates[] = {
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000,
+    };
+
+    const char *deviceName = "hw:1";
+    snd_pcm_t *pcm;
+    snd_pcm_hw_params_t *hw_params;
+    unsigned int i;
+    unsigned int min, max;
+    int err;
+
+    err = snd_pcm_open(&pcm, deviceName, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
+    if (err < 0) {
+        fprintf(stderr, "cannot open device '%s': %s\n", deviceName, snd_strerror(err));
+        return false;
+    }
+
+    snd_pcm_hw_params_alloca(&hw_params);
+    err = snd_pcm_hw_params_any(pcm, hw_params);
+    if (err < 0) {
+        fprintf(stderr, "cannot get hardware parameters: %s\n", snd_strerror(err));
+        snd_pcm_close(pcm);
+        return false;
+    }
+
+    printf("Device: %s (type: %s)\n", deviceName, snd_pcm_type_name(snd_pcm_type(pcm)));
+
+    printf("Formats:");
+    for (i = 0; i < ARRAY_SIZE(formats); ++i) {
+        if (!snd_pcm_hw_params_test_format(pcm, hw_params, formats[i]))
+            printf(" %s", snd_pcm_format_name(formats[i]));
+    }
+    putchar('\n');
+
+    err = snd_pcm_hw_params_get_rate_min(hw_params, &min, NULL);
+    if (err < 0) {
+        fprintf(stderr, "cannot get minimum rate: %s\n", snd_strerror(err));
+        snd_pcm_close(pcm);
+        return 1;
+    }
+    err = snd_pcm_hw_params_get_rate_max(hw_params, &max, NULL);
+    if (err < 0) {
+        fprintf(stderr, "cannot get maximum rate: %s\n", snd_strerror(err));
+        snd_pcm_close(pcm);
+        return 1;
+    }
+    printf("Sample rates:");
+    if (min == max) {
+        printf(" %u", min);
+    } else {
+        for (i = 0; i < ARRAY_SIZE(rates); ++i) {
+            if (!snd_pcm_hw_params_test_rate(pcm, hw_params, rates[i], 0)) {
+                printf(" %u", rates[i]);
+            }
+        }
+    }
+    putchar('\n');
+
+    snd_pcm_close(pcm);
+    return true;
 }
 
 static AudioOutAlsa s_instance;

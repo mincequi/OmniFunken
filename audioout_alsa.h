@@ -19,6 +19,8 @@ public:
     virtual void play(char *data, int samples) override;
 
 private:
+    bool probeNativeFormat();
+
     char        *m_deviceName;
     snd_pcm_t   *m_pcm;
     bool        m_block;

@@ -3,9 +3,11 @@
 
 
 AudioOutAlsa::AudioOutAlsa() :
-    m_deviceName(NULL),
+    m_deviceName("hw:1"),
     m_pcm(0),
-    m_block(true)
+    m_block(true),
+    m_format(SND_PCM_FORMAT_UNKNOWN),
+    m_rate(0)
 {
     AudioOutFactory::registerAudioOut(this);
 }
@@ -17,7 +19,7 @@ const char *AudioOutAlsa::name() const
 
 void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
-    // probe for native format
+    probeNativeFormat();
 }
 
 void AudioOutAlsa::deinit()
@@ -30,9 +32,53 @@ void AudioOutAlsa::start()
         return;
     }
 
+    snd_pcm_hw_params_t *hw_params;
+
     int error = 0;
     if (error = snd_pcm_open(&m_pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, m_block ? 0 : SND_PCM_NONBLOCK) < 0) {
-        //qCritical() <<
+        qCritical("cannot open audio device %s (%s)\n", m_deviceName, snd_strerror(error));
+        return;
+    }
+
+    if ((error = snd_pcm_hw_params_malloc(&hw_params)) < 0) {
+        qCritical("cannot allocate hardware parameter structure (%s)\n", snd_strerror(error));
+        return;
+    }
+
+    if ((error = snd_pcm_hw_params_any(m_pcm, hw_params)) < 0) {
+        qCritical("cannot initialize hardware parameter structure (%s)\n", snd_strerror(error));
+        return;
+    }
+
+    if ((error = snd_pcm_hw_params_set_access(m_pcm, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+        qCritical("cannot set access type (%s)\n", snd_strerror(error));
+        return;
+    }
+
+    if ((error = snd_pcm_hw_params_set_format(m_pcm, hw_params, m_format)) < 0) {
+        qCritical("cannot set sample format (%s)\n", snd_strerror(error));
+        return;
+    }
+
+    if ((error = snd_pcm_hw_params_set_rate_near(m_pcm, hw_params, m_rate, 0)) < 0) {
+        qCritical("cannot set sample rate (%s)\n", snd_strerror(error));
+        return;
+    }
+
+    if ((error = snd_pcm_hw_params_set_channels(m_pcm, hw_params, 2)) < 0) {
+        qCritical("cannot set channel count (%s)\n", snd_strerror(error));
+        return;
+    }
+
+    if ((error = snd_pcm_hw_params(m_pcm, hw_params)) < 0) {
+        qCritical("cannot set parameters (%s)\n", snd_strerror(error));
+        return;
+    }
+
+    snd_pcm_hw_params_free(hw_params);
+
+    if ((error = snd_pcm_prepare(m_pcm)) < 0) {
+        qCritical("cannot prepare audio interface for use (%s)\n", snd_strerror(error));
         return;
     }
 }
@@ -48,6 +94,11 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int samples)
 {
+    int error;
+    if ((error = snd_pcm_writei(m_pcm, data, samples)) != samples) {
+        qCritical("write to audio interface failed (%s)\n", snd_strerror(error));
+        return;
+    }
 }
 
 bool AudioOutAlsa::probeNativeFormat()
@@ -63,18 +114,14 @@ bool AudioOutAlsa::probeNativeFormat()
         SND_PCM_FORMAT_S24_BE, /** Signed 24 bit Big Endian */
         SND_PCM_FORMAT_U24_LE, /** Unsigned 24 bit Little Endian */
         SND_PCM_FORMAT_U24_BE, /** Unsigned 24 bit Big Endian */
-        SND_PCM_FORMAT_S32_LE, /** Signed 32 bit Little Endian */
-        SND_PCM_FORMAT_S32_BE, /** Signed 32 bit Big Endian */
-        SND_PCM_FORMAT_U32_LE, /** Unsigned 32 bit Little Endian */
-        SND_PCM_FORMAT_U32_BE, /** Unsigned 32 bit Big Endian */
-        SND_PCM_FORMAT_FLOAT_LE, /** Float 32 bit Little Endian, Range -1.0 to 1.0 */
-        SND_PCM_FORMAT_FLOAT_BE, /** Float 32 bit Big Endian, Range -1.0 to 1.0 */
-        SND_PCM_FORMAT_FLOAT64_LE, /** Float 64 bit Little Endian, Range -1.0 to 1.0 */
-        SND_PCM_FORMAT_FLOAT64_BE, /** Float 64 bit Big Endian, Range -1.0 to 1.0 */
         SND_PCM_FORMAT_S24_3LE, /** Signed 24bit Little Endian in 3bytes format */
         SND_PCM_FORMAT_S24_3BE, /** Signed 24bit Big Endian in 3bytes format */
         SND_PCM_FORMAT_U24_3LE, /** Unsigned 24bit Little Endian in 3bytes format */
         SND_PCM_FORMAT_U24_3BE, /** Unsigned 24bit Big Endian in 3bytes format */
+        SND_PCM_FORMAT_S32_LE, /** Signed 32 bit Little Endian */
+        SND_PCM_FORMAT_S32_BE, /** Signed 32 bit Big Endian */
+        SND_PCM_FORMAT_U32_LE, /** Unsigned 32 bit Little Endian */
+        SND_PCM_FORMAT_U32_BE, /** Unsigned 32 bit Big Endian */
     };
 
     static const unsigned int rates[] = {
@@ -86,23 +133,22 @@ bool AudioOutAlsa::probeNativeFormat()
         192000,
     };
 
-    const char *deviceName = "hw:1";
     snd_pcm_t *pcm;
     snd_pcm_hw_params_t *hw_params;
     unsigned int i;
     unsigned int min, max;
-    int err;
+    int error;
 
-    err = snd_pcm_open(&pcm, deviceName, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
-    if (err < 0) {
-        fprintf(stderr, "cannot open device '%s': %s\n", deviceName, snd_strerror(err));
+    error = snd_pcm_open(&pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
+    if (error < 0) {
+        fprintf(stderr, "cannot open device '%s': %s\n", m_deviceName, snd_strerror(error));
         return false;
     }
 
     snd_pcm_hw_params_alloca(&hw_params);
-    err = snd_pcm_hw_params_any(pcm, hw_params);
-    if (err < 0) {
-        fprintf(stderr, "cannot get hardware parameters: %s\n", snd_strerror(err));
+    error = snd_pcm_hw_params_any(pcm, hw_params);
+    if (error < 0) {
+        fprintf(stderr, "cannot get hardware parameters: %s\n", snd_strerror(error));
         snd_pcm_close(pcm);
         return false;
     }
@@ -110,31 +156,37 @@ bool AudioOutAlsa::probeNativeFormat()
     printf("Device: %s (type: %s)\n", deviceName, snd_pcm_type_name(snd_pcm_type(pcm)));
 
     printf("Formats:");
-    for (i = 0; i < ARRAY_SIZE(formats); ++i) {
-        if (!snd_pcm_hw_params_test_format(pcm, hw_params, formats[i]))
+    for (i = ARRAY_SIZE(formats)-1; i >= 0; --i) {
+        if (!snd_pcm_hw_params_test_format(pcm, hw_params, formats[i])) {
             printf(" %s", snd_pcm_format_name(formats[i]));
+            m_format = formats[i];
+            break;
+        }
     }
     putchar('\n');
 
-    err = snd_pcm_hw_params_get_rate_min(hw_params, &min, NULL);
-    if (err < 0) {
-        fprintf(stderr, "cannot get minimum rate: %s\n", snd_strerror(err));
+    error = snd_pcm_hw_params_get_rate_min(hw_params, &min, NULL);
+    if (error < 0) {
+        fprintf(stderr, "cannot get minimum rate: %s\n", snd_strerror(error));
         snd_pcm_close(pcm);
-        return 1;
+        return false;
     }
-    err = snd_pcm_hw_params_get_rate_max(hw_params, &max, NULL);
-    if (err < 0) {
-        fprintf(stderr, "cannot get maximum rate: %s\n", snd_strerror(err));
+    error = snd_pcm_hw_params_get_rate_max(hw_params, &max, NULL);
+    if (error < 0) {
+        fprintf(stderr, "cannot get maximum rate: %s\n", snd_strerror(error));
         snd_pcm_close(pcm);
-        return 1;
+        return false;
     }
     printf("Sample rates:");
     if (min == max) {
         printf(" %u", min);
+        m_rate = min;
     } else {
         for (i = 0; i < ARRAY_SIZE(rates); ++i) {
             if (!snd_pcm_hw_params_test_rate(pcm, hw_params, rates[i], 0)) {
                 printf(" %u", rates[i]);
+                m_rate = rates[i];
+                break;
             }
         }
     }
@@ -208,17 +260,17 @@ int QAlsaAudioOutput::xrun_recovery(int err)
     int  count = 0;
     bool reset = false;
 
-    if(err == -EPIPE) {
+    if(error == -EPIPE) {
         errorState = QAudio::UnderrunError;
         emit errorChanged(errorState);
-        err = snd_pcm_prepare(handle);
-        if(err < 0)
+        error = snd_pcm_prepare(handle);
+        if(error < 0)
             reset = true;
 
-    } else if((err == -ESTRPIPE)||(err == -EIO)) {
+    } else if((error == -ESTRPIPE)||(error == -EIO)) {
         errorState = QAudio::IOError;
         emit errorChanged(errorState);
-        while((err = snd_pcm_resume(handle)) == -EAGAIN){
+        while((error = snd_pcm_resume(handle)) == -EAGAIN){
             usleep(100);
             count++;
             if(count > 5) {
@@ -226,9 +278,9 @@ int QAlsaAudioOutput::xrun_recovery(int err)
                 break;
             }
         }
-        if(err < 0) {
-            err = snd_pcm_prepare(handle);
-            if(err < 0)
+        if(error < 0) {
+            error = snd_pcm_prepare(handle);
+            if(error < 0)
                 reset = true;
         }
     }
@@ -347,11 +399,11 @@ bool QAlsaAudioOutput::open()
     elapsedTimeOffset = 0;
 
     int dir;
-    int err = 0;
+    int error = 0;
     int count=0;
     unsigned int sampleRate=settings.sampleRate();
 
-    if (err == 0) {
+    if (error == 0) {
         errorState = QAudio::OpenError;
         deviceState = QAudio::StoppedState;
         emit errorChanged(errorState);
@@ -370,12 +422,12 @@ bool QAlsaAudioOutput::open()
     }
 
     // Step 1: try and open the device
-    while((count < 5) && (err < 0)) {
+    while((count < 5) && (error < 0)) {
         err=snd_pcm_open(&handle,dev.toLocal8Bit().constData(),SND_PCM_STREAM_PLAYBACK,0);
-        if(err < 0)
+        if(error < 0)
             count++;
     }
-    if (( err < 0)||(handle == 0)) {
+    if (( error < 0)||(handle == 0)) {
         errorState = QAudio::OpenError;
         emit errorChanged(errorState);
         deviceState = QAudio::StoppedState;
@@ -390,44 +442,44 @@ bool QAlsaAudioOutput::open()
     QString errMessage;
     unsigned int chunks = 8;
 
-    err = snd_pcm_hw_params_any( handle, hwparams );
-    if ( err < 0 ) {
+    error = snd_pcm_hw_params_any( handle, hwparams );
+    if ( error < 0 ) {
         fatal = true;
-        errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_any: err = %1").arg(err);
+        errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_any: error = %1").arg(error);
     }
     if ( !fatal ) {
-        err = snd_pcm_hw_params_set_rate_resample( handle, hwparams, 1 );
-        if ( err < 0 ) {
+        error = snd_pcm_hw_params_set_rate_resample( handle, hwparams, 1 );
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_rate_resample: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_rate_resample: error = %1").arg(error);
         }
     }
     if ( !fatal ) {
-        err = snd_pcm_hw_params_set_access( handle, hwparams, access );
-        if ( err < 0 ) {
+        error = snd_pcm_hw_params_set_access( handle, hwparams, access );
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_access: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_access: error = %1").arg(error);
         }
     }
     if ( !fatal ) {
-        err = setFormat();
-        if ( err < 0 ) {
+        error = setFormat();
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_format: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_format: error = %1").arg(error);
         }
     }
     if ( !fatal ) {
-        err = snd_pcm_hw_params_set_channels( handle, hwparams, (unsigned int)settings.channelCount() );
-        if ( err < 0 ) {
+        error = snd_pcm_hw_params_set_channels( handle, hwparams, (unsigned int)settings.channelCount() );
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_channels: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_channels: error = %1").arg(error);
         }
     }
     if ( !fatal ) {
-        err = snd_pcm_hw_params_set_rate_near( handle, hwparams, &sampleRate, 0 );
-        if ( err < 0 ) {
+        error = snd_pcm_hw_params_set_rate_near( handle, hwparams, &sampleRate, 0 );
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_rate_near: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_rate_near: error = %1").arg(error);
         }
     }
     if ( !fatal ) {
@@ -436,17 +488,17 @@ bool QAlsaAudioOutput::open()
         unsigned int maxPeriodTime = 0;
         unsigned int minPeriodTime = 0;
 
-        err = snd_pcm_hw_params_get_buffer_time_max(hwparams, &maxBufferTime, &dir);
-        if ( err >= 0)
-            err = snd_pcm_hw_params_get_buffer_time_min(hwparams, &minBufferTime, &dir);
-        if ( err >= 0)
-            err = snd_pcm_hw_params_get_period_time_max(hwparams, &maxPeriodTime, &dir);
-        if ( err >= 0)
-            err = snd_pcm_hw_params_get_period_time_min(hwparams, &minPeriodTime, &dir);
+        error = snd_pcm_hw_params_get_buffer_time_max(hwparams, &maxBufferTime, &dir);
+        if ( error >= 0)
+            error = snd_pcm_hw_params_get_buffer_time_min(hwparams, &minBufferTime, &dir);
+        if ( error >= 0)
+            error = snd_pcm_hw_params_get_period_time_max(hwparams, &maxPeriodTime, &dir);
+        if ( error >= 0)
+            error = snd_pcm_hw_params_get_period_time_min(hwparams, &minPeriodTime, &dir);
 
-        if ( err < 0 ) {
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: buffer/period min and max: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: buffer/period min and max: error = %1").arg(error);
         } else {
             if (maxBufferTime < buffer_time || buffer_time < minBufferTime || maxPeriodTime < period_time || minPeriodTime > period_time) {
                 period_time = minPeriodTime;
@@ -466,34 +518,34 @@ bool QAlsaAudioOutput::open()
         }
     }
     if ( !fatal ) {
-        err = snd_pcm_hw_params_set_buffer_time_near(handle, hwparams, &buffer_time, &dir);
-        if ( err < 0 ) {
+        error = snd_pcm_hw_params_set_buffer_time_near(handle, hwparams, &buffer_time, &dir);
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_buffer_time_near: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_buffer_time_near: error = %1").arg(error);
         }
     }
     if ( !fatal ) {
-        err = snd_pcm_hw_params_set_period_time_near(handle, hwparams, &period_time, &dir);
-        if ( err < 0 ) {
+        error = snd_pcm_hw_params_set_period_time_near(handle, hwparams, &period_time, &dir);
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_period_time_near: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_period_time_near: error = %1").arg(error);
         }
     }
     if ( !fatal ) {
-        err = snd_pcm_hw_params_set_periods_near(handle, hwparams, &chunks, &dir);
-        if ( err < 0 ) {
+        error = snd_pcm_hw_params_set_periods_near(handle, hwparams, &chunks, &dir);
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_periods_near: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params_set_periods_near: error = %1").arg(error);
         }
     }
     if ( !fatal ) {
-        err = snd_pcm_hw_params(handle, hwparams);
-        if ( err < 0 ) {
+        error = snd_pcm_hw_params(handle, hwparams);
+        if ( error < 0 ) {
             fatal = true;
-            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params: err = %1").arg(err);
+            errMessage = QString::fromLatin1("QAudioOutput: snd_pcm_hw_params: error = %1").arg(error);
         }
     }
-    if( err < 0) {
+    if( error < 0) {
         qWarning()<<errMessage;
         errorState = QAudio::OpenError;
         emit errorChanged(errorState);
@@ -567,8 +619,8 @@ int QAlsaAudioOutput::bytesFree() const
     int frames = snd_pcm_avail_update(handle);
     if (frames == -EPIPE) {
         // Try and handle buffer underrun
-        int err = snd_pcm_recover(handle, frames, 0);
-        if (err < 0)
+        int error = snd_pcm_recover(handle, frames, 0);
+        if (error < 0)
             return 0;
         else
             frames = snd_pcm_avail_update(handle);
@@ -598,12 +650,12 @@ qint64 QAlsaAudioOutput::write( const char *data, qint64 len )
     if (m_volume < 1.0f) {
         char out[space];
         QAudioHelperInternal::qMultiplySamples(m_volume, settings, data, out, space);
-        err = snd_pcm_writei(handle, out, frames);
+        error = snd_pcm_writei(handle, out, frames);
     } else {
-        err = snd_pcm_writei(handle, data, frames);
+        error = snd_pcm_writei(handle, data, frames);
     }
 
-    if(err > 0) {
+    if(error > 0) {
         totalTimeValue += err;
         resuming = false;
         errorState = QAudio::NoError;
@@ -611,11 +663,11 @@ qint64 QAlsaAudioOutput::write( const char *data, qint64 len )
             deviceState = QAudio::ActiveState;
             emit stateChanged(deviceState);
         }
-        return snd_pcm_frames_to_bytes( handle, err );
+        return snd_pcm_frames_to_bytes( handle, error );
     } else
-        err = xrun_recovery(err);
+        error = xrun_recovery(error);
 
-    if(err < 0) {
+    if(error < 0) {
         close();
         errorState = QAudio::FatalError;
         emit errorChanged(errorState);
@@ -659,16 +711,16 @@ qint64 QAlsaAudioOutput::processedUSecs() const
 void QAlsaAudioOutput::resume()
 {
     if(deviceState == QAudio::SuspendedState) {
-        int err = 0;
+        int error = 0;
 
         if(handle) {
-            err = snd_pcm_prepare( handle );
-            if(err < 0)
-                xrun_recovery(err);
+            error = snd_pcm_prepare( handle );
+            if(error < 0)
+                xrun_recovery(error);
 
-            err = snd_pcm_start(handle);
-            if(err < 0)
-                xrun_recovery(err);
+            error = snd_pcm_start(handle);
+            if(error < 0)
+                xrun_recovery(error);
 
             bytesAvailable = (int)snd_pcm_frames_to_bytes(handle, buffer_frames);
         }

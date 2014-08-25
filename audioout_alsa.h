@@ -24,6 +24,8 @@ private:
     char        *m_deviceName;
     snd_pcm_t   *m_pcm;
     bool        m_block;
+    snd_pcm_format_t    m_format;
+    unsigned int        m_rate;
 };
 
 #endif // AUDIOOUT_ALSA_H

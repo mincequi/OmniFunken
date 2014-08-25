@@ -60,7 +60,7 @@ void AudioOutAlsa::start()
         return;
     }
 
-    if ((error = snd_pcm_hw_params_set_rate_near(m_pcm, hw_params, m_rate, 0)) < 0) {
+    if ((error = snd_pcm_hw_params_set_rate(m_pcm, hw_params, m_rate, 0)) < 0) {
         qCritical("cannot set sample rate (%s)\n", snd_strerror(error));
         return;
     }
@@ -135,7 +135,6 @@ bool AudioOutAlsa::probeNativeFormat()
 
     snd_pcm_t *pcm;
     snd_pcm_hw_params_t *hw_params;
-    unsigned int i;
     unsigned int min, max;
     int error;
 
@@ -153,10 +152,10 @@ bool AudioOutAlsa::probeNativeFormat()
         return false;
     }
 
-    printf("Device: %s (type: %s)\n", deviceName, snd_pcm_type_name(snd_pcm_type(pcm)));
+    printf("Device: %s (type: %s)\n", m_deviceName, snd_pcm_type_name(snd_pcm_type(pcm)));
 
     printf("Formats:");
-    for (i = ARRAY_SIZE(formats)-1; i >= 0; --i) {
+    for (int i = ARRAY_SIZE(formats)-1; i >= 0; --i) {
         if (!snd_pcm_hw_params_test_format(pcm, hw_params, formats[i])) {
             printf(" %s", snd_pcm_format_name(formats[i]));
             m_format = formats[i];
@@ -182,7 +181,7 @@ bool AudioOutAlsa::probeNativeFormat()
         printf(" %u", min);
         m_rate = min;
     } else {
-        for (i = 0; i < ARRAY_SIZE(rates); ++i) {
+        for (int i = 0; i < ARRAY_SIZE(rates); ++i) {
             if (!snd_pcm_hw_params_test_rate(pcm, hw_params, rates[i], 0)) {
                 printf(" %u", rates[i]);
                 m_rate = rates[i];

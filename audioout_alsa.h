@@ -26,6 +26,8 @@ private:
     bool        m_block;
     snd_pcm_format_t    m_format;
     unsigned int        m_rate;
+    snd_pcm_channel_area_t *m_srcAreas;
+    snd_pcm_channel_area_t *m_destAreas;
 };
 
 #endif // AUDIOOUT_ALSA_H

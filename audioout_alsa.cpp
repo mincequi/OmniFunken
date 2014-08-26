@@ -7,7 +7,7 @@ AudioOutAlsa::AudioOutAlsa() :
     m_pcm(0),
     m_block(true),
     m_format(SND_PCM_FORMAT_UNKNOWN),
-    m_rate(0)
+    m_rate(44100)
 {
     AudioOutFactory::registerAudioOut(this);
 }
@@ -19,12 +19,30 @@ const char *AudioOutAlsa::name() const
 
 void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
+    m_srcAreas = calloc(2, sizeof(snd_pcm_channel_area_t));
+    m_srcAreas[0].addr = NULL;
+    m_srcAreas[0].first = 0;
+    m_srcAreas[0].step = 32;
+    m_srcAreas[1].addr = NULL;
+    m_srcAreas[1].first = 16;
+    m_srcAreas[1].step = 32;
+
+    m_destAreas = calloc(2, sizeof(snd_pcm_channel_area_t));
+    m_destAreas[0].addr = calloc(352, 6);
+    m_destAreas[0].first = 0;
+    m_destAreas[0].step = 48;
+    m_destAreas[1].addr = m_destAreas[0].addr;
+    m_destAreas[1].first = 24;
+    m_destAreas[1].step = 48;
+
     probeNativeFormat();
     start();
 }
 
 void AudioOutAlsa::deinit()
 {
+    free(m_srcAreas);
+    free(m_destAreas);
 }
 
 void AudioOutAlsa::start()
@@ -61,7 +79,7 @@ void AudioOutAlsa::start()
         return;
     }
 
-    if ((error = snd_pcm_hw_params_set_rate(m_pcm, hw_params, m_rate, 0)) < 0) {
+    if ((error = snd_pcm_hw_params_set_rate(m_pcm, hw_params, 44100/*m_rate*/, 0)) < 0) {
         qCritical("cannot set sample rate (%s)\n", snd_strerror(error));
         return;
     }
@@ -75,9 +93,6 @@ void AudioOutAlsa::start()
         qCritical("cannot set parameters (%s)\n", snd_strerror(error));
         return;
     }
-
-    int bits = snd_pcm_hw_params_get_sbits(hw_params);
-    qWarning("significant bits: %d\n", bits);
 
     snd_pcm_hw_params_free(hw_params);
 
@@ -98,8 +113,14 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int samples)
 {
+    snd_pcm_channel_area_t *areas = ca
+
+    snd_pcm_areas_copy(m_destAreas, 0,
+                       m_srcAreas, 0,
+                       m_pcm->channels, 352, m_pcm->format);
+
     int error;
-    if ((error = snd_pcm_writei(m_pcm, data, samples)) != samples) {
+    if ((error = snd_pcm_writei(m_pcm, m_destAreas.addr, 352)) != 352) {
         qCritical("write to audio interface failed (%s)\n", snd_strerror(error));
         return;
     }

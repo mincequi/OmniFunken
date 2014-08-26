@@ -113,14 +113,20 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int samples)
 {
-    m_srcAreas[0].addr = data;
-    m_srcAreas[1].addr = data;
-    snd_pcm_areas_copy(m_destAreas, 0,
-                       m_srcAreas, 0,
-                       2, 352, m_format);
+    int number = 0;
+    int i, size;
+    double const Pi=4*atan(1);
+    char buffer[352*3*2]; //buffer array
+
+    /*
+    for(i = 0; i < 352; i++){
+        (*quint16)buffer[i*6] = (qint16)sin((2*Pi*880)/(44100*i))*32767;
+        qint16
+    }
+    */
 
     int error;
-    if ((error = snd_pcm_writei(m_pcm, m_destAreas[0].addr, 352)) != 352) {
+    if ((error = snd_pcm_writei(m_pcm, buffer, 352)) != 352) {
         qCritical("write to audio interface failed (%s)\n", snd_strerror(error));
         return;
     }

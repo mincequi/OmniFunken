@@ -113,6 +113,8 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int samples)
 {
+    m_srcAreas[0].addr = data;
+    m_srcAreas[1].addr = data;
     snd_pcm_areas_copy(m_destAreas, 0,
                        m_srcAreas, 0,
                        2, 352, m_format);

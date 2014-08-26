@@ -1,6 +1,8 @@
 #include "audioout_alsa.h"
 #include "audiooutfactory.h"
 
+#include <alsa/asoundlib.h>
+
 
 AudioOutAlsa::AudioOutAlsa() :
     m_deviceName("hw:1"),
@@ -19,7 +21,7 @@ const char *AudioOutAlsa::name() const
 
 void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
-    m_srcAreas = calloc(2, sizeof(snd_pcm_channel_area_t));
+    m_srcAreas = new snd_pcm_channel_area_t[2];
     m_srcAreas[0].addr = NULL;
     m_srcAreas[0].first = 0;
     m_srcAreas[0].step = 32;
@@ -27,7 +29,7 @@ void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
     m_srcAreas[1].first = 16;
     m_srcAreas[1].step = 32;
 
-    m_destAreas = calloc(2, sizeof(snd_pcm_channel_area_t));
+    m_destAreas = new snd_pcm_channel_area_t[2];
     m_destAreas[0].addr = calloc(352, 6);
     m_destAreas[0].first = 0;
     m_destAreas[0].step = 48;
@@ -41,8 +43,8 @@ void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 
 void AudioOutAlsa::deinit()
 {
-    free(m_srcAreas);
-    free(m_destAreas);
+    delete[] m_srcAreas;
+    delete[] m_destAreas;
 }
 
 void AudioOutAlsa::start()
@@ -113,14 +115,12 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int samples)
 {
-    snd_pcm_channel_area_t *areas = ca
-
     snd_pcm_areas_copy(m_destAreas, 0,
                        m_srcAreas, 0,
                        m_pcm->channels, 352, m_pcm->format);
 
     int error;
-    if ((error = snd_pcm_writei(m_pcm, m_destAreas.addr, 352)) != 352) {
+    if ((error = snd_pcm_writei(m_pcm, m_destAreas[0].addr, 352)) != 352) {
         qCritical("write to audio interface failed (%s)\n", snd_strerror(error));
         return;
     }

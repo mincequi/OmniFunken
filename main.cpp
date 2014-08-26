@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
 
     // init audio driver
-    AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut("ao");
+    AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut("alsa");
     audioOut->init(audioSettings);
     QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->stop(); audioOut->deinit(); } );
 

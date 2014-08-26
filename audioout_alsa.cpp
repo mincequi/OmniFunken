@@ -1,8 +1,6 @@
 #include "audioout_alsa.h"
 #include "audiooutfactory.h"
 
-#include <alsa/asoundlib.h>
-
 
 AudioOutAlsa::AudioOutAlsa() :
     m_deviceName("hw:1"),
@@ -117,7 +115,7 @@ void AudioOutAlsa::play(char *data, int samples)
 {
     snd_pcm_areas_copy(m_destAreas, 0,
                        m_srcAreas, 0,
-                       m_pcm->channels, 352, m_pcm->format);
+                       2, 352, m_format);
 
     int error;
     if ((error = snd_pcm_writei(m_pcm, m_destAreas[0].addr, 352)) != 352) {

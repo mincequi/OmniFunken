@@ -22,7 +22,12 @@ void AudioOutFactory::registerAudioOut(AudioOutAbstract* audioOut)
     registry->insert(audioOut->name(), audioOut);
 }
 
-AudioOutAbstract* AudioOutFactory::createAudioOut(const QString &key)
+AudioOutAbstract* AudioOutFactory::createAudioOut(const QString &key, const QSettings::SettingsMap &settings)
 {
-    return registry->value(key, dummy);
+    AudioOutAbstract* audioOut = registry->value(key, dummy);
+    if (!audioOut->init(settings)) {
+        return dummy;
+    } else {
+        return audioOut;
+    }
 }

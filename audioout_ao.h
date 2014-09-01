@@ -12,7 +12,7 @@ public:
     AudioOutAo();
 
     virtual const char *name() const override;
-    virtual void init(const QSettings::SettingsMap &settings) override;
+    virtual bool init(const QSettings::SettingsMap &settings) override;
     virtual void deinit() override;
     virtual void start() override;
     virtual void stop() override;

@@ -12,11 +12,11 @@ public:
     AudioOutAlsa();
 
     virtual const char *name() const override;
-    virtual void init(const QSettings::SettingsMap &settings) override;
+    virtual bool init(const QSettings::SettingsMap &settings) override;
     virtual void deinit() override;
     virtual void start() override;
     virtual void stop() override;
-    virtual void play(char *data, int samples) override;
+    virtual void play(char *data, int bytes) override;
 
 private:
     bool probeNativeFormat();

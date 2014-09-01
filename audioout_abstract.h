@@ -14,7 +14,7 @@ public:
     virtual const char *name() const = 0;
 
     // called at startup
-    virtual void init(const QSettings::SettingsMap &settings) { Q_UNUSED(settings) }
+    virtual bool init(const QSettings::SettingsMap &settings) { Q_UNUSED(settings) return true; }
     // called at shutdown
     virtual void deinit() {}
 
@@ -23,7 +23,7 @@ public:
     // called after playing
     virtual void stop() {}
     // play samples
-    virtual void play(char *data, int samples) = 0;
+    virtual void play(char *data, int bytes) = 0;
 
     // if no volume control available, we apply soft volume
     virtual bool hasVolumeControl() { return false; }

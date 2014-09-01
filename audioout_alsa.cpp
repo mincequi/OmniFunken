@@ -17,7 +17,7 @@ const char *AudioOutAlsa::name() const
     return "alsa";
 }
 
-void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
+bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
     m_srcAreas = new snd_pcm_channel_area_t[2];
     m_srcAreas[0].addr = NULL;
@@ -35,8 +35,7 @@ void AudioOutAlsa::init(const QSettings::SettingsMap &settings)
     m_destAreas[1].first = 24;
     m_destAreas[1].step = 48;
 
-    probeNativeFormat();
-    start();
+    return probeNativeFormat();
 }
 
 void AudioOutAlsa::deinit()
@@ -111,25 +110,26 @@ void AudioOutAlsa::stop()
     }
 }
 
-void AudioOutAlsa::play(char *data, int samples)
+void AudioOutAlsa::play(char *data, int bytes)
 {
-    int number = 0;
-    int i, size;
-    double const Pi=4*atan(1);
-    char buffer[352*3*2]; //buffer array
+    char *samples = new char[bytes*1.5];
 
-    /*
-    for(i = 0; i < 352; i++){
-        (*quint16)buffer[i*6] = (qint16)sin((2*Pi*880)/(44100*i))*32767;
-        qint16
+    for(int i = 0; i < bytes/4; ++i) {
+        *(char*)(samples+(i*6)) = 0; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
+        *(char*)(samples+(i*6+1)) = *(char*)(data+(i*4));
+        *(char*)(samples+(i*6+2)) = *(char*)(data+(i*4+1));
+        *(char*)(samples+(i*6+3)) = 0;
+        *(char*)(samples+(i*6+4)) = *(char*)(data+(i*4+2));
+        *(char*)(samples+(i*6+5)) = *(char*)(data+(i*4+3));
     }
-    */
 
     int error;
-    if ((error = snd_pcm_writei(m_pcm, buffer, 352)) != 352) {
+    if ((error = snd_pcm_writei(m_pcm, samples, 704)) != 704) {
         qCritical("write to audio interface failed (%s)\n", snd_strerror(error));
         return;
     }
+
+    delete[] samples;
 }
 
 bool AudioOutAlsa::probeNativeFormat()

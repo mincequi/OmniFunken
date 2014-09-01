@@ -16,7 +16,7 @@ const char *AudioOutAo::name() const
     return "ao";
 }
 
-void AudioOutAo::init(const QSettings::SettingsMap &settings)
+bool AudioOutAo::init(const QSettings::SettingsMap &settings)
 {
     ao_initialize();
 
@@ -50,6 +50,8 @@ void AudioOutAo::init(const QSettings::SettingsMap &settings)
         m_aoDevice = ao_open_live(m_driverId, &format, m_aoOptions);
     }
 #endif
+
+    return true;
 }
 
 void AudioOutAo::deinit()
@@ -90,9 +92,21 @@ void AudioOutAo::stop()
 #endif
 }
 
-void AudioOutAo::play(char *data, int samples)
+void AudioOutAo::play(char *data, int bytes)
 {
-    ao_play(m_aoDevice, data, samples);
+    //bytes *= 1000;
+    char *samples = new char[bytes];
+
+    for(int i = 0; i < bytes/4; ++i) {
+        *(char*)(samples+(i*4)) = 0; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
+        *(char*)(samples+(i*4+1)) = *(char*)(data+(i*4+1));
+        *(char*)(samples+(i*4+2)) = 0; //*(char*)(data+(i*4+2));//*(samples+(i*4));
+        *(char*)(samples+(i*4+3)) = 0;//*(char*)(data+(i*4+3));
+    }
+
+    ao_play(m_aoDevice, samples, bytes);
+
+    delete[] samples;
 }
 
 static AudioOutAo s_instance;

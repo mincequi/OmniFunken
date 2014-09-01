@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
         // Return only the first non-loopback MAC Address
         if (!(networkInterface.flags() & QNetworkInterface::IsLoopBack)) {
             macAddress = networkInterface.hardwareAddress();
-            break;
+            //break;
         }
     }
     // TODO: mac address might be "00:00:00:00:00:00", which is illegal
@@ -74,8 +74,7 @@ int main(int argc, char *argv[])
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
 
     // init audio driver
-    AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut("alsa");
-    audioOut->init(audioSettings);
+    AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut("alsa", audioSettings);
     QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->stop(); audioOut->deinit(); } );
 
     // init player

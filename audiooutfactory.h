@@ -11,7 +11,7 @@ protected:
     ~AudioOutFactory() {}
 
 public:
-    static AudioOutAbstract *createAudioOut(const QString &key);
+    static AudioOutAbstract *createAudioOut(const QString &key, const QSettings::SettingsMap &settings);
     static void registerAudioOut(AudioOutAbstract* audioOut);
 };
 

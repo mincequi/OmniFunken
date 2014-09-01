@@ -9,6 +9,7 @@
 #include "devicecontrolfactory.h"
 #include "player.h"
 #include "rtspserver.h"
+#include "util.h"
 #include "zeroconf_dns_sd.h"
 
 #include <unistd.h>
@@ -28,7 +29,9 @@ int main(int argc, char *argv[])
         // Return only the first non-loopback MAC Address
         if (!(networkInterface.flags() & QNetworkInterface::IsLoopBack)) {
             macAddress = networkInterface.hardwareAddress();
-            //break;
+            if (isValidMacAddress(macAddress)) {
+                break;
+            }
         }
     }
     // TODO: mac address might be "00:00:00:00:00:00", which is illegal

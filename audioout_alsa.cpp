@@ -53,7 +53,7 @@ void AudioOutAlsa::start()
     snd_pcm_hw_params_t *hw_params;
 
     int error = 0;
-    if (error = snd_pcm_open(&m_pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, m_block ? 0 : SND_PCM_NONBLOCK) < 0) {
+    if (error = snd_pcm_open(&m_pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, (m_block ? 0 : SND_PCM_NONBLOCK)) < 0) {
         qCritical("cannot open audio device %s (%s)\n", m_deviceName, snd_strerror(error));
         return;
     }
@@ -112,22 +112,22 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int bytes)
 {
-    char *samples = new char[bytes*1.5];
+    char *samples = new char[bytes*(bytes/2)];
 
     for(int i = 0; i < bytes/4; ++i) {
         //
         int32_t j = 2100000000 * sin( (2.f*float(M_PI)*440)/44100 * i );
 
-        *(char*)(samples+(i*6)) = *(char*)&j+1; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
-        *(char*)(samples+(i*6+1)) = *(char*)&j+2;//*(char*)(data+(i*4));
-        *(char*)(samples+(i*6+2)) = *(char*)&j+3;//*(char*)(data+(i*4+1));
-        *(char*)(samples+(i*6+3)) = *(char*)&j+1;
-        *(char*)(samples+(i*6+4)) = *(char*)&j+2;//*(char*)(data+(i*4+2));
-        *(char*)(samples+(i*6+5)) = *(char*)&j+3;//*(char*)(data+(i*4+3));
+        *(char*)(samples+(i*6)) = 0; //*(char*)&j+1; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
+        *(char*)(samples+(i*6+1)) = 0; //*(char*)&j+2;//*(char*)(data+(i*4));
+        *(char*)(samples+(i*6+2)) = *(((char*)&j)+3);//*(char*)(data+(i*4+1));
+        *(char*)(samples+(i*6+3)) = 0; //*(char*)&j+1;
+        *(char*)(samples+(i*6+4)) = 0; //*(char*)&j+2;//*(char*)(data+(i*4+2));
+        *(char*)(samples+(i*6+5)) = *(((char*)&j)+3);//*(char*)(data+(i*4+3));
     }
 
     int error;
-    if ((error = snd_pcm_writei(m_pcm, samples, bytes/2)) != bytes/2) {
+    if ((error = snd_pcm_writei(m_pcm, samples, bytes/4)) != bytes/4) {
         qCritical("write to audio interface failed (%s)\n", snd_strerror(error));
         return;
     }

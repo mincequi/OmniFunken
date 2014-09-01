@@ -115,16 +115,19 @@ void AudioOutAlsa::play(char *data, int bytes)
     char *samples = new char[bytes*1.5];
 
     for(int i = 0; i < bytes/4; ++i) {
-        *(char*)(samples+(i*6)) = 0; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
-        *(char*)(samples+(i*6+1)) = *(char*)(data+(i*4));
-        *(char*)(samples+(i*6+2)) = *(char*)(data+(i*4+1));
-        *(char*)(samples+(i*6+3)) = 0;
-        *(char*)(samples+(i*6+4)) = *(char*)(data+(i*4+2));
-        *(char*)(samples+(i*6+5)) = *(char*)(data+(i*4+3));
+        //
+        int32_t j = 2100000000 * sin( (2.f*float(M_PI)*440)/44100 * i );
+
+        *(char*)(samples+(i*6)) = *(char*)&j+1; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
+        *(char*)(samples+(i*6+1)) = *(char*)&j+2;//*(char*)(data+(i*4));
+        *(char*)(samples+(i*6+2)) = *(char*)&j+3;//*(char*)(data+(i*4+1));
+        *(char*)(samples+(i*6+3)) = *(char*)&j+1;
+        *(char*)(samples+(i*6+4)) = *(char*)&j+2;//*(char*)(data+(i*4+2));
+        *(char*)(samples+(i*6+5)) = *(char*)&j+3;//*(char*)(data+(i*4+3));
     }
 
     int error;
-    if ((error = snd_pcm_writei(m_pcm, samples, 704)) != 704) {
+    if ((error = snd_pcm_writei(m_pcm, samples, bytes/2)) != bytes/2) {
         qCritical("write to audio interface failed (%s)\n", snd_strerror(error));
         return;
     }

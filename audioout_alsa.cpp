@@ -88,6 +88,16 @@ void AudioOutAlsa::start()
         return;
     }
 
+    if ((error = snd_pcm_hw_params_set_period_size(m_pcm, hw_params, 352, 0)) < 0) {
+        qCritical("cannot set period size (%s)\n", snd_strerror(error));
+        return;
+    }
+
+    if ((error = snd_pcm_hw_params_set_buffer_size(m_pcm, hw_params, 4*352)) < 0) {
+        qCritical("cannot set buffer size (%s)\n", snd_strerror(error));
+        return;
+    }
+
     if ((error = snd_pcm_hw_params(m_pcm, hw_params)) < 0) {
         qCritical("cannot set parameters (%s)\n", snd_strerror(error));
         return;
@@ -115,14 +125,11 @@ void AudioOutAlsa::play(char *data, int bytes)
     char *samples = new char[bytes*(bytes/2)];
 
     for(int i = 0; i < bytes/4; ++i) {
-        //
-        int16_t j = 32500 * sin( (2.f*float(M_PI)*352)/44100 * i * 2);
-
         *((char*)(samples+(i*6))) = 0; //*(char*)&j+1; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
-        *((char*)(samples+(i*6+1))) = 0; //*(char*)&j+2;//*(char*)(data+(i*4));
+        *((char*)(samples+(i*6+1))) = *(char*)(data+(i*4));
         *((char*)(samples+(i*6+2))) = *(char*)(data+(i*4+1)); //*(((char*)&j)+1);
         *((char*)(samples+(i*6+3))) = 0; //*(char*)&j+1;
-        *((char*)(samples+(i*6+4))) = 0; //*(char*)&j+2;//*(char*)(data+(i*4+2));
+        *((char*)(samples+(i*6+4))) = *(char*)(data+(i*4+2));
         *((char*)(samples+(i*6+5))) = *(char*)(data+(i*4+3)); //*(((char*)&j)+1);
     }
 
@@ -189,7 +196,7 @@ bool AudioOutAlsa::probeNativeFormat()
     printf("Device: %s (type: %s)\n", m_deviceName, snd_pcm_type_name(snd_pcm_type(pcm)));
 
     printf("Formats:");
-    for (int i = ARRAY_SIZE(formats)-1; i >= 0; --i) {
+    for (size_t i = ARRAY_SIZE(formats)-1; i >= 0; --i) {
         if (!snd_pcm_hw_params_test_format(pcm, hw_params, formats[i])) {
             printf(" %s", snd_pcm_format_name(formats[i]));
             m_format = formats[i];
@@ -215,7 +222,7 @@ bool AudioOutAlsa::probeNativeFormat()
         printf(" %u", min);
         m_rate = min;
     } else {
-        for (int i = 0; i < ARRAY_SIZE(rates); ++i) {
+        for (size_t i = 0; i < ARRAY_SIZE(rates); ++i) {
             if (!snd_pcm_hw_params_test_rate(pcm, hw_params, rates[i], 0)) {
                 printf(" %u", rates[i]);
                 m_rate = rates[i];

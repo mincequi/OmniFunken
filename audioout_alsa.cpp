@@ -136,7 +136,6 @@ void AudioOutAlsa::play(char *data, int bytes)
     int error;
     if ((error = snd_pcm_writei(m_pcm, samples, bytes/4)) != bytes/4) {
         qCritical("write to audio interface failed (%s)\n", snd_strerror(error));
-        return;
     }
 
     delete[] samples;

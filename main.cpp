@@ -63,6 +63,8 @@ int main(int argc, char *argv[])
     parser.addOption(portOption);
     QCommandLineOption latencyOption(QStringList() << "l" << "latency", "Set latency in milliseconds.", "latency", "500");
     parser.addOption(latencyOption);
+    QCommandLineOption audioOutOption(QStringList() << "a" << "audio", "Set audio backend.", "audio", "ao");
+    parser.addOption(audioOutOption);
     QCommandLineOption daemonOption(QStringList() << "d" << "daemon", "Start as daemon.");
     parser.addOption(daemonOption);
     parser.process(a);
@@ -77,7 +79,7 @@ int main(int argc, char *argv[])
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
 
     // init audio driver
-    AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut("alsa", audioSettings);
+    AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut(parser.value(audioOutOption).toLatin1(), audioSettings);
     QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->stop(); audioOut->deinit(); } );
 
     // init player
@@ -99,10 +101,10 @@ int main(int argc, char *argv[])
     //deviceControl->init(deviceControlSettings);
     //QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->stop(); deviceControl->deinit(); } );
 
-
     // startup
     rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());
 
+    // register service
     ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd(macAddress);
     dnsSd->registerService(parser.value(nameOption).toLatin1(), parser.value(portOption).toInt());
 

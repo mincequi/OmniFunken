@@ -94,19 +94,7 @@ void AudioOutAo::stop()
 
 void AudioOutAo::play(char *data, int bytes)
 {
-    //bytes *= 1000;
-    char *samples = new char[bytes];
-
-    for(int i = 0; i < bytes/4; ++i) {
-        *(char*)(samples+(i*4)) = 0; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
-        *(char*)(samples+(i*4+1)) = *(char*)(data+(i*4+1));
-        *(char*)(samples+(i*4+2)) = 0; //*(char*)(data+(i*4+2));//*(samples+(i*4));
-        *(char*)(samples+(i*4+3)) = 0;//*(char*)(data+(i*4+3));
-    }
-
-    ao_play(m_aoDevice, samples, bytes);
-
-    delete[] samples;
+    ao_play(m_aoDevice, data, bytes);
 }
 
 static AudioOutAo s_instance;

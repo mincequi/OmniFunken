@@ -55,6 +55,7 @@ Player::PlayWorker::PlayWorker(Player *player)
 
 void Player::PlayWorker::run()
 {
+    qDebug() << __func__;
     while(const RtpPacket *packet = m_player->m_rtpBuffer->takePacket()) {
         m_player->m_mutex.lock();
         int shift = abs(m_player->m_volume/5.625f);
@@ -74,6 +75,5 @@ void Player::PlayWorker::run()
 //    int size;
 //    m_player->m_rtpBuffer->silence(&silence, &size);
 //    m_player->m_audioOut->play(silence, size);
-//    m_player->m_audioOut->stop();
     m_player->m_audioOutTimer->start(15000);
 }

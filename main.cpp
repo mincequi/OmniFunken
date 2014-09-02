@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
 
     // init device control
-    DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl("rs232");
+    //DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl("rs232");
     //deviceControl->init(deviceControlSettings);
     //QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->stop(); deviceControl->deinit(); } );
 

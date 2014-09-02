@@ -1,6 +1,8 @@
 #include "audioout_alsa.h"
 #include "audiooutfactory.h"
 
+#include <QDebug>
+
 
 AudioOutAlsa::AudioOutAlsa() :
     m_deviceName("hw:1"),
@@ -31,6 +33,8 @@ void AudioOutAlsa::start()
     if (m_pcm) {
         return;
     }
+
+    qDebug() << __func__;
 
     snd_pcm_hw_params_t *hw_params;
 
@@ -96,6 +100,7 @@ void AudioOutAlsa::start()
 void AudioOutAlsa::stop()
 {
     if (m_pcm) {
+	qDebug() << __func__;
         snd_pcm_drain(m_pcm);
         snd_pcm_close(m_pcm);
         m_pcm = 0;
@@ -115,9 +120,12 @@ void AudioOutAlsa::play(char *data, int bytes)
         *((char*)(samples+(i*6+5))) = *(char*)(data+(i*4+3)); //*(((char*)&j)+1);
     }
 
-    int error;
-    if ((error = snd_pcm_writei(m_pcm, samples, bytes/4)) != bytes/4) {
-        qCritical("write to audio interface failed (%s)\n", snd_strerror(error));
+    int error = snd_pcm_writei(m_pcm, samples, bytes/4);
+    if (error < 0) {
+        error = snd_pcm_recover(m_pcm, error, 1);
+    }
+    if (error < 0) {
+        qFatal("write to audio interface failed (%s)\n", snd_strerror(error));
     }
 
     delete[] samples;
@@ -130,7 +138,7 @@ bool AudioOutAlsa::hasVolumeControl()
 
 void AudioOutAlsa::setVolume(float volume)
 {
-
+    Q_UNUSED(volume);
 }
 
 bool AudioOutAlsa::probeNativeFormat()

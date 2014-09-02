@@ -75,7 +75,7 @@ void AudioOutAlsa::start()
         return;
     }
 
-    if ((error = snd_pcm_hw_params_set_buffer_size(m_pcm, hw_params, 4*352)) < 0) {
+    if ((error = snd_pcm_hw_params_set_buffer_size(m_pcm, hw_params, 16*352)) < 0) {
         qCritical("cannot set buffer size (%s)\n", snd_strerror(error));
         return;
     }

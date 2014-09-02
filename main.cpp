@@ -4,13 +4,13 @@
 #include <QNetworkInterface>
 #include <QSettings>
 
-#include "audiooutfactory.h"
+#include "audioout/audiooutfactory.h"
 #include "daemon.h"
-#include "devicecontrolfactory.h"
+#include "devicecontrol/devicecontrolfactory.h"
 #include "player.h"
 #include "rtspserver.h"
 #include "util.h"
-#include "zeroconf_dns_sd.h"
+#include "zeroconf/zeroconf_dns_sd.h"
 
 #include <unistd.h>
 #include <sys/stat.h>

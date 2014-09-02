@@ -32,7 +32,6 @@ CONFIG(release, debug|release) {
 
 SOURCES += main.cpp \
     player.cpp \
-    zeroconf_dns_sd.cpp \
     rtspmessage.cpp \
     rtspserver.cpp \
     rtpreceiver.cpp \
@@ -42,19 +41,19 @@ SOURCES += main.cpp \
     omnifunken.cpp \
     rtpbuffer.cpp \
     daemon.c \
-    audiooutfactory.cpp \
-    audioout_ao.cpp \
-    devicecontrolfactory.cpp \
-    util.cpp
+    util.cpp \
+    devicecontrol/devicecontrolfactory.cpp \
+    audioout/audiooutfactory.cpp \
+    audioout/audioout_ao.cpp \
+    zeroconf/zeroconf_dns_sd.cpp
 
 unix:!macx {
-    SOURCES += audioout_alsa.cpp
+    SOURCES += audioout/audioout_alsa.cpp
 }
+
 
 HEADERS += \
     player.h \
-    zeroconf.h \
-    zeroconf_dns_sd.h \
     rtspmessage.h \
     rtspserver.h \
     rtpreceiver.h \
@@ -65,16 +64,19 @@ HEADERS += \
     omnifunken.h \
     rtppacket.h \
     rtpbuffer.h \
-    audioout_abstract.h \
-    audiooutfactory.h \
-    audioout_ao.h \
-    devicecontrolabstract.h \
-    devicecontrolfactory.h \
-    util.h
+    util.h \
+    devicecontrol/devicecontrolfactory.h \
+    devicecontrol/devicecontrolabstract.h \
+    audioout/audioout_abstract.h \
+    audioout/audioout_ao.h \
+    audioout/audiooutfactory.h \
+    zeroconf/zeroconf.h \
+    zeroconf/zeroconf_dns_sd.h
 
 unix:!macx {
-    HEADERS += audioout_alsa.h
+    HEADERS += audioout/audioout_alsa.h
 }
+
 
 OTHER_FILES += \
     etc/init.d/omnifunken \

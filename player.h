@@ -7,7 +7,7 @@
 
 #include <ao/ao.h>
 
-#include "audioout_abstract.h"
+#include "audioout/audioout_abstract.h"
 #include "rtpbuffer.h"
 
 class Player : public QObject

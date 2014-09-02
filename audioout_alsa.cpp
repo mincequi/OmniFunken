@@ -19,29 +19,11 @@ const char *AudioOutAlsa::name() const
 
 bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
-    m_srcAreas = new snd_pcm_channel_area_t[2];
-    m_srcAreas[0].addr = NULL;
-    m_srcAreas[0].first = 0;
-    m_srcAreas[0].step = 32;
-    m_srcAreas[1].addr = NULL;
-    m_srcAreas[1].first = 16;
-    m_srcAreas[1].step = 32;
-
-    m_destAreas = new snd_pcm_channel_area_t[2];
-    m_destAreas[0].addr = calloc(352, 6);
-    m_destAreas[0].first = 0;
-    m_destAreas[0].step = 48;
-    m_destAreas[1].addr = m_destAreas[0].addr;
-    m_destAreas[1].first = 24;
-    m_destAreas[1].step = 48;
-
     return probeNativeFormat();
 }
 
 void AudioOutAlsa::deinit()
 {
-    delete[] m_srcAreas;
-    delete[] m_destAreas;
 }
 
 void AudioOutAlsa::start()
@@ -139,6 +121,16 @@ void AudioOutAlsa::play(char *data, int bytes)
     }
 
     delete[] samples;
+}
+
+bool AudioOutAlsa::hasVolumeControl()
+{
+    return true;
+}
+
+void AudioOutAlsa::setVolume(float volume)
+{
+
 }
 
 bool AudioOutAlsa::probeNativeFormat()

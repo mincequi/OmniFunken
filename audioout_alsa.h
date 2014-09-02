@@ -17,6 +17,8 @@ public:
     virtual void start() override;
     virtual void stop() override;
     virtual void play(char *data, int bytes) override;
+    virtual bool hasVolumeControl() override;
+    virtual void setVolume(float volume) override;
 
 private:
     bool probeNativeFormat();
@@ -26,8 +28,6 @@ private:
     bool        m_block;
     snd_pcm_format_t    m_format;
     unsigned int        m_rate;
-    snd_pcm_channel_area_t *m_srcAreas;
-    snd_pcm_channel_area_t *m_destAreas;
 };
 
 #endif // AUDIOOUT_ALSA_H

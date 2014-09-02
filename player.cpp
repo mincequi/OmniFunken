@@ -68,11 +68,12 @@ void Player::PlayWorker::run()
         }
 
         m_player->m_audioOut->play(packet->payload, packet->payloadSize);
-    }
+    } // while
 
     char *silence = NULL;
     int size;
     m_player->m_rtpBuffer->silence(&silence, &size);
     m_player->m_audioOut->play(silence, size);
+    m_player->m_audioOut->stop();
     m_player->m_audioOutTimer->start(15000);
 }

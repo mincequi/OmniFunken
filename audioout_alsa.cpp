@@ -120,10 +120,10 @@ void AudioOutAlsa::play(char *data, int bytes)
 
         *((char*)(samples+(i*6))) = 0; //*(char*)&j+1; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
         *((char*)(samples+(i*6+1))) = 0; //*(char*)&j+2;//*(char*)(data+(i*4));
-        *((char*)(samples+(i*6+2))) = *(((char*)&j)+1);//*(char*)(data+(i*4+1));
+        *((char*)(samples+(i*6+2))) = *(char*)(data+(i*4+1)); //*(((char*)&j)+1);
         *((char*)(samples+(i*6+3))) = 0; //*(char*)&j+1;
         *((char*)(samples+(i*6+4))) = 0; //*(char*)&j+2;//*(char*)(data+(i*4+2));
-        *((char*)(samples+(i*6+5))) = *(((char*)&j)+1);//*(char*)(data+(i*4+3));
+        *((char*)(samples+(i*6+5))) = *(char*)(data+(i*4+3)); //*(((char*)&j)+1);
     }
 
     int error;

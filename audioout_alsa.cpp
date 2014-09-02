@@ -100,7 +100,7 @@ void AudioOutAlsa::start()
 void AudioOutAlsa::stop()
 {
     if (m_pcm) {
-	qDebug() << __func__;
+        qDebug() << __func__;
         snd_pcm_drain(m_pcm);
         snd_pcm_close(m_pcm);
         m_pcm = 0;

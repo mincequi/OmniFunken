@@ -22,6 +22,7 @@ public:
 
 private:
     bool probeNativeFormat();
+    void* convertSamplesToNativeFormat(qint16 *frames, snd_pcm_uframes_t size);
 
     char        *m_deviceName;
     snd_pcm_t   *m_pcm;

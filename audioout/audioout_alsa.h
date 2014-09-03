@@ -28,6 +28,8 @@ private:
     bool        m_block;
     snd_pcm_format_t    m_format;
     unsigned int        m_rate;
+    
+    bool    m_bitAccurate;
 };
 
 #endif // AUDIOOUT_ALSA_H

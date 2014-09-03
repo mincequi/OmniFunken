@@ -9,7 +9,8 @@ AudioOutAlsa::AudioOutAlsa() :
     m_pcm(0),
     m_block(true),
     m_format(SND_PCM_FORMAT_UNKNOWN),
-    m_rate(44100)
+    m_rate(44100),
+    m_bitAccurate(true)
 {
     AudioOutFactory::registerAudioOut(this);
 }

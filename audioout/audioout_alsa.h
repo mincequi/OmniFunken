@@ -22,15 +22,15 @@ public:
 
 private:
     bool probeNativeFormat();
-    void* convertSamplesToNativeFormat(qint16 *frames, snd_pcm_uframes_t size);
+    const char* convertSamplesToNativeFormat(char *frames, snd_pcm_uframes_t size);
 
     char        *m_deviceName;
     snd_pcm_t   *m_pcm;
     bool        m_block;
     snd_pcm_format_t    m_format;
-    unsigned int        m_rate;
     
     bool    m_bitAccurate;
+    char    *m_conversionBuffer;
 };
 
 #endif // AUDIOOUT_ALSA_H

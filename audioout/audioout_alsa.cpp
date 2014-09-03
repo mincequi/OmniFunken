@@ -1,5 +1,6 @@
 #include "audioout_alsa.h"
 #include "audiooutfactory.h"
+#include "airtunes/common.h"
 
 #include <QDebug>
 
@@ -9,8 +10,8 @@ AudioOutAlsa::AudioOutAlsa() :
     m_pcm(0),
     m_block(true),
     m_format(SND_PCM_FORMAT_UNKNOWN),
-    m_rate(44100),
-    m_bitAccurate(true)
+    m_bitAccurate(true),
+    m_conversionBuffer(NULL)
 {
     AudioOutFactory::registerAudioOut(this);
 }
@@ -22,11 +23,27 @@ const char *AudioOutAlsa::name() const
 
 bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
-    return probeNativeFormat();
+    if (!probeNativeFormat()) {
+        return false;
+    }
+
+    // sample size in bytes
+    int sampleSize = snd_pcm_format_width(m_format);
+    if ((sampleSize%8) != 0) {
+        return false;
+    }
+    if (sampleSize > airtunes::sampleSize) {
+        int size = airtunes::framesPerPacket*airtunes::channels*sampleSize/8;
+        m_conversionBuffer = new char[size];
+    }
+    return true;
 }
 
 void AudioOutAlsa::deinit()
 {
+    if (m_conversionBuffer) {
+        delete[] m_conversionBuffer;
+    }
 }
 
 void AudioOutAlsa::start()
@@ -65,7 +82,7 @@ void AudioOutAlsa::start()
         return;
     }
 
-    if ((error = snd_pcm_hw_params_set_rate(m_pcm, hw_params, 44100/*m_rate*/, 0)) < 0) {
+    if ((error = snd_pcm_hw_params_set_rate(m_pcm, hw_params, airtunes::sampleRate, 0)) < 0) {
         qCritical("cannot set sample rate (%s)\n", snd_strerror(error));
         return;
     }
@@ -75,12 +92,12 @@ void AudioOutAlsa::start()
         return;
     }
 
-    if ((error = snd_pcm_hw_params_set_period_size(m_pcm, hw_params, 352, 0)) < 0) {
+    if ((error = snd_pcm_hw_params_set_period_size(m_pcm, hw_params, airtunes::framesPerPacket, 0)) < 0) {
         qCritical("cannot set period size (%s)\n", snd_strerror(error));
         return;
     }
 
-    if ((error = snd_pcm_hw_params_set_buffer_size(m_pcm, hw_params, 16*352)) < 0) {
+    if ((error = snd_pcm_hw_params_set_buffer_size(m_pcm, hw_params, 16*airtunes::framesPerPacket)) < 0) {
         qCritical("cannot set buffer size (%s)\n", snd_strerror(error));
         return;
     }
@@ -110,28 +127,28 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int bytes)
 {
-    char *samples = new char[bytes*(bytes/2)];
-
-    for(int i = 0; i < bytes/4; ++i) {
-        *((char*)(samples+(i*6))) = 0; //*(char*)&j+1; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
-        *((char*)(samples+(i*6+1))) = *(char*)(data+(i*4));
-        *((char*)(samples+(i*6+2))) = *(char*)(data+(i*4+1)); //*(((char*)&j)+1);
-        *((char*)(samples+(i*6+3))) = 0; //*(char*)&j+1;
-        *((char*)(samples+(i*6+4))) = *(char*)(data+(i*4+2));
-        *((char*)(samples+(i*6+5))) = *(char*)(data+(i*4+3)); //*(((char*)&j)+1);
+    /*
+    if (m_conversionBuffer) {
+        for(int i = 0; i < bytes/4; ++i) {
+            *((char*)(m_conversionBuffer+(i*6))) = 0; //*(char*)&j+1; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
+            *((char*)(m_conversionBuffer+(i*6+1))) = *(char*)(data+(i*4));
+            *((char*)(m_conversionBuffer+(i*6+2))) = *(char*)(data+(i*4+1)); //*(((char*)&j)+1);
+            *((char*)(m_conversionBuffer+(i*6+3))) = 0; //*(char*)&j+1;
+            *((char*)(m_conversionBuffer+(i*6+4))) = *(char*)(data+(i*4+2));
+            *((char*)(m_conversionBuffer+(i*6+5))) = *(char*)(data+(i*4+3)); //*(((char*)&j)+1);
+        }
     }
+    */
 
-    int error = snd_pcm_writei(m_pcm, samples, bytes/4);
+    int error = snd_pcm_writei(m_pcm, convertSamplesToNativeFormat(data, bytes/4), bytes/4);
     if (error < 0) {
         error = snd_pcm_recover(m_pcm, error, 1);
     }
     if (error < 0) {
         qFatal("write to audio interface failed (%s)\n", snd_strerror(error));
     } else {
-        error = snd_pcm_writei(m_pcm, samples, bytes/4);
+        //error = snd_pcm_writei(m_pcm, samples, bytes/4);
     }
-
-    delete[] samples;
 }
 
 bool AudioOutAlsa::hasVolumeControl()
@@ -150,35 +167,25 @@ bool AudioOutAlsa::probeNativeFormat()
 
     static const snd_pcm_format_t formats[] = {
         SND_PCM_FORMAT_S16_LE, /** Signed 16 bit Little Endian */
-        SND_PCM_FORMAT_S16_BE, /** Signed 16 bit Big Endian */
-        SND_PCM_FORMAT_U16_LE, /** Unsigned 16 bit Little Endian */
-        SND_PCM_FORMAT_U16_BE, /** Unsigned 16 bit Big Endian */
+        //SND_PCM_FORMAT_S16_BE, /** Signed 16 bit Big Endian */
+        //SND_PCM_FORMAT_U16_LE, /** Unsigned 16 bit Little Endian */
+        //SND_PCM_FORMAT_U16_BE, /** Unsigned 16 bit Big Endian */
         SND_PCM_FORMAT_S24_LE, /** Signed 24 bit Little Endian */
-        SND_PCM_FORMAT_S24_BE, /** Signed 24 bit Big Endian */
-        SND_PCM_FORMAT_U24_LE, /** Unsigned 24 bit Little Endian */
-        SND_PCM_FORMAT_U24_BE, /** Unsigned 24 bit Big Endian */
+        //SND_PCM_FORMAT_S24_BE, /** Signed 24 bit Big Endian */
+        //SND_PCM_FORMAT_U24_LE, /** Unsigned 24 bit Little Endian */
+        //SND_PCM_FORMAT_U24_BE, /** Unsigned 24 bit Big Endian */
         SND_PCM_FORMAT_S24_3LE, /** Signed 24bit Little Endian in 3bytes format */
-        SND_PCM_FORMAT_S24_3BE, /** Signed 24bit Big Endian in 3bytes format */
-        SND_PCM_FORMAT_U24_3LE, /** Unsigned 24bit Little Endian in 3bytes format */
-        SND_PCM_FORMAT_U24_3BE, /** Unsigned 24bit Big Endian in 3bytes format */
+        //SND_PCM_FORMAT_S24_3BE, /** Signed 24bit Big Endian in 3bytes format */
+        //SND_PCM_FORMAT_U24_3LE, /** Unsigned 24bit Little Endian in 3bytes format */
+        //SND_PCM_FORMAT_U24_3BE, /** Unsigned 24bit Big Endian in 3bytes format */
         SND_PCM_FORMAT_S32_LE, /** Signed 32 bit Little Endian */
-        SND_PCM_FORMAT_S32_BE, /** Signed 32 bit Big Endian */
-        SND_PCM_FORMAT_U32_LE, /** Unsigned 32 bit Little Endian */
-        SND_PCM_FORMAT_U32_BE, /** Unsigned 32 bit Big Endian */
-    };
-
-    static const unsigned int rates[] = {
-        44100,
-        48000,
-        88200,
-        96000,
-        176400,
-        192000,
+        //SND_PCM_FORMAT_S32_BE, /** Signed 32 bit Big Endian */
+        //SND_PCM_FORMAT_U32_LE, /** Unsigned 32 bit Little Endian */
+        //SND_PCM_FORMAT_U32_BE, /** Unsigned 32 bit Big Endian */
     };
 
     snd_pcm_t *pcm;
     snd_pcm_hw_params_t *hw_params;
-    unsigned int min, max;
     int error;
 
     error = snd_pcm_open(&pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
@@ -207,35 +214,46 @@ bool AudioOutAlsa::probeNativeFormat()
     }
     putchar('\n');
 
-    error = snd_pcm_hw_params_get_rate_min(hw_params, &min, NULL);
-    if (error < 0) {
-        fprintf(stderr, "cannot get minimum rate: %s\n", snd_strerror(error));
-        snd_pcm_close(pcm);
+    if ((error = snd_pcm_hw_params_test_rate(pcm, hw_params, airtunes::sampleRate, 0)) < 0) {
+        qCritical("cannot set sample rate (%s)\n", snd_strerror(error));
         return false;
     }
-    error = snd_pcm_hw_params_get_rate_max(hw_params, &max, NULL);
-    if (error < 0) {
-        fprintf(stderr, "cannot get maximum rate: %s\n", snd_strerror(error));
-        snd_pcm_close(pcm);
+    if ((error = snd_pcm_hw_params_test_channels(pcm, hw_params, airtunes::channels)) < 0) {
+        qCritical("cannot set channel count (%s)\n", snd_strerror(error));
         return false;
     }
-    printf("Sample rates:");
-    if (min == max) {
-        printf(" %u", min);
-        m_rate = min;
-    } else {
-        for (size_t i = 0; i < ARRAY_SIZE(rates); ++i) {
-            if (!snd_pcm_hw_params_test_rate(pcm, hw_params, rates[i], 0)) {
-                printf(" %u", rates[i]);
-                m_rate = rates[i];
-                break;
-            }
-        }
+    if ((error = snd_pcm_hw_params_test_period_size(pcm, hw_params, airtunes::framesPerPacket, 0)) < 0) {
+        qCritical("cannot set period size (%s)\n", snd_strerror(error));
+        return false;
     }
-    putchar('\n');
+    if ((error = snd_pcm_hw_params_test_buffer_size(pcm, hw_params, 16*airtunes::framesPerPacket)) < 0) {
+        qCritical("cannot set buffer size (%s)\n", snd_strerror(error));
+        return false;
+    }
 
     snd_pcm_close(pcm);
     return true;
+}
+
+const char* AudioOutAlsa::convertSamplesToNativeFormat(char *frames, snd_pcm_uframes_t size)
+{
+    if (m_conversionBuffer) {
+        for(snd_pcm_uframes_t i = 0; i < size; ++i) {
+            qint32 left = *(((qint16*)frames)+(i*2));
+            qint32 right = *(((qint16*)frames)+(i*2+1));
+
+            left <<= 16;
+            right <<= 16;
+
+            *(m_conversionBuffer+(i*6)) = *((qint8*)&left);
+            *(m_conversionBuffer+(i*6+3)) = *((qint8*)&right);;
+
+            *((qint16*)(m_conversionBuffer+(i*6+1))) = *(((qint16*)&left)+1);
+            *((qint16*)(m_conversionBuffer+(i*6+4))) = *(((qint16*)&right)+1);
+        }
+        return m_conversionBuffer;
+    }
+    return frames;
 }
 
 static AudioOutAlsa s_instance;

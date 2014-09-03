@@ -73,7 +73,8 @@ HEADERS += \
     zeroconf/zeroconf.h \
     zeroconf/zeroconf_dns_sd.h \
     airtunes/airtunes.h \
-    airplay/airplay.h
+    airplay/airplay.h \
+    airtunes/common.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

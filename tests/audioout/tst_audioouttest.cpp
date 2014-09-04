@@ -15,7 +15,8 @@ private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
 
-    void audioOutStartStop();
+    void audioOutStart();
+    void audioOutStop();
     void audioOutPlay();
 
 private:
@@ -39,6 +40,7 @@ void AudioOutTest::initTestCase()
 
     QSettings::SettingsMap settings;
     m_audioOut = AudioOutFactory::createAudioOut(m_driver, settings);
+    QVERIFY(m_audioOut->name() == m_driver);
 }
 
 void AudioOutTest::cleanupTestCase()
@@ -46,11 +48,18 @@ void AudioOutTest::cleanupTestCase()
     m_audioOut->deinit();
 }
 
-void AudioOutTest::audioOutStartStop()
+void AudioOutTest::audioOutStart()
 {
-    QVERIFY(m_audioOut->name() == m_driver);
     QBENCHMARK {
         m_audioOut->start();
+    }
+    m_audioOut->stop();
+}
+
+void AudioOutTest::audioOutStop()
+{
+    m_audioOut->start();
+    QBENCHMARK {
         m_audioOut->stop();
     }
 }

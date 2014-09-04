@@ -56,18 +56,25 @@ Player::PlayWorker::PlayWorker(Player *player)
 void Player::PlayWorker::run()
 {
     qDebug() << __func__;
+
+    float prevVolume = 0.0;
+
     while(const RtpPacket *packet = m_player->m_rtpBuffer->takePacket()) {
         m_player->m_mutex.lock();
-        int shift = abs(m_player->m_volume/5.625f);
-        //float volume = qPow(10.0f, m_volume/20.0f);
+        float volume = m_player->m_volume;
         m_player->m_mutex.unlock();
+        int shift = abs(volume/5.625f);
+        //float volume = qPow(10.0f, m_volume/20.0f);
         if (shift != 0) {
             for (int i = 0; i < packet->payloadSize/2; ++i) {
                 *(qint16 *)(packet->payload+(i*2)) >>= shift;
                 //*(qint16 *)(data+(i*2)) *= volume;
             }
         }
-
+        if (prevVolume != volume && m_player->m_audioOut->hasVolumeControl()) {
+            m_player->m_audioOut->setVolume(volume);
+            prevVolume = volume;
+        }
         m_player->m_audioOut->play(packet->payload, packet->payloadSize);
     } // while
 

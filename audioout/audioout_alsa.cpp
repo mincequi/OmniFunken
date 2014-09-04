@@ -11,7 +11,8 @@ AudioOutAlsa::AudioOutAlsa() :
     m_block(true),
     m_format(SND_PCM_FORMAT_UNKNOWN),
     m_bitAccurate(true),
-    m_conversionBuffer(NULL)
+    m_conversionBuffer(NULL),
+    m_volume(0.0)
 {
     AudioOutFactory::registerAudioOut(this);
 }
@@ -146,7 +147,7 @@ bool AudioOutAlsa::hasVolumeControl()
 
 void AudioOutAlsa::setVolume(float volume)
 {
-    Q_UNUSED(volume);
+    m_volume = volume;
 }
 
 bool AudioOutAlsa::probeNativeFormat()
@@ -200,7 +201,6 @@ bool AudioOutAlsa::probeNativeFormat()
             break;
         }
     }
-    putchar('\n');
 
     if ((error = snd_pcm_hw_params_test_rate(pcm, hw_params, airtunes::sampleRate, 0)) < 0) {
         qWarning("cannot set sample rate (%s)\n", snd_strerror(error));
@@ -232,6 +232,13 @@ const char* AudioOutAlsa::convertSamplesToNativeFormat(char *frames, snd_pcm_ufr
 
             left <<= 16;
             right <<= 16;
+
+            // apply volume
+            int shift = abs(m_volume/5.625f);
+            if (shift) {
+                left >>= shift;
+                right >>= shift;
+            }
 
             *(m_conversionBuffer+(i*6)) = *((qint8*)&left);
             *(m_conversionBuffer+(i*6+3)) = *((qint8*)&right);;

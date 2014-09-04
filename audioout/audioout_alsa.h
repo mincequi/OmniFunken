@@ -31,6 +31,8 @@ private:
     
     bool    m_bitAccurate;
     char    *m_conversionBuffer;
+
+    float m_volume;
 };
 
 #endif // AUDIOOUT_ALSA_H

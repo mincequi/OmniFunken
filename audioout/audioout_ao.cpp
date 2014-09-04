@@ -56,12 +56,11 @@ bool AudioOutAo::init(const QSettings::SettingsMap &settings)
 
 void AudioOutAo::deinit()
 {
-#ifdef Q_OS_MAC
     if (m_aoDevice) {
         ao_close(m_aoDevice);
         m_aoDevice = NULL;
     }
-#endif
+
     ao_shutdown();
 }
 

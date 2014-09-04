@@ -178,24 +178,24 @@ bool AudioOutAlsa::probeNativeFormat()
 
     error = snd_pcm_open(&pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
     if (error < 0) {
-        fprintf(stderr, "cannot open device '%s': %s\n", m_deviceName, snd_strerror(error));
+        qWarning("cannot open device '%s': %s\n", m_deviceName, snd_strerror(error));
         return false;
     }
 
     snd_pcm_hw_params_alloca(&hw_params);
     error = snd_pcm_hw_params_any(pcm, hw_params);
     if (error < 0) {
-        fprintf(stderr, "cannot get hardware parameters: %s\n", snd_strerror(error));
+        qWarning("cannot get hardware parameters: %s\n", snd_strerror(error));
         snd_pcm_close(pcm);
         return false;
     }
 
-    printf("Device: %s (type: %s)\n", m_deviceName, snd_pcm_type_name(snd_pcm_type(pcm)));
+    qDebug("Device: %s (type: %s)\n", m_deviceName, snd_pcm_type_name(snd_pcm_type(pcm)));
 
-    printf("Formats:");
+    qDebug("Formats:");
     for (size_t i = ARRAY_SIZE(formats)-1; i >= 0; --i) {
         if (!snd_pcm_hw_params_test_format(pcm, hw_params, formats[i])) {
-            printf(" %s", snd_pcm_format_name(formats[i]));
+            qDebug(" %s", snd_pcm_format_name(formats[i]));
             m_format = formats[i];
             break;
         }
@@ -203,19 +203,19 @@ bool AudioOutAlsa::probeNativeFormat()
     putchar('\n');
 
     if ((error = snd_pcm_hw_params_test_rate(pcm, hw_params, airtunes::sampleRate, 0)) < 0) {
-        qCritical("cannot set sample rate (%s)\n", snd_strerror(error));
+        qWarning("cannot set sample rate (%s)\n", snd_strerror(error));
         return false;
     }
     if ((error = snd_pcm_hw_params_test_channels(pcm, hw_params, airtunes::channels)) < 0) {
-        qCritical("cannot set channel count (%s)\n", snd_strerror(error));
+        qWarning("cannot set channel count (%s)\n", snd_strerror(error));
         return false;
     }
     if ((error = snd_pcm_hw_params_test_period_size(pcm, hw_params, airtunes::framesPerPacket, 0)) < 0) {
-        qCritical("cannot set period size (%s)\n", snd_strerror(error));
+        qWarning("cannot set period size (%s)\n", snd_strerror(error));
         return false;
     }
     if ((error = snd_pcm_hw_params_test_buffer_size(pcm, hw_params, 16*airtunes::framesPerPacket)) < 0) {
-        qCritical("cannot set buffer size (%s)\n", snd_strerror(error));
+        qWarning("cannot set buffer size (%s)\n", snd_strerror(error));
         return false;
     }
 

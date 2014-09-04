@@ -18,6 +18,9 @@
 
 int main(int argc, char *argv[])
 {
+    // suppress avahi warning
+    setenv("AVAHI_COMPAT_NOWARN", "1", 1);
+
     //qInstallMsgHandler(logOutput);
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("OmniFunken");
@@ -80,7 +83,7 @@ int main(int argc, char *argv[])
 
     // init audio driver
     AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut(parser.value(audioOutOption).toLatin1(), audioSettings);
-    QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->stop(); audioOut->deinit(); } );
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->deinit(); } );
 
     // init player
     Player      *player = new Player(rtpBuffer, audioOut);
@@ -91,8 +94,8 @@ int main(int argc, char *argv[])
     QObject::connect(rtspServer, SIGNAL(receiverSocketRequired(RtpReceiver::PayloadType, quint16*)), rtpReceiver, SLOT(bindSocket(RtpReceiver::PayloadType, quint16*)));
     QObject::connect(rtspServer, SIGNAL(record(quint16)), rtpBuffer, SLOT(flush(quint16)));
     QObject::connect(rtspServer, SIGNAL(flush(quint16)), rtpBuffer, SLOT(flush(quint16)));
-    QObject::connect(rtspServer, SIGNAL(teardown()), rtpBuffer, SLOT(teardown()));
-    QObject::connect(rtspServer, SIGNAL(teardown()), rtpReceiver, SLOT(teardown()));
+    QObject::connect(rtspServer, &RtspServer::teardown, rtpBuffer, &RtpBuffer::teardown);
+    QObject::connect(rtspServer, &RtspServer::teardown, rtpReceiver, &RtpReceiver::teardown);
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
     QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
 

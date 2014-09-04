@@ -41,6 +41,7 @@ bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 
 void AudioOutAlsa::deinit()
 {
+    stop();
     if (m_conversionBuffer) {
         delete[] m_conversionBuffer;
     }
@@ -127,19 +128,6 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int bytes)
 {
-    /*
-    if (m_conversionBuffer) {
-        for(int i = 0; i < bytes/4; ++i) {
-            *((char*)(m_conversionBuffer+(i*6))) = 0; //*(char*)&j+1; //*(char*)(data+(i*4)); //32750 * sin( (2.f*float(M_PI)*440)/44100 * i*2 );
-            *((char*)(m_conversionBuffer+(i*6+1))) = *(char*)(data+(i*4));
-            *((char*)(m_conversionBuffer+(i*6+2))) = *(char*)(data+(i*4+1)); //*(((char*)&j)+1);
-            *((char*)(m_conversionBuffer+(i*6+3))) = 0; //*(char*)&j+1;
-            *((char*)(m_conversionBuffer+(i*6+4))) = *(char*)(data+(i*4+2));
-            *((char*)(m_conversionBuffer+(i*6+5))) = *(char*)(data+(i*4+3)); //*(((char*)&j)+1);
-        }
-    }
-    */
-
     int error = snd_pcm_writei(m_pcm, convertSamplesToNativeFormat(data, bytes/4), bytes/4);
     if (error < 0) {
         error = snd_pcm_recover(m_pcm, error, 1);

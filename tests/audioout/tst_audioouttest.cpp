@@ -2,6 +2,8 @@
 #include <QtTest>
 #include <QCoreApplication>
 
+#include <audioout/audiooutfactory.h>
+
 class AudioOutTest : public QObject
 {
     Q_OBJECT
@@ -12,34 +14,56 @@ public:
 private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
-    void initAudioOut();
-    void initAudioOut_data();
+
+    void audioOutStartStop();
+    void audioOutPlay();
+
+private:
+    AudioOutAbstract *m_audioOut;
+    QString m_driver;
+
 };
 
-AudioOutTest::AudioOutTest()
+AudioOutTest::AudioOutTest() :
+    m_audioOut(NULL)
 {
 }
 
 void AudioOutTest::initTestCase()
 {
+#ifdef Q_OS_MAC
+    m_driver = "ao";
+#elif
+    m_driver = "alsa";
+#endif
+
+    QSettings::SettingsMap settings;
+    m_audioOut = AudioOutFactory::createAudioOut(m_driver, settings);
 }
 
 void AudioOutTest::cleanupTestCase()
 {
+    m_audioOut->deinit();
 }
 
-void AudioOutTest::initAudioOut()
+void AudioOutTest::audioOutStartStop()
 {
-    QFETCH(QString, data);
+    QVERIFY(m_audioOut->name() == m_driver);
     QBENCHMARK {
+        m_audioOut->start();
+        m_audioOut->stop();
     }
 }
 
-void AudioOutTest::initAudioOut_data()
+void AudioOutTest::audioOutPlay()
 {
-    QTest::addColumn<QString>("data");
-    QTest::newRow("0") << QString();
+    /*
+    m_audioOut->start();
+    m_audioOut->play();
+    m_audioOut->stop();
+    */
 }
+
 
 QTEST_MAIN(AudioOutTest)
 

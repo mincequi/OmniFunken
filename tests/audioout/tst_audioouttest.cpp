@@ -33,7 +33,7 @@ void AudioOutTest::initTestCase()
 {
 #ifdef Q_OS_MAC
     m_driver = "ao";
-#elif
+#else
     m_driver = "alsa";
 #endif
 

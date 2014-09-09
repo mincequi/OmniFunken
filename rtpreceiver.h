@@ -2,7 +2,6 @@
 #define RTPRECEIVER_H
 
 #include "rtspmessage.h"
-#include "rtpbuffer.h"
 
 #include "alac.h"
 
@@ -13,6 +12,7 @@
 #include <QObject>
 #include <QUdpSocket>
 
+class RtpBuffer;
 
 class RtpReceiver : public QObject
 {

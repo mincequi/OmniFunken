@@ -1,16 +1,12 @@
 #ifndef DEVICECONTROLFACTORY_H
 #define DEVICECONTROLFACTORY_H
 
+#include <QString>
 
-#include "devicecontrolabstract.h"
-
+class DeviceControlAbstract;
 
 class DeviceControlFactory
 {
-protected:
-    DeviceControlFactory() {}
-    ~DeviceControlFactory() {}
-
 public:
     static DeviceControlAbstract *createDeviceControl(const QString &key);
     static void registerDeviceControl(DeviceControlAbstract* audioOut);

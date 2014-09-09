@@ -1,5 +1,7 @@
 #include "audiooutfactory.h"
 
+#include "audioout_abstract.h"
+
 #include <QDebug>
 #include <QMap>
 #include <QThread>

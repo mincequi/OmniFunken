@@ -3,7 +3,6 @@
 
 #include <QHostAddress>
 #include <QMap>
-#include <QObject>
 
 class RtspMessage : public QObject
 {

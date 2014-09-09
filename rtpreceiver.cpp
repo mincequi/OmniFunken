@@ -1,4 +1,6 @@
 #include "rtpreceiver.h"
+#include "rtp/rtpbuffer.h"
+#include "rtp/rtppacket.h"
 #include "alac.h"
 
 #include <assert.h>

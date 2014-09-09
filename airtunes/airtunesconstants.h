@@ -3,7 +3,6 @@
 
 #include <QtGlobal>
 
-
 namespace airtunes
 {
     const quint32 framesPerPacket = 352;

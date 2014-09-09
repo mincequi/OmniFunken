@@ -1,5 +1,9 @@
 #include "player.h"
 
+#include "audioout/audioout_abstract.h"
+#include "rtp/rtpbuffer.h"
+#include "rtp/rtppacket.h"
+
 #include <QDebug>
 
 Player::Player(RtpBuffer *rtpBuffer, AudioOutAbstract *audioOut, QObject *parent) :

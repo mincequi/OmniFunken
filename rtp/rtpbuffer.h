@@ -1,14 +1,12 @@
 #ifndef RTPBUFFER_H
 #define RTPBUFFER_H
 
-
-#include "rtppacket.h"
-
 #include <QMutex>
 #include <QObject>
 #include <QTimer>
 #include <QVector>
 
+struct RtpPacket;
 
 class RtpBuffer : public QObject
 {

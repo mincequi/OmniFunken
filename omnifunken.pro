@@ -37,15 +37,15 @@ SOURCES += main.cpp \
     rtpreceiver.cpp \
     alac.c \
     ratecontrol.cpp \
-    rtpbufferalt.cpp \
     omnifunken.cpp \
-    rtpbuffer.cpp \
     daemon.c \
     util.cpp \
     devicecontrol/devicecontrolfactory.cpp \
     audioout/audiooutfactory.cpp \
     audioout/audioout_ao.cpp \
-    zeroconf/zeroconf_dns_sd.cpp
+    zeroconf/zeroconf_dns_sd.cpp \
+    rtp/rtpbuffer.cpp \
+    rtp/rtpbufferalt.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -59,11 +59,8 @@ HEADERS += \
     rtpreceiver.h \
     alac.h \
     ratecontrol.h \
-    rtpbufferalt.h \
     daemon.h \
     omnifunken.h \
-    rtppacket.h \
-    rtpbuffer.h \
     util.h \
     devicecontrol/devicecontrolfactory.h \
     devicecontrol/devicecontrolabstract.h \
@@ -74,7 +71,10 @@ HEADERS += \
     zeroconf/zeroconf_dns_sd.h \
     airtunes/airtunes.h \
     airplay/airplay.h \
-    airtunes/common.h
+    rtp/rtppacket.h \
+    rtp/rtpbuffer.h \
+    rtp/rtpbufferalt.h \
+    airtunes/airtunesconstants.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

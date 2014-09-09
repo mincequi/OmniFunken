@@ -1,6 +1,6 @@
 #include "audioout_alsa.h"
 #include "audiooutfactory.h"
-#include "airtunes/common.h"
+#include "airtunes/airtunesconstants.h"
 
 #include <QDebug>
 
@@ -35,7 +35,7 @@ bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
     }
     if (sampleSize > airtunes::sampleSize) {
         int size = airtunes::framesPerPacket*airtunes::channels*sampleSize/8;
-        m_conversionBuffer = new char[size];
+        m_conversionBuffer = new char[size]();
     }
     return true;
 }
@@ -159,7 +159,7 @@ bool AudioOutAlsa::probeNativeFormat()
         //SND_PCM_FORMAT_S16_BE, /** Signed 16 bit Big Endian */
         //SND_PCM_FORMAT_U16_LE, /** Unsigned 16 bit Little Endian */
         //SND_PCM_FORMAT_U16_BE, /** Unsigned 16 bit Big Endian */
-        SND_PCM_FORMAT_S24_LE, /** Signed 24 bit Little Endian */
+        SND_PCM_FORMAT_S24_LE, /** Signed 24 bit Little Endian using low three bytes in 32-bit word */
         //SND_PCM_FORMAT_S24_BE, /** Signed 24 bit Big Endian */
         //SND_PCM_FORMAT_U24_LE, /** Unsigned 24 bit Little Endian */
         //SND_PCM_FORMAT_U24_BE, /** Unsigned 24 bit Big Endian */
@@ -227,24 +227,59 @@ const char* AudioOutAlsa::convertSamplesToNativeFormat(char *frames, snd_pcm_ufr
 {
     if (m_conversionBuffer) {
         for(snd_pcm_uframes_t i = 0; i < size; ++i) {
-            qint32 left = *(((qint16*)frames)+(i*2));
-            qint32 right = *(((qint16*)frames)+(i*2+1));
+            qint32 left = 0;
+            qint32 right = 0;
 
-            left <<= 16;
-            right <<= 16;
+            ((qint16*)&left)[1] = ((qint16*)frames)[i*2];
+            ((qint16*)&right)[1] = ((qint16*)frames)[i*2+1];
 
             // apply volume
-            int shift = abs(m_volume/5.625f);
+            int shift = abs(m_volume/3.75f);
             if (shift) {
                 left >>= shift;
                 right >>= shift;
             }
 
-            *(m_conversionBuffer+(i*6)) = *((qint8*)&left);
-            *(m_conversionBuffer+(i*6+3)) = *((qint8*)&right);;
+            // Always the higher 3 bytes/24 bits are relevant
+            switch (m_format) {
+            case SND_PCM_FORMAT_S24_3LE:
+                m_conversionBuffer[i*6] = ((qint8*)&left)[1];
+                m_conversionBuffer[i*6+1] = ((qint8*)&left)[2];
+                m_conversionBuffer[i*6+2] = ((qint8*)&left)[3];
+                m_conversionBuffer[i*6+3] = ((qint8*)&right)[1];
+                m_conversionBuffer[i*6+4] = ((qint8*)&right)[2];
+                m_conversionBuffer[i*6+5] = ((qint8*)&right)[3];
+                break;
+            case SND_PCM_FORMAT_S24_LE:
+                m_conversionBuffer[i*8] = ((qint8*)&left)[1];
+                m_conversionBuffer[i*8+1] = ((qint8*)&left)[2];
+                m_conversionBuffer[i*8+2] = ((qint8*)&left)[3];
+                m_conversionBuffer[i*8+4] = ((qint8*)&right)[1];
+                m_conversionBuffer[i*8+5] = ((qint8*)&right)[2];
+                m_conversionBuffer[i*8+6] = ((qint8*)&right)[3];
+                break;
+            case SND_PCM_FORMAT_S32_LE:
+                m_conversionBuffer[i*8] = ((qint8*)&left)[0];
+                m_conversionBuffer[i*8+1] = ((qint8*)&left)[1];
+                m_conversionBuffer[i*8+2] = ((qint8*)&left)[2];
+                m_conversionBuffer[i*8+3] = ((qint8*)&left)[3];
+                m_conversionBuffer[i*8+4] = ((qint8*)&right)[0];
+                m_conversionBuffer[i*8+5] = ((qint8*)&right)[1];
+                m_conversionBuffer[i*8+6] = ((qint8*)&right)[2];
+                m_conversionBuffer[i*8+7] = ((qint8*)&right)[3];
+                break;
+            default:
+                return frames;
+                break;
+            }
+
+            /*
+            *(m_conversionBuffer+(i*6)) = *(((qint8*)&left)+1);
+            *(m_conversionBuffer+(i*6+3)) = *(((qint8*)&right)+1);
 
             *((qint16*)(m_conversionBuffer+(i*6+1))) = *(((qint16*)&left)+1);
             *((qint16*)(m_conversionBuffer+(i*6+4))) = *(((qint16*)&right)+1);
+            */
         }
         return m_conversionBuffer;
     }

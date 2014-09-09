@@ -1,14 +1,13 @@
 #ifndef AUDIOOUT_ABSTRACT_H
 #define AUDIOOUT_ABSTRACT_H
 
-#include <QObject>
 #include <QSettings>
 
-class AudioOutAbstract : public QObject
+class AudioOutAbstract
 {
-    Q_OBJECT
 public:
-    AudioOutAbstract() : QObject() {}
+    AudioOutAbstract() {}
+    virtual ~AudioOutAbstract() {}
 
     // name of output plugin
     virtual const char *name() const = 0;
@@ -27,8 +26,6 @@ public:
 
     // if no volume control available, we apply soft volume
     virtual bool hasVolumeControl() { return false; }
-
-public slots:
     virtual void setVolume(float volume) { Q_UNUSED(volume) }
 };
 

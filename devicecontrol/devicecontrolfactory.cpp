@@ -1,5 +1,7 @@
 #include "devicecontrolfactory.h"
 
+#include "devicecontrolabstract.h"
+
 #include <QDebug>
 #include <QMap>
 

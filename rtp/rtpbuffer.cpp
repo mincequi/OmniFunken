@@ -1,5 +1,7 @@
 #include "rtpbuffer.h"
 
+#include "rtppacket.h"
+
 #include <QtDebug>
 
 RtpBuffer::RtpBuffer(int latency, QObject *parent) :

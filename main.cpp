@@ -5,9 +5,11 @@
 #include <QSettings>
 
 #include "audioout/audiooutfactory.h"
+#include "audioout/audioout_abstract.h"
 #include "daemon.h"
 #include "devicecontrol/devicecontrolfactory.h"
 #include "player.h"
+#include "rtp/rtpbuffer.h"
 #include "rtspserver.h"
 #include "util.h"
 #include "zeroconf/zeroconf_dns_sd.h"

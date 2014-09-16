@@ -2,7 +2,7 @@
 #define RTSPSERVER_H
 
 #include "rtspmessage.h"
-#include "Airtunes/Airtunesconstants.h"
+#include "airtunes/airtunesconstants.h"
 
 #include <QTcpServer>
 

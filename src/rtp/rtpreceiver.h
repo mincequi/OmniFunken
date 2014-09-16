@@ -1,7 +1,7 @@
 #ifndef RTPRECEIVER_H
 #define RTPRECEIVER_H
 
-#include "Airtunes/Airtunesconstants.h"
+#include "airtunes/airtunesconstants.h"
 #include "rtsp/rtspmessage.h"
 
 #include "alac.h"

@@ -1,11 +1,11 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include <QMutex>
 #include <QObject>
 #include <QTimer>
 #include <QThread>
 
-#include <ao/ao.h>
 
 class AudioOutAbstract;
 class RtpBuffer;

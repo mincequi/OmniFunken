@@ -28,10 +28,10 @@ void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
     initAlac(announcement.fmtp);
 }
 
-void RtpReceiver::setSenderSocket(RtpReceiver::PayloadType payloadType, quint16 controlPort)
+void RtpReceiver::setSenderSocket(Airtunes::PayloadType payloadType, quint16 controlPort)
 {
     switch (payloadType) {
-    case RetransmitRequest:
+    case Airtunes::RetransmitRequest:
         m_senderControlPort = controlPort;
         break;
     default:
@@ -39,7 +39,7 @@ void RtpReceiver::setSenderSocket(RtpReceiver::PayloadType payloadType, quint16 
     }
 }
 
-void RtpReceiver::bindSocket(RtpReceiver::PayloadType payloadType, quint16 *port)
+void RtpReceiver::bindSocket(Airtunes::PayloadType payloadType, quint16 *port)
 {
     Q_UNUSED(payloadType);
 
@@ -77,14 +77,14 @@ void RtpReceiver::readPendingDatagrams()
         }
 
         switch (header.payloadType) {
-        case Sync:
+        case Airtunes::Sync:
             break;
-        case RetransmitResponse: {
+        case Airtunes::RetransmitResponse: {
             header.sequenceNumber = qFromBigEndian(*((quint16*)(datagram.data()+6)));
             payload = payload+4;
             payloadSize = payloadSize-4;
         }
-        case AudioData: {
+        case Airtunes::AudioData: {
             unsigned char packet[2048];
             decrypt(payload, packet, payloadSize);
             RtpPacket* bufferItem = m_rtpBuffer->obtainPacket(header.sequenceNumber);
@@ -124,7 +124,7 @@ void RtpReceiver::readHeader(const char* data, RtpHeader *header)
     header->extension   = (data[0] >> 4) & 0x01;
     header->csrcCount   = (data[0] >> 0) & 0x0f;
     header->marker      = (data[1] >> 7) & 0x01;
-    header->payloadType = static_cast<PayloadType>((data[1] >> 0) & 0x7f);
+    header->payloadType = static_cast<Airtunes::PayloadType>((data[1] >> 0) & 0x7f);
 
     header->sequenceNumber  = qFromBigEndian(*((quint16*)(data+2)));
     header->timestamp       = qFromBigEndian(*((quint32*)(data+4)));

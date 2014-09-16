@@ -69,7 +69,7 @@ void RtspServer::onNewConnection()
 
 void RtspServer::onRequest()
 {
-    QTcpSocket *tcpSocket = qobject_cast<QTcpSocket *>(sender());
+    QTcpSocket *tcpSocket = qobject_cast<QTcpSocket*>(sender());
     if (!tcpSocket) {
         qFatal("onRequest: no valid sender");
         return;
@@ -108,6 +108,7 @@ void RtspServer::onRequest()
 void RtspServer::handleOptions(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(request);
+    qDebug() << __func__;
     response->insert("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, SET_PARAMETER");
 }
 
@@ -184,20 +185,20 @@ void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
     }
 
     if (senderControlPort) {
-        emit senderSocketAvailable(RtpReceiver::RetransmitRequest, senderControlPort);
-        emit senderSocketAvailable(RtpReceiver::Sync, senderControlPort);
+        emit senderSocketAvailable(Airtunes::RetransmitRequest, senderControlPort);
+        emit senderSocketAvailable(Airtunes::Sync, senderControlPort);
     }
     if (senderTimingPort) {
-        emit senderSocketAvailable(RtpReceiver::TimingRequest, senderTimingPort);
+        emit senderSocketAvailable(Airtunes::TimingRequest, senderTimingPort);
     }    
     
     quint16 receiverServerPort  = 0;
     quint16 receiverControlPort = 0;
     quint16 receiverTimingPort  = 0;
     
-    emit receiverSocketRequired(RtpReceiver::AudioData, &receiverServerPort);
-    emit receiverSocketRequired(RtpReceiver::RetransmitResponse, &receiverControlPort);
-    emit receiverSocketRequired(RtpReceiver::TimingResponse, &receiverTimingPort);
+    emit receiverSocketRequired(Airtunes::AudioData, &receiverServerPort);
+    emit receiverSocketRequired(Airtunes::RetransmitResponse, &receiverControlPort);
+    emit receiverSocketRequired(Airtunes::TimingResponse, &receiverTimingPort);
    
     QByteArray data;
     QTextStream os(&data);

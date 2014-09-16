@@ -8,7 +8,7 @@ class DeviceControlAbstract;
 class DeviceControlFactory
 {
 public:
-    static DeviceControlAbstract *createDeviceControl(const QString &key);
+    static DeviceControlAbstract* createDeviceControl(const QString &key);
     static void registerDeviceControl(DeviceControlAbstract* audioOut);
 };
 

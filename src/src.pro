@@ -15,6 +15,7 @@ TEMPLATE = app
 
 QMAKE_CXXFLAGS += -std=c++11
 
+
 macx {
     INCLUDEPATH += "/usr/local/Cellar/libao/1.2.0/include/"
     LIBS += -L/usr/local/Cellar/libao/1.2.0/lib
@@ -32,9 +33,6 @@ CONFIG(release, debug|release) {
 
 SOURCES += main.cpp \
     player.cpp \
-    rtspmessage.cpp \
-    rtspserver.cpp \
-    rtpreceiver.cpp \
     alac.c \
     ratecontrol.cpp \
     omnifunken.cpp \
@@ -45,7 +43,10 @@ SOURCES += main.cpp \
     audioout/audioout_ao.cpp \
     zeroconf/zeroconf_dns_sd.cpp \
     rtp/rtpbuffer.cpp \
-    rtp/rtpbufferalt.cpp
+    rtp/rtpbufferalt.cpp \
+    rtp/rtpreceiver.cpp \
+    rtsp/rtspmessage.cpp \
+    rtsp/rtspserver.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -54,9 +55,6 @@ unix:!macx {
 
 HEADERS += \
     player.h \
-    rtspmessage.h \
-    rtspserver.h \
-    rtpreceiver.h \
     alac.h \
     ratecontrol.h \
     daemon.h \
@@ -69,18 +67,16 @@ HEADERS += \
     audioout/audiooutfactory.h \
     zeroconf/zeroconf.h \
     zeroconf/zeroconf_dns_sd.h \
-    airtunes/airtunes.h \
     airplay/airplay.h \
     rtp/rtppacket.h \
     rtp/rtpbuffer.h \
     rtp/rtpbufferalt.h \
-    airtunes/airtunesconstants.h
+    airtunes/airtunesconstants.h \
+    rtp/rtpreceiver.h \
+    rtsp/rtspserver.h \
+    rtsp/rtspmessage.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h
 }
 
-
-OTHER_FILES += \
-    etc/init.d/omnifunken \
-    etc/omnifunken.conf

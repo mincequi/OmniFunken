@@ -6,13 +6,14 @@
 
 #include "audioout/audiooutfactory.h"
 #include "audioout/audioout_abstract.h"
-#include "daemon.h"
 #include "devicecontrol/devicecontrolfactory.h"
-#include "player.h"
 #include "rtp/rtpbuffer.h"
-#include "rtspserver.h"
-#include "util.h"
+#include "rtp/rtpreceiver.h"
+#include "rtsp/rtspserver.h"
 #include "zeroconf/zeroconf_dns_sd.h"
+#include "daemon.h"
+#include "player.h"
+#include "util.h"
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -92,8 +93,8 @@ int main(int argc, char *argv[])
 
     // wire components
     QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
-    QObject::connect(rtspServer, SIGNAL(senderSocketAvailable(RtpReceiver::PayloadType, quint16)), rtpReceiver, SLOT(setSenderSocket(RtpReceiver::PayloadType, quint16)));
-    QObject::connect(rtspServer, SIGNAL(receiverSocketRequired(RtpReceiver::PayloadType, quint16*)), rtpReceiver, SLOT(bindSocket(RtpReceiver::PayloadType, quint16*)));
+    QObject::connect(rtspServer, &RtspServer::senderSocketAvailable, rtpReceiver, &RtpReceiver::setSenderSocket);
+    QObject::connect(rtspServer, &RtspServer::receiverSocketRequired, rtpReceiver, &RtpReceiver::bindSocket);
     QObject::connect(rtspServer, SIGNAL(record(quint16)), rtpBuffer, SLOT(flush(quint16)));
     QObject::connect(rtspServer, SIGNAL(flush(quint16)), rtpBuffer, SLOT(flush(quint16)));
     QObject::connect(rtspServer, &RtspServer::teardown, rtpBuffer, &RtpBuffer::teardown);

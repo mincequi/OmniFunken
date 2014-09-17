@@ -5,10 +5,10 @@
 
 namespace Airtunes
 {
-    const quint32 framesPerPacket = 352;
+    const quint16 framesPerPacket = 352;
     const quint32 sampleRate = 44100;
-    const quint32 sampleSize = 16;
-    const quint32 channels = 2;
+    const quint16 sampleSize = 16;
+    const quint8  channels = 2;
 
     enum PayloadType {
         TimingRequest       = 82,

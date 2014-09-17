@@ -6,7 +6,7 @@
 
 
 AudioOutAlsa::AudioOutAlsa() :
-    m_deviceName("hw:1"),
+    m_deviceName("hw:0"),
     m_pcm(0),
     m_block(true),
     m_format(SND_PCM_FORMAT_UNKNOWN),
@@ -24,6 +24,8 @@ const char *AudioOutAlsa::name() const
 
 bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
+    Q_UNUSED(settings)
+
     if (!probeNativeFormat()) {
         return false;
     }
@@ -33,8 +35,8 @@ bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
     if ((sampleSize%8) != 0) {
         return false;
     }
-    if (sampleSize > airtunes::sampleSize) {
-        int size = airtunes::framesPerPacket*airtunes::channels*sampleSize/8;
+    if (sampleSize > Airtunes::sampleSize) {
+        int size = Airtunes::framesPerPacket*Airtunes::channels*sampleSize/8;
         m_conversionBuffer = new char[size]();
     }
     return true;
@@ -59,51 +61,42 @@ void AudioOutAlsa::start()
     snd_pcm_hw_params_t *hw_params;
 
     int error = 0;
-    if (error = snd_pcm_open(&m_pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, (m_block ? 0 : SND_PCM_NONBLOCK)) < 0) {
+    if ((error = snd_pcm_open(&m_pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, m_block ? 0 : SND_PCM_NONBLOCK) < 0)) {
         qCritical("cannot open audio device %s (%s)\n", m_deviceName, snd_strerror(error));
         return;
     }
-
     if ((error = snd_pcm_hw_params_malloc(&hw_params)) < 0) {
         qCritical("cannot allocate hardware parameter structure (%s)\n", snd_strerror(error));
         return;
     }
-
     if ((error = snd_pcm_hw_params_any(m_pcm, hw_params)) < 0) {
         qCritical("cannot initialize hardware parameter structure (%s)\n", snd_strerror(error));
         return;
     }
-
     if ((error = snd_pcm_hw_params_set_access(m_pcm, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
         qCritical("cannot set access type (%s)\n", snd_strerror(error));
         return;
     }
-
     if ((error = snd_pcm_hw_params_set_format(m_pcm, hw_params, m_format)) < 0) {
         qCritical("cannot set sample format (%s)\n", snd_strerror(error));
         return;
     }
-
-    if ((error = snd_pcm_hw_params_set_rate(m_pcm, hw_params, airtunes::sampleRate, 0)) < 0) {
+    if ((error = snd_pcm_hw_params_set_rate(m_pcm, hw_params, Airtunes::sampleRate, 0)) < 0) {
         qCritical("cannot set sample rate (%s)\n", snd_strerror(error));
         return;
     }
-
     if ((error = snd_pcm_hw_params_set_channels(m_pcm, hw_params, 2)) < 0) {
         qCritical("cannot set channel count (%s)\n", snd_strerror(error));
         return;
     }
-
-    if ((error = snd_pcm_hw_params_set_period_size(m_pcm, hw_params, airtunes::framesPerPacket, 0)) < 0) {
+    if ((error = snd_pcm_hw_params_set_period_size(m_pcm, hw_params, Airtunes::framesPerPacket, 0)) < 0) {
         qCritical("cannot set period size (%s)\n", snd_strerror(error));
         return;
     }
-
-    if ((error = snd_pcm_hw_params_set_buffer_size(m_pcm, hw_params, 16*airtunes::framesPerPacket)) < 0) {
+    if ((error = snd_pcm_hw_params_set_buffer_size(m_pcm, hw_params, 16*Airtunes::framesPerPacket)) < 0) {
         qCritical("cannot set buffer size (%s)\n", snd_strerror(error));
         return;
     }
-
     if ((error = snd_pcm_hw_params(m_pcm, hw_params)) < 0) {
         qCritical("cannot set parameters (%s)\n", snd_strerror(error));
         return;
@@ -194,7 +187,7 @@ bool AudioOutAlsa::probeNativeFormat()
     qDebug("Device: %s (type: %s)\n", m_deviceName, snd_pcm_type_name(snd_pcm_type(pcm)));
 
     qDebug("Formats:");
-    for (size_t i = ARRAY_SIZE(formats)-1; i >= 0; --i) {
+    for (int i = ARRAY_SIZE(formats)-1; i >= 0; --i) {
         if (!snd_pcm_hw_params_test_format(pcm, hw_params, formats[i])) {
             qDebug(" %s", snd_pcm_format_name(formats[i]));
             m_format = formats[i];
@@ -202,19 +195,19 @@ bool AudioOutAlsa::probeNativeFormat()
         }
     }
 
-    if ((error = snd_pcm_hw_params_test_rate(pcm, hw_params, airtunes::sampleRate, 0)) < 0) {
+    if ((error = snd_pcm_hw_params_test_rate(pcm, hw_params, Airtunes::sampleRate, 0)) < 0) {
         qWarning("cannot set sample rate (%s)\n", snd_strerror(error));
         return false;
     }
-    if ((error = snd_pcm_hw_params_test_channels(pcm, hw_params, airtunes::channels)) < 0) {
+    if ((error = snd_pcm_hw_params_test_channels(pcm, hw_params, Airtunes::channels)) < 0) {
         qWarning("cannot set channel count (%s)\n", snd_strerror(error));
         return false;
     }
-    if ((error = snd_pcm_hw_params_test_period_size(pcm, hw_params, airtunes::framesPerPacket, 0)) < 0) {
+    if ((error = snd_pcm_hw_params_test_period_size(pcm, hw_params, Airtunes::framesPerPacket, 0)) < 0) {
         qWarning("cannot set period size (%s)\n", snd_strerror(error));
         return false;
     }
-    if ((error = snd_pcm_hw_params_test_buffer_size(pcm, hw_params, 16*airtunes::framesPerPacket)) < 0) {
+    if ((error = snd_pcm_hw_params_test_buffer_size(pcm, hw_params, 16*Airtunes::framesPerPacket)) < 0) {
         qWarning("cannot set buffer size (%s)\n", snd_strerror(error));
         return false;
     }
@@ -235,6 +228,9 @@ const char* AudioOutAlsa::convertSamplesToNativeFormat(char *frames, snd_pcm_ufr
 
             // apply volume
             int shift = abs(m_volume/3.75f);
+            if (shift >= 16) {
+                shift = 16;
+            }
             if (shift) {
                 left >>= shift;
                 right >>= shift;

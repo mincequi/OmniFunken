@@ -24,7 +24,7 @@ private:
     bool probeNativeFormat();
     const char* convertSamplesToNativeFormat(char *frames, snd_pcm_uframes_t size);
 
-    char        *m_deviceName;
+    const char  *m_deviceName;
     snd_pcm_t   *m_pcm;
     bool        m_block;
     snd_pcm_format_t    m_format;

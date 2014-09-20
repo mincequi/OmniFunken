@@ -10,6 +10,7 @@ case "$1" in
     # add the omnifunken user
     if ! getent passwd omnifunken >/dev/null; then
         adduser --quiet --ingroup audio --system --no-create-home omnifunken
+        adduser omnifunken dialout
     fi
     ;;
 

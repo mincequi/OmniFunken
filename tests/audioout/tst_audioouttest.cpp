@@ -2,6 +2,7 @@
 #include <QtTest>
 #include <QCoreApplication>
 
+#include <audioout/audioout_abstract.h>
 #include <audioout/audiooutfactory.h>
 
 class AudioOutTest : public QObject

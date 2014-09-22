@@ -272,14 +272,6 @@ const char* AudioOutAlsa::convertSamplesToNativeFormat(char *frames, snd_pcm_ufr
                 return frames;
                 break;
             }
-
-            /*
-            *(m_conversionBuffer+(i*6)) = *(((qint8*)&left)+1);
-            *(m_conversionBuffer+(i*6+3)) = *(((qint8*)&right)+1);
-
-            *((qint16*)(m_conversionBuffer+(i*6+1))) = *(((qint16*)&left)+1);
-            *((qint16*)(m_conversionBuffer+(i*6+4))) = *(((qint16*)&right)+1);
-            */
         }
         return m_conversionBuffer;
     }

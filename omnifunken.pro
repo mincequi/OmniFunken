@@ -1,7 +1,7 @@
 TEMPLATE = subdirs
 
-SUBDIRS += \
-    src
+SUBDIRS += src
+!isEmpty(BUILD_TESTS):SUBDIRS += tests
 
 OTHER_FILES += \
     etc/init.d/omnifunken \

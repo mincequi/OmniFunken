@@ -14,7 +14,7 @@ public:
     virtual const char *name() const = 0;
 
     // called at startup
-    virtual void init(const QSettings::SettingsMap &settings) { Q_UNUSED(settings) }
+    virtual bool init(const QSettings::SettingsMap &settings) { Q_UNUSED(settings) return true; }
     // called at shutdown
     virtual void deinit() {}
 
@@ -24,6 +24,9 @@ public:
     virtual void close() {}
 
 public slots:
+    virtual void powerOn() {}
+    virtual void powerOff() {}
+    virtual void setInput() {}
     virtual void setVolume(float volume) { Q_UNUSED(volume) }
 
 };

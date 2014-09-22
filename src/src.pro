@@ -46,7 +46,8 @@ SOURCES += main.cpp \
     rtp/rtpbufferalt.cpp \
     rtp/rtpreceiver.cpp \
     rtsp/rtspmessage.cpp \
-    rtsp/rtspserver.cpp
+    rtsp/rtspserver.cpp \
+    devicecontrol/devicecontrolrs232.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -74,7 +75,8 @@ HEADERS += \
     airtunes/airtunesconstants.h \
     rtp/rtpreceiver.h \
     rtsp/rtspserver.h \
-    rtsp/rtspmessage.h
+    rtsp/rtspmessage.h \
+    devicecontrol/devicecontrolrs232.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

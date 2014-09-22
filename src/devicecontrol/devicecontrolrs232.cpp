@@ -32,8 +32,8 @@ void DeviceControlRs232::deinit()
 void DeviceControlRs232::open()
 {
     m_serialPort.setPortName(m_portName);
-    m_serialPort.setBaudRate(m_baudRate);
     m_serialPort.open(QIODevice::WriteOnly);
+    m_serialPort.setBaudRate(m_baudRate);
 }
 
 void DeviceControlRs232::close()

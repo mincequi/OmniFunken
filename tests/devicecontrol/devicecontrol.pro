@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += testlib
+QT       += testlib serialport
 
 QT       -= gui
 
@@ -21,7 +21,9 @@ DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
 INCLUDEPATH += ../../src
 
-SOURCES += ../../src/devicecontrol/devicecontrolfactory.cpp
+SOURCES += ../../src/devicecontrol/devicecontrolfactory.cpp \
+    ../../src/devicecontrol/devicecontrolrs232.cpp
 
 HEADERS += ../../src/devicecontrol/devicecontrolabstract.h \
-    ../../src/devicecontrol/devicecontrolfactory.h
+    ../../src/devicecontrol/devicecontrolfactory.h \
+    ../../src/devicecontrol/devicecontrolrs232.h

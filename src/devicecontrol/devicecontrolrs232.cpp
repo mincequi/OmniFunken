@@ -2,6 +2,8 @@
 
 #include "devicecontrolfactory.h"
 
+#include <QDebug>
+
 DeviceControlRs232::DeviceControlRs232() :
     m_serialPort(NULL),
     m_portName("/dev/ttyUSB0"),
@@ -9,8 +11,7 @@ DeviceControlRs232::DeviceControlRs232() :
 {
     DeviceControlFactory::registerDeviceControl(this);
 
-    m_timer.setSingleShot(true);
-    connect(m_serialPort, SIGNAL(error(QSerialPort::SerialPortError)), SLOT(handleError(QSerialPort::SerialPortError)));
+    connect(&m_serialPort, SIGNAL(error(QSerialPort::SerialPortError)), SLOT(handleError(QSerialPort::SerialPortError)));
 }
 
 const char *DeviceControlRs232::name() const
@@ -44,7 +45,7 @@ void DeviceControlRs232::close()
 
 void DeviceControlRs232::powerOn()
 {
-    write(QByteArray::fromHex("025781011003");
+    write(QByteArray::fromHex("025781011003"));
 }
 
 void DeviceControlRs232::powerOff()
@@ -59,10 +60,10 @@ void DeviceControlRs232::setVolume(float volume)
 {
 }
 
-void SerialPortWriter::handleError(QSerialPort::SerialPortError serialPortError)
+void DeviceControlRs232::handleError(QSerialPort::SerialPortError serialPortError)
 {
     if (serialPortError == QSerialPort::WriteError) {
-        qWarning() << __pretty_function__ << ": failed writing data";
+        qWarning() << __PRETTY_FUNCTION__ << ": failed writing data";
     }
 }
 
@@ -70,10 +71,10 @@ void DeviceControlRs232::write(const QByteArray &writeData)
 {
     //m_writeData = writeData;
 
-    qint64 bytesWritten = m_serialPort->write(writeData);
+    qint64 bytesWritten = m_serialPort.write(writeData);
 
     if (bytesWritten != writeData.size()) {
-        qWarning() << __pretty_function__ << ": failed writing data";
+        qWarning() << __PRETTY_FUNCTION__ << ": failed writing data";
         return;
     }
 }

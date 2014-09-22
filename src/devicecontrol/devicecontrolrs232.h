@@ -3,7 +3,7 @@
 
 #include "devicecontrolabstract.h"
 
-#include <QtSerialPort/QSerialPort>
+#include <QtSerialPort/QtSerialPort>
 #include <QTextStream>
 #include <QTimer>
 

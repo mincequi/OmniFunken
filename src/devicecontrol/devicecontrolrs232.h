@@ -29,13 +29,13 @@ private slots:
 
 private:
     void write(const QByteArray &writeData);
+    QByteArray getVolumeCommand(float volume);
 
     QSerialPort m_serialPort;
     QString     m_portName;
     qint32      m_baudRate;
 
-    //QByteArray  m_writeData;
-    //qint64      m_bytesWritten;
+    QMap<QString, QByteArray> m_commands;
 };
 
 #endif // DEVICECONTROLRS232_H

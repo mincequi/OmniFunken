@@ -6,6 +6,7 @@
 
 #include "audioout/audiooutfactory.h"
 #include "audioout/audioout_abstract.h"
+#include "devicecontrol/devicecontrolabstract.h"
 #include "devicecontrol/devicecontrolfactory.h"
 #include "rtp/rtpbuffer.h"
 #include "rtp/rtpreceiver.h"
@@ -100,12 +101,21 @@ int main(int argc, char *argv[])
     QObject::connect(rtspServer, &RtspServer::teardown, rtpBuffer, &RtpBuffer::teardown);
     QObject::connect(rtspServer, &RtspServer::teardown, rtpReceiver, &RtpReceiver::teardown);
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
-    QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
+    //QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
 
     // init device control
-    //DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl("rs232");
-    //deviceControl->init(deviceControlSettings);
-    //QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->stop(); deviceControl->deinit(); } );
+    QSettings::SettingsMap deviceControlSettings;
+    deviceControlSettings.insert("power_on", "0x02 0x57 0x81 0x01 0x10 0x03");
+    deviceControlSettings.insert("power_off", "0x02 0x57 0x81 0x00 0x10 0x03");
+    deviceControlSettings.insert("set_input", "0x02 0x57 0x82 0xYY 0x10 0x03"); //#YY= 0x01 to 0x07
+    deviceControlSettings.insert("set_volume", "0x02 0x57 0x83 0xYY 0x10 0x03"); //#YY=0x00 to 0x4F
+    deviceControlSettings.insert("min_volume", "0x00");
+    deviceControlSettings.insert("max_volume", "0x20");
+
+    DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl("rs232", deviceControlSettings);
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->close(); deviceControl->deinit(); } );
+
+    QObject::connect(rtspServer, &RtspServer::volume, deviceControl, &DeviceControlAbstract::setVolume);
 
     // startup
     rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());

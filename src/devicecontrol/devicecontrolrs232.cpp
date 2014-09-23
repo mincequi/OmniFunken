@@ -22,6 +22,13 @@ const char *DeviceControlRs232::name() const
 bool DeviceControlRs232::init(const QSettings::SettingsMap &settings)
 {
     m_baudRate = QSerialPort::Baud4800;
+
+    auto it = settings.constBegin();
+    while (it != settings.constEnd()) {
+        m_commands.insert(it.key(), it.value().toString().remove(QRegExp("(0x|0X|x|X|\\s)")).toLatin1());
+        ++it;
+    }
+
     return true;
 }
 
@@ -49,19 +56,30 @@ void DeviceControlRs232::close()
 
 void DeviceControlRs232::powerOn()
 {
-    write(QByteArray::fromHex("025781011003"));
+    if (m_commands.contains("power_on")) {
+        write(QByteArray::fromHex(m_commands.value("power_on")));
+    }
 }
 
 void DeviceControlRs232::powerOff()
 {
+    if (m_commands.contains("power_off")) {
+        write(QByteArray::fromHex(m_commands.value("power_off")));
+    }
 }
 
 void DeviceControlRs232::setInput()
 {
+    if (m_commands.contains("set_input")) {
+        write(QByteArray::fromHex(m_commands.value("set_input")));
+    }
 }
 
 void DeviceControlRs232::setVolume(float volume)
 {
+    if (m_commands.contains("set_volume")) {
+        write(getVolumeCommand(volume));
+    }
 }
 
 void DeviceControlRs232::handleTimeout()
@@ -77,14 +95,26 @@ void DeviceControlRs232::handleError(QSerialPort::SerialPortError serialPortErro
 
 void DeviceControlRs232::write(const QByteArray &writeData)
 {
-    //m_writeData = writeData;
-
     qint64 bytesWritten = m_serialPort.write(writeData);
-    m_serialPort.waitForBytesWritten(-1);
+    m_serialPort.waitForBytesWritten(100);
+}
 
-    if (bytesWritten != writeData.size()) {
-        qWarning() << __PRETTY_FUNCTION__ << ": failed writing data";
-        return;
+QByteArray DeviceControlRs232::getVolumeCommand(float volume)
+{
+    QByteArray command = m_commands.value("set_volume");
+    if (volume <= -144.0f) {
+        return command.replace("YY", "00");
+    } else if (volume >= 0.0f) {
+        return command.replace("YY", m_commands.value("max_volume"));
+    } else {
+        volume += 30.0f; // shift from 0.0 to 30.0
+        volume /= 30.0f; // scale volume from 0.0 to 1.0
+        bool ok = false;
+        QByteArray number = QByteArray::number((uint)((m_commands.value("max_volume").toUInt(&ok, 16)*volume)+0.5f), 16);
+        if (number.size() == 1) {
+            number.prepend("0");
+        }
+        return command.replace("YY", number);
     }
 }
 

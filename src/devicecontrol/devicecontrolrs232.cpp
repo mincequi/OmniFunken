@@ -60,6 +60,10 @@ void DeviceControlRs232::setVolume(float volume)
 {
 }
 
+void DeviceControlRs232::handleTimeout()
+{
+}
+
 void DeviceControlRs232::handleError(QSerialPort::SerialPortError serialPortError)
 {
     if (serialPortError == QSerialPort::WriteError) {

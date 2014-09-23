@@ -9,6 +9,7 @@
 
 class DeviceControlRs232 : public DeviceControlAbstract
 {
+    Q_OBJECT
 public:
     DeviceControlRs232();
 

@@ -78,7 +78,7 @@ void DeviceControlRs232::setInput()
 void DeviceControlRs232::setVolume(float volume)
 {
     if (m_commands.contains("set_volume")) {
-        write(getVolumeCommand(volume));
+        write(QByteArray::fromHex(getVolumeCommand(volume)));
     }
 }
 

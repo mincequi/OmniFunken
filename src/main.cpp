@@ -1,7 +1,6 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QHostInfo>
-#include <QNetworkInterface>
 #include <QSettings>
 
 #include "audioout/audiooutfactory.h"
@@ -31,18 +30,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion("0.0.1");
 
     // MAC address
-    QString macAddress;
-    foreach(QNetworkInterface networkInterface, QNetworkInterface::allInterfaces()) {
-        // Return only the first non-loopback MAC Address
-        if (!(networkInterface.flags() & QNetworkInterface::IsLoopBack)) {
-            macAddress = networkInterface.hardwareAddress();
-            if (isValidMacAddress(macAddress)) {
-                break;
-            }
-        }
-    }
-    // TODO: mac address might be "00:00:00:00:00:00", which is illegal
-    qDebug() << "MAC address: " << macAddress;
+    QString macAddress = getMacAddress();
 
     // settings
     QSettings settings("/etc/omnifunken.conf", QSettings::IniFormat);
@@ -72,6 +60,8 @@ int main(int argc, char *argv[])
     parser.addOption(latencyOption);
     QCommandLineOption audioOutOption(QStringList() << "a" << "audio", "Set audio backend.", "audio", "ao");
     parser.addOption(audioOutOption);
+    QCommandLineOption audioDeviceOption(QStringList() << "ad" << "audiodevice", "Set audio device.", "audiodevice", "hw:0");
+    parser.addOption(audioDeviceOption);
     QCommandLineOption daemonOption(QStringList() << "d" << "daemon", "Start as daemon.");
     parser.addOption(daemonOption);
     parser.process(a);
@@ -86,7 +76,9 @@ int main(int argc, char *argv[])
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
 
     // init audio driver
-    AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut(parser.value(audioOutOption).toLatin1(), audioSettings);
+    AudioOutAbstract *audioOut = AudioOutFactory::createAudioOut(parser.value(audioOutOption).toLatin1(),
+                                                                 parser.value(audioDeviceOption).toLatin1(),
+                                                                 audioSettings);
     QObject::connect(&a, &QCoreApplication::aboutToQuit, [audioOut]() { audioOut->deinit(); } );
 
     // init player

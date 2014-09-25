@@ -3,6 +3,6 @@
 
 #include <QString>
 
-bool isValidMacAddress(const QString &address);
+QString getMacAddress();
 
 #endif // UTIL_H

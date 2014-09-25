@@ -1,8 +1,9 @@
 #include "util.h"
 
+#include <QNetworkInterface>
 #include <QStringList>
 
-bool isValidMacAddress(const QString &address)
+bool isMacAddressValid(const QString &address)
 {
     QStringList list = address.split(":");
 
@@ -13,4 +14,21 @@ bool isValidMacAddress(const QString &address)
              (list.at(3).toInt() != 0) ||
              (list.at(4).toInt() != 0) ||
              (list.at(5).toInt() != 0)));
+}
+
+QString getMacAddress()
+{
+    QString macAddress;
+    foreach(QNetworkInterface networkInterface, QNetworkInterface::allInterfaces()) {
+        // Return only the first non-loopback MAC Address
+        if (!(networkInterface.flags() & QNetworkInterface::IsLoopBack)) {
+            macAddress = networkInterface.hardwareAddress();
+            if (isMacAddressValid(macAddress)) {
+                break;
+            }
+        }
+    }
+    // TODO: mac address might be "00:00:00:00:00:00", which is illegal
+    qDebug() << __PRETTY_FUNCTION__ << ": " << macAddress;
+    return macAddress;
 }

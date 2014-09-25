@@ -22,6 +22,11 @@ const char *AudioOutAlsa::name() const
     return "alsa";
 }
 
+void AudioOutAlsa::setDevice(const QString &device)
+{
+    m_deviceName = device;
+}
+
 bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
     Q_UNUSED(settings)

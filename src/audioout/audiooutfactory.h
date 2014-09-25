@@ -9,7 +9,9 @@ class AudioOutAbstract;
 class AudioOutFactory
 {
 public:
-    static AudioOutAbstract *createAudioOut(const QString &key, const QSettings::SettingsMap &settings);
+    static AudioOutAbstract *createAudioOut(const QString &key,
+                                            const QString &device,
+                                            const QSettings::SettingsMap &settings);
     static void registerAudioOut(AudioOutAbstract* audioOut);
 };
 

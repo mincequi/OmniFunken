@@ -12,6 +12,7 @@ public:
     AudioOutAlsa();
 
     virtual const char *name() const override;
+    virtual void setDevice(const QString &device) override;
     virtual bool init(const QSettings::SettingsMap &settings) override;
     virtual void deinit() override;
     virtual void start() override;

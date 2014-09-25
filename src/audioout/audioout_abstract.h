@@ -12,6 +12,9 @@ public:
     // name of output plugin
     virtual const char *name() const = 0;
 
+    // set device
+    virtual void setDevice(const QString &device) { Q_UNUSED(device) }
+
     // called at startup
     virtual bool init(const QSettings::SettingsMap &settings) { Q_UNUSED(settings) return true; }
     // called at shutdown

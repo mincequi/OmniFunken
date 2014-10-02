@@ -22,8 +22,8 @@ bool AudioOutAo::init(const QSettings::SettingsMap &settings)
 
     auto it = settings.find("driver");
     if (it != settings.end()) {
-        const char *driverName = it.value().toByteArray();
-        if (driverName) {
+        QByteArray driverName = it.value().toByteArray();
+        if (!driverName.isEmpty()) {
             m_driverId = ao_driver_id(driverName);
         } else {
             m_driverId = ao_default_driver_id();

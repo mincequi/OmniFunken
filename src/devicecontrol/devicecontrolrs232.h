@@ -14,7 +14,7 @@ public:
     DeviceControlRs232();
 
     virtual const char *name() const override;
-    virtual bool init(const QSettings::SettingsMap &settings) override;
+    virtual bool init(const QString &device, const QString &group, QSettings *settings) override;
     virtual void deinit() override;
     virtual void open() override;
     virtual void close() override;
@@ -32,7 +32,7 @@ private:
     QByteArray getVolumeCommand(float volume);
 
     QSerialPort m_serialPort;
-    QString     m_portName;
+    QString     m_device;
     qint32      m_baudRate;
 
     QMap<QString, QByteArray> m_commands;

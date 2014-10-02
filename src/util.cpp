@@ -16,6 +16,9 @@ bool isMacAddressValid(const QString &address)
              (list.at(5).toInt() != 0)));
 }
 
+
+namespace Util {
+
 QString getMacAddress()
 {
     QString macAddress;
@@ -29,6 +32,23 @@ QString getMacAddress()
         }
     }
     // TODO: mac address might be "00:00:00:00:00:00", which is illegal
-    qDebug() << __PRETTY_FUNCTION__ << ": " << macAddress;
+    qDebug() << __func__ << ": " << macAddress;
     return macAddress;
 }
+
+qint32 roundToPowerOfTwo(qint32 x)
+{
+    if (x < 0) {
+        return 0;
+    }
+
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return x+1;
+}
+
+} // namespace Util

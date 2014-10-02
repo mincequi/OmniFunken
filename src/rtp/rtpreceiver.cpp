@@ -106,9 +106,6 @@ void RtpReceiver::requestRetransmit(quint16 first, quint16 num)
     char req[8];    // *not* a standard RTCP NACK
     req[0] = 0x80;
     req[1] = 0x55|0x80;  // Apple 'resend'
-//    *(unsigned short *)(req+2) = htons(1);  // our seqnum
-//    *(unsigned short *)(req+4) = htons(first);  // missed seqnum
-//    *(unsigned short *)(req+6) = htons(num);  // count
 
     *(unsigned short *)(req+2) = qToBigEndian(1);  // our seqnum
     *(unsigned short *)(req+4) = qToBigEndian(first);  // missed seqnum

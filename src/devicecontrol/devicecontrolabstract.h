@@ -14,7 +14,7 @@ public:
     virtual const char *name() const = 0;
 
     // called at startup
-    virtual bool init(const QSettings::SettingsMap &settings) { Q_UNUSED(settings) return true; }
+    virtual bool init(const QString &device, const QString &settingsGroup, QSettings *settings) = 0;
     // called at shutdown
     virtual void deinit() {}
 

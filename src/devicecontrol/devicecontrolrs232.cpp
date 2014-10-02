@@ -4,9 +4,10 @@
 
 #include <QDebug>
 
+
 DeviceControlRs232::DeviceControlRs232() :
     m_serialPort(NULL),
-    m_portName("/dev/ttyUSB0"),
+    m_device("/dev/ttyUSB0"),
     m_baudRate(QSerialPort::UnknownBaud)
 {
     DeviceControlFactory::registerDeviceControl(this);
@@ -19,26 +20,41 @@ const char *DeviceControlRs232::name() const
     return "rs232";
 }
 
-bool DeviceControlRs232::init(const QSettings::SettingsMap &settings)
+bool DeviceControlRs232::init(const QString &device, const QString &group, QSettings *settings)
 {
-    m_baudRate = QSerialPort::Baud4800;
+    m_device = device;
 
-    auto it = settings.constBegin();
-    while (it != settings.constEnd()) {
-        m_commands.insert(it.key(), it.value().toString().remove(QRegExp("(0x|0X|x|X|\\s)")).toLatin1());
-        ++it;
+    settings->beginGroup(group);
+    m_baudRate = settings->value("baud_rate", QSerialPort::Baud4800).toInt();
+    QStringList keys = settings->childKeys();
+    for (const QString &key : keys) {
+        m_commands.insert(key, QByteArray::fromHex(settings->value(key).toString().remove(QRegExp("(0x|0X|x|X|\\s)")).toLatin1()));
+    }
+    settings->endGroup();
+
+    m_serialPort.setPortName(m_device);
+    if (!m_serialPort.open(QIODevice::WriteOnly)) {
+        qWarning() << __func__ << ": unable to open device: " << m_device;
+        return false;
+    }
+    if (!m_serialPort.setBaudRate(m_baudRate)) {
+        qWarning() << __func__ << ": unable to set baud rate: " << m_baudRate;
+        close();
+        return false;
     }
 
+    close();
     return true;
 }
 
 void DeviceControlRs232::deinit()
 {
+    close();
 }
 
 void DeviceControlRs232::open()
 {
-    m_serialPort.setPortName(m_portName);
+    m_serialPort.setPortName(m_device);
     m_serialPort.open(QIODevice::WriteOnly);
     m_serialPort.setBaudRate(m_baudRate);
     m_serialPort.setDataBits(QSerialPort::Data8);
@@ -57,28 +73,28 @@ void DeviceControlRs232::close()
 void DeviceControlRs232::powerOn()
 {
     if (m_commands.contains("power_on")) {
-        write(QByteArray::fromHex(m_commands.value("power_on")));
+        write(m_commands.value("power_on"));
     }
 }
 
 void DeviceControlRs232::powerOff()
 {
     if (m_commands.contains("power_off")) {
-        write(QByteArray::fromHex(m_commands.value("power_off")));
+        write(m_commands.value("power_off"));
     }
 }
 
 void DeviceControlRs232::setInput()
 {
     if (m_commands.contains("set_input")) {
-        write(QByteArray::fromHex(m_commands.value("set_input")));
+        write(m_commands.value("set_input"));
     }
 }
 
 void DeviceControlRs232::setVolume(float volume)
 {
-    if (m_commands.contains("set_volume")) {
-        write(QByteArray::fromHex(getVolumeCommand(volume)));
+    if (m_commands.contains("set_volume_prefix") || m_commands.contains("set_volume_suffix")) {
+        write(getVolumeCommand(volume));
     }
 }
 
@@ -89,7 +105,7 @@ void DeviceControlRs232::handleTimeout()
 void DeviceControlRs232::handleError(QSerialPort::SerialPortError serialPortError)
 {
     if (serialPortError == QSerialPort::WriteError) {
-        qWarning() << __PRETTY_FUNCTION__ << ": failed writing data";
+        qWarning() << __func__ << ": failed writing data";
     }
 }
 
@@ -97,25 +113,29 @@ void DeviceControlRs232::write(const QByteArray &writeData)
 {
     qint64 bytesWritten = m_serialPort.write(writeData);
     m_serialPort.waitForBytesWritten(100);
+
+    if (bytesWritten == -1) {
+        qWarning() << __func__ << ": failed writing data";
+    } else if (bytesWritten != writeData.size()) {
+        qWarning() << __func__ << ": failed writing data";
+    } else if (!m_serialPort.waitForBytesWritten(100)) {
+        qWarning() << __func__ << ": timed out writing data";
+    }
 }
 
 QByteArray DeviceControlRs232::getVolumeCommand(float volume)
 {
-    QByteArray command = m_commands.value("set_volume");
+    QByteArray command = m_commands.value("set_volume_prefix");
     if (volume <= -144.0f) {
-        return command.replace("YY", "00");
+        command.append((char)0x00);
     } else if (volume >= 0.0f) {
-        return command.replace("YY", m_commands.value("max_volume"));
+        command.append(m_commands.value("set_volume_max_value").at(0));
     } else {
         volume += 30.0f; // shift from 0.0 to 30.0
         volume /= 30.0f; // scale volume from 0.0 to 1.0
-        bool ok = false;
-        QByteArray number = QByteArray::number((uint)((m_commands.value("max_volume").toUInt(&ok, 16)*volume)+0.5f), 16);
-        if (number.size() == 1) {
-            number.prepend("0");
-        }
-        return command.replace("YY", number);
+        command.append((m_commands.value("set_volume_max_value").at(0)*volume)+0.5f);
     }
+    return command.append(m_commands.value("set_volume_suffix"));
 }
 
 static DeviceControlRs232 s_instance;

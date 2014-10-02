@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion("0.0.1");
 
     // MAC address
-    QString macAddress = getMacAddress();
+    QString macAddress = Util::getMacAddress();
 
     // settings
     QSettings settings("/etc/omnifunken.conf", QSettings::IniFormat);
@@ -84,6 +84,9 @@ int main(int argc, char *argv[])
     // init player
     Player      *player = new Player(rtpBuffer, audioOut);
 
+    // init device control
+    DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl(&settings);
+
     // wire components
     QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
     QObject::connect(rtspServer, &RtspServer::senderSocketAvailable, rtpReceiver, &RtpReceiver::setSenderSocket);
@@ -93,21 +96,13 @@ int main(int argc, char *argv[])
     QObject::connect(rtspServer, &RtspServer::teardown, rtpBuffer, &RtpBuffer::teardown);
     QObject::connect(rtspServer, &RtspServer::teardown, rtpReceiver, &RtpReceiver::teardown);
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
-    //QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
 
-    // init device control
-    QSettings::SettingsMap deviceControlSettings;
-    deviceControlSettings.insert("power_on", "0x02 0x57 0x81 0x01 0x10 0x03");
-    deviceControlSettings.insert("power_off", "0x02 0x57 0x81 0x00 0x10 0x03");
-    deviceControlSettings.insert("set_input", "0x02 0x57 0x82 0xYY 0x10 0x03"); //#YY= 0x01 to 0x07
-    deviceControlSettings.insert("set_volume", "0x02 0x57 0x83 0xYY 0x10 0x03"); //#YY=0x00 to 0x4F
-    deviceControlSettings.insert("min_volume", "0x00");
-    deviceControlSettings.insert("max_volume", "0x20");
-
-    DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl("rs232", deviceControlSettings);
-    QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->close(); deviceControl->deinit(); } );
-
-    QObject::connect(rtspServer, &RtspServer::volume, deviceControl, &DeviceControlAbstract::setVolume);
+    if (deviceControl) {
+        QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->deinit(); } );
+        QObject::connect(rtspServer, &RtspServer::volume, deviceControl, &DeviceControlAbstract::setVolume);
+    } else {
+        QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
+    }
 
     // startup
     rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());

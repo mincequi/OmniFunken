@@ -40,7 +40,7 @@ void AudioOutTest::initTestCase()
 #endif
 
     QSettings::SettingsMap settings;
-    m_audioOut = AudioOutFactory::createAudioOut(m_driver, settings);
+    m_audioOut = AudioOutFactory::createAudioOut(m_driver, "hw:0" ,settings);
     QVERIFY(m_audioOut->name() == m_driver);
 }
 

@@ -2,7 +2,10 @@
 
 #include "rtppacket.h"
 
+#include "util.h"
+
 #include <QtDebug>
+
 
 RtpBuffer::RtpBuffer(int latency, QObject *parent) :
     QObject(parent),
@@ -29,7 +32,7 @@ void RtpBuffer::setPacketSize(int frames)
 
     m_packetSize = frames;
     m_desiredFill = (44100*m_latency)/(m_packetSize*1000);
-    m_capacity = roundToPowerOfTwo(m_desiredFill*2);
+    m_capacity = Util::roundToPowerOfTwo(m_desiredFill*2);
     alloc();
 }
 
@@ -49,10 +52,6 @@ RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
     case Early:
     case Expected:
         m_last = sequenceNumber % m_capacity;
-        // if packet was rendered as ok before
-        //if (m_data[m_last].status == PacketOk && m_status == Ready) {
-        //    qDebug() << __func__ << ": buffer full, overwriting samples";
-        //}
     case Late:
         if (m_status == Init) {
             qDebug() << __func__ << ": buffer now filling";
@@ -209,21 +208,6 @@ void RtpBuffer::free()
         delete[] m_silence;
         m_silence = NULL;
     }
-}
-
-int RtpBuffer::roundToPowerOfTwo(int x)
-{
-    if (x < 0) {
-        return 0;
-    }
-
-    --x;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    return x+1;
 }
 
 void RtpBuffer::setStatus(Status status)

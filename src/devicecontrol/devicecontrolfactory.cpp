@@ -16,10 +16,23 @@ void DeviceControlFactory::registerDeviceControl(DeviceControlAbstract* deviceCo
     registry->insert(deviceControl->name(), deviceControl);
 }
 
-DeviceControlAbstract* DeviceControlFactory::createDeviceControl(const QString &key, const QSettings::SettingsMap &settings)
+DeviceControlAbstract* DeviceControlFactory::createDeviceControl(QSettings *settings)
 {
-    DeviceControlAbstract* deviceControl = registry->value(key, NULL);
-    if (!deviceControl || !deviceControl->init(settings)) {
+    settings->beginGroup("device_control");
+    QString type = settings->value("type", "").toString();
+    QString device = settings->value("device", "/dev/ttyUSB0").toString();
+    QString config = settings->value("config", "").toString();
+    settings->endGroup();
+
+    if (type.isEmpty() || config.isEmpty()) {
+        return NULL;
+    }
+
+    QString configGroup = "device_control_";
+    configGroup += config;
+
+    DeviceControlAbstract* deviceControl = registry->value(type, NULL);
+    if (!deviceControl || !deviceControl->init(device, configGroup, settings)) {
         return NULL;
     } else {
         return deviceControl;

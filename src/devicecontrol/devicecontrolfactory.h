@@ -9,7 +9,7 @@ class DeviceControlAbstract;
 class DeviceControlFactory
 {
 public:
-    static DeviceControlAbstract* createDeviceControl(const QString &key, const QSettings::SettingsMap &settings);
+    static DeviceControlAbstract* createDeviceControl(QSettings *settings);
     static void registerDeviceControl(DeviceControlAbstract* deviceControl);
 };
 

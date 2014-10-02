@@ -18,12 +18,12 @@ public:
     // called at shutdown
     virtual void deinit() {}
 
+public slots:
     // open device
     virtual void open() {}
     // close device
     virtual void close() {}
 
-public slots:
     virtual void powerOn() {}
     virtual void powerOff() {}
     virtual void setInput() {}

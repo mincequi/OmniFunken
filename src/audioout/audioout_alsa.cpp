@@ -66,8 +66,8 @@ void AudioOutAlsa::start()
     snd_pcm_hw_params_t *hw_params;
 
     int error = 0;
-    if ((error = snd_pcm_open(&m_pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, m_block ? 0 : SND_PCM_NONBLOCK) < 0)) {
-        qCritical("cannot open audio device %s (%s)\n", m_deviceName, snd_strerror(error));
+    if ((error = snd_pcm_open(&m_pcm, m_deviceName.toLatin1().constData(), SND_PCM_STREAM_PLAYBACK, m_block ? 0 : SND_PCM_NONBLOCK) < 0)) {
+        qCritical("cannot open audio device %s (%s)\n", m_deviceName.toLatin1().constData(), snd_strerror(error));
         return;
     }
     if ((error = snd_pcm_hw_params_malloc(&hw_params)) < 0) {
@@ -175,9 +175,9 @@ bool AudioOutAlsa::probeNativeFormat()
     snd_pcm_hw_params_t *hw_params;
     int error;
 
-    error = snd_pcm_open(&pcm, m_deviceName, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
+    error = snd_pcm_open(&pcm, m_deviceName.toLatin1().constData(), SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
     if (error < 0) {
-        qWarning("cannot open device '%s': %s\n", m_deviceName, snd_strerror(error));
+        qWarning("cannot open device '%s': %s\n", m_deviceName.toLatin1().constData(), snd_strerror(error));
         return false;
     }
 
@@ -189,7 +189,7 @@ bool AudioOutAlsa::probeNativeFormat()
         return false;
     }
 
-    qDebug("Device: %s (type: %s)\n", m_deviceName, snd_pcm_type_name(snd_pcm_type(pcm)));
+    qDebug("Device: %s (type: %s)\n", m_deviceName.toLatin1().constData(), snd_pcm_type_name(snd_pcm_type(pcm)));
 
     qDebug("Formats:");
     for (int i = ARRAY_SIZE(formats)-1; i >= 0; --i) {

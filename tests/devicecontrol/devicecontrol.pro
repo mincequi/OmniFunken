@@ -19,7 +19,8 @@ QMAKE_CXXFLAGS += -std=c++11
 SOURCES += tst_devicecontroltest.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
-INCLUDEPATH += ../../src
+INCLUDEPATH += ../../src \
+	/usr/include/qt5
 
 SOURCES += ../../src/devicecontrol/devicecontrolfactory.cpp \
     ../../src/devicecontrol/devicecontrolrs232.cpp

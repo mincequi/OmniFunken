@@ -15,11 +15,15 @@ TEMPLATE = app
 
 QMAKE_CXXFLAGS += -std=c++11
 
+CONFIG += debug_and_release
+
 
 macx {
     INCLUDEPATH += "/usr/local/Cellar/libao/1.2.0/include/"
     LIBS += -L/usr/local/Cellar/libao/1.2.0/lib
 }
+
+INCLUDEPATH += "/usr/include/qt5"
 
 LIBS += -lcrypto -lao
 

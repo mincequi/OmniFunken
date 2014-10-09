@@ -27,7 +27,7 @@ void daemon_init()
         exit(EXIT_FAILURE);
     }
 
-    close(STDIN_FILENO);
+//    close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
 }

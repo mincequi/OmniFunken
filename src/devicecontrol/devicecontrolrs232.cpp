@@ -112,7 +112,6 @@ void DeviceControlRs232::handleError(QSerialPort::SerialPortError serialPortErro
 void DeviceControlRs232::write(const QByteArray &writeData)
 {
     qint64 bytesWritten = m_serialPort.write(writeData);
-    m_serialPort.waitForBytesWritten(100);
 
     if (bytesWritten == -1) {
         qWarning() << __func__ << ": failed writing data";

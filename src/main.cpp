@@ -99,7 +99,11 @@ int main(int argc, char *argv[])
 
     if (deviceControl) {
         QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->deinit(); } );
-        QObject::connect(rtspServer, &RtspServer::announce, deviceControl, &DeviceControlAbstract::open);
+        QObject::connect(rtspServer, &RtspServer::announce, [deviceControl]() {
+            deviceControl->open();
+            //deviceControl->powerOn();
+            deviceControl->setInput();
+        });
         QObject::connect(rtspServer, &RtspServer::volume, deviceControl, &DeviceControlAbstract::setVolume);
     } else {
         QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);

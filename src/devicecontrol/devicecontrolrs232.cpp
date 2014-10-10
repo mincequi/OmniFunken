@@ -32,6 +32,7 @@ bool DeviceControlRs232::init(const QString &device, const QString &group, QSett
     }
     settings->endGroup();
 
+    /*
     m_serialPort.setPortName(m_device);
     if (!m_serialPort.open(QIODevice::WriteOnly)) {
         qWarning() << __func__ << ": unable to open device: " << m_device;
@@ -44,6 +45,7 @@ bool DeviceControlRs232::init(const QString &device, const QString &group, QSett
     }
 
     close();
+    */
     return true;
 }
 
@@ -54,13 +56,15 @@ void DeviceControlRs232::deinit()
 
 void DeviceControlRs232::open()
 {
-    m_serialPort.setPortName(m_device);
-    m_serialPort.open(QIODevice::WriteOnly);
-    m_serialPort.setBaudRate(m_baudRate);
-    m_serialPort.setDataBits(QSerialPort::Data8);
-    m_serialPort.setStopBits(QSerialPort::OneStop);
-    m_serialPort.setParity(QSerialPort::NoParity);
-    m_serialPort.setFlowControl(QSerialPort::NoFlowControl);
+    if (!m_serialPort.isOpen()) {
+        m_serialPort.setPortName(m_device);
+        m_serialPort.open(QIODevice::WriteOnly);
+        m_serialPort.setBaudRate(m_baudRate);
+        m_serialPort.setDataBits(QSerialPort::Data8);
+        m_serialPort.setStopBits(QSerialPort::OneStop);
+        m_serialPort.setParity(QSerialPort::NoParity);
+        m_serialPort.setFlowControl(QSerialPort::NoFlowControl);
+    }
 }
 
 void DeviceControlRs232::close()

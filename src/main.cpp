@@ -100,7 +100,9 @@ int main(int argc, char *argv[])
     if (deviceControl) {
         QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->deinit(); } );
         QObject::connect(rtspServer, &RtspServer::announce, [deviceControl]() {
+            qDebug("open deviceControl");
             deviceControl->open();
+            qDebug("deviceControl opened");
             //deviceControl->powerOn();
             //deviceControl->setInput();
         });

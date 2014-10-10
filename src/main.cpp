@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
         QObject::connect(rtspServer, &RtspServer::announce, [deviceControl]() {
             deviceControl->open();
             //deviceControl->powerOn();
-            deviceControl->setInput();
+            //deviceControl->setInput();
         });
         QObject::connect(rtspServer, &RtspServer::volume, deviceControl, &DeviceControlAbstract::setVolume);
     } else {

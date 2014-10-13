@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-void daemon_init()
+void daemonize()
 {
     pid_t pid = fork();
     if (pid < 0) {

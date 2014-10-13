@@ -13,6 +13,7 @@
 #include "zeroconf/zeroconf_dns_sd.h"
 #include "daemon.h"
 #include "player.h"
+#include "signal.h"
 #include "util.h"
 
 #include <unistd.h>
@@ -67,8 +68,11 @@ int main(int argc, char *argv[])
     parser.process(a);
 
     if (parser.isSet(daemonOption)) {
-        daemon_init();
+        daemonize();
     }
+
+    // init signal handler
+    initSignalHandler();
 
     // init rtsp/rtp components
     RtspServer  *rtspServer = new RtspServer(macAddress);

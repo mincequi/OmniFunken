@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void daemon_init();
+void daemonize();
 
 #ifdef  __cplusplus
 }

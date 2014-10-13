@@ -1,4 +1,4 @@
-#include "signal.h"
+#include "signalhandler.h"
 
 #include <QCoreApplication>
 

@@ -52,7 +52,7 @@ SOURCES += main.cpp \
     rtsp/rtspmessage.cpp \
     rtsp/rtspserver.cpp \
     devicecontrol/devicecontrolrs232.cpp \
-    signal.c
+    signalhandler.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -82,7 +82,7 @@ HEADERS += \
     rtsp/rtspserver.h \
     rtsp/rtspmessage.h \
     devicecontrol/devicecontrolrs232.h \
-    signal.h
+    signalhandler.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

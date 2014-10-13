@@ -13,7 +13,7 @@
 #include "zeroconf/zeroconf_dns_sd.h"
 #include "daemon.h"
 #include "player.h"
-#include "signal.h"
+#include "signalhandler.h"
 #include "util.h"
 
 #include <unistd.h>

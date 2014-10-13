@@ -16,11 +16,11 @@ void handleSignal(int signo)
         break;
     case SIGINT:
         qWarning("interrupt signal catched");
-        qApp->exit();
+        qApp->quit();
         break;
     case SIGTERM:
         qWarning("terminate signal catched");
-        qApp->exit();
+        qApp->quit();
         break;
     }
 }

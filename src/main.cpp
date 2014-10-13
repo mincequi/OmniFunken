@@ -122,5 +122,9 @@ int main(int argc, char *argv[])
     ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd(macAddress);
     dnsSd->registerService(parser.value(nameOption).toLatin1(), parser.value(portOption).toInt());
 
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, rtpBuffer, &RtpBuffer::teardown);
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, rtpReceiver, &RtpReceiver::teardown);
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, player, &Player::teardown);
+
     return a.exec();
 }

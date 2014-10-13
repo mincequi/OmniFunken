@@ -22,6 +22,8 @@ const char *DeviceControlRs232::name() const
 
 bool DeviceControlRs232::init(const QString &device, const QString &group, QSettings *settings)
 {
+    qDebug("DeviceControlRs232::init()");
+
     m_device = device;
 
     settings->beginGroup(group);
@@ -52,6 +54,8 @@ bool DeviceControlRs232::init(const QString &device, const QString &group, QSett
 
 void DeviceControlRs232::deinit()
 {
+    qDebug("DeviceControlRs232::deinit()");
+
     close();
 }
 

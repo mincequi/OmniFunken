@@ -52,7 +52,7 @@ SOURCES += main.cpp \
     rtsp/rtspmessage.cpp \
     rtsp/rtspserver.cpp \
     devicecontrol/devicecontrolrs232.cpp \
-    signal.cpp
+    signal.c
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp

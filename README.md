@@ -6,7 +6,7 @@ OmniFunken aims to be a general purpose media render daemon. Currently it only s
 Features
 --------
 * Apple AirPlay
-* RS232 device control (planned)
+* RS232 device control
 
 
 Build Requirements
@@ -38,10 +38,7 @@ For command line options run `omnifunken -h`.
 
 TODO
 ----
-* RS232 device control
-* ALSA audio output
 * init scripts (write pidfile)
-* audio device selection
 * timing/synchronisation
 
 

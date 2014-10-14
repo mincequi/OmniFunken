@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     parser.addOption(portOption);
     QCommandLineOption latencyOption(QStringList() << "l" << "latency", "Set latency in milliseconds.", "latency", "500");
     parser.addOption(latencyOption);
-    QCommandLineOption audioOutOption(QStringList() << "a" << "audio", "Set audio backend.", "audio", "ao");
+    QCommandLineOption audioOutOption(QStringList() << "ao" << "audioout", "Set audio backend.", "audioout", "ao");
     parser.addOption(audioOutOption);
     QCommandLineOption audioDeviceOption(QStringList() << "ad" << "audiodevice", "Set audio device.", "audiodevice", "hw:0");
     parser.addOption(audioDeviceOption);

@@ -23,7 +23,7 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 # Configuration defaults
 USER=omnifunken
-GROUP=nogroup
+GROUP=audio
 AIRPLAY_NAME=$(hostname)
 LATENCY=500
 
@@ -35,7 +35,8 @@ LATENCY=500
 
 [ -z "$AIRPLAY_NAME" ]	|| DAEMON_ARGS="$DAEMON_ARGS --name $AIRPLAY_NAME"
 [ -z "$LATENCY" ]	|| DAEMON_ARGS="$DAEMON_ARGS --latency $LATENCY"
-
+[ -z "$AUDIO_OUT" ]     || DAEMON_ARGS="$DAEMON_ARGS --audioout $AUDIO_OUT"
+[ -z "$AUDIO_DEVICE" ]  || DAEMON_ARGS="$DAEMON_ARGS --audiodevice $AUDIO_DEVICE"
 
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh

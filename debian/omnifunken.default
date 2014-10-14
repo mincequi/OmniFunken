@@ -1,9 +1,9 @@
 # Defaults for omnifunken initscript, sourced by /etc/init.d/omnifunken
 
 # Change this to prevent omnifunken from being started as a system service
-START_DAEMON=false
-USER=omnifunken
-GROUP=nogroup
+START_DAEMON=true
 
 AIRPLAY_NAME=OmniFunken
 LATENCY=500
+#AUDIO_OUT=alsa
+#AUDIO_DEVICE=hw:1

@@ -31,6 +31,10 @@ void Player::play()
 
 void Player::teardown()
 {
+    if (m_playWorker->isRunning()) {
+        //m_playWorker->quit();
+        m_playWorker->wait();
+    }
     m_audioOutTimer->stop();
     m_audioOut->stop();
 }

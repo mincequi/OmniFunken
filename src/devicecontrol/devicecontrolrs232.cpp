@@ -141,7 +141,10 @@ QByteArray DeviceControlRs232::getVolumeCommand(float volume)
     } else {
         volume += 30.0f; // shift from 0.0 to 30.0
         volume /= 30.0f; // scale volume from 0.0 to 1.0
-        command.append((m_commands.value("set_volume_max_value").at(0)*volume)+0.5f);
+        char minVol = m_commands.value("set_volume_min_value").at(0);
+        char maxVol = m_commands.value("set_volume_max_value").at(0);
+        char resVol = minVol + (((maxVol-minVol)*volume)+0.5f);
+        command.append(resVol);
     }
     return command.append(m_commands.value("set_volume_suffix"));
 }

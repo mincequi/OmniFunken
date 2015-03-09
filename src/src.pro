@@ -82,7 +82,8 @@ HEADERS += \
     rtsp/rtspserver.h \
     rtsp/rtspmessage.h \
     devicecontrol/devicecontrolrs232.h \
-    signalhandler.h
+    signalhandler.h \
+    audiofilter/audiofilterabstract.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

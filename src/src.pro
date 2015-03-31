@@ -28,7 +28,7 @@ INCLUDEPATH += "/usr/include/qt5"
 LIBS += -lcrypto -lao
 
 unix:!macx {
-    LIBS += -ldns_sd -lasound
+    LIBS += -ldns_sd -lasound -ludev
 }
 
 CONFIG(release, debug|release) {
@@ -55,7 +55,8 @@ SOURCES += main.cpp \
     signalhandler.cpp
 
 unix:!macx {
-    SOURCES += audioout/audioout_alsa.cpp
+    SOURCES += audioout/audioout_alsa.cpp \
+        devicecontrol/devicewatcher.cpp
 }
 
 
@@ -86,6 +87,7 @@ HEADERS += \
     audiofilter/audiofilterabstract.h
 
 unix:!macx {
-    HEADERS += audioout/audioout_alsa.h
+    HEADERS += audioout/audioout_alsa.h \
+        devicecontrol/devicewatcher.h
 }
 

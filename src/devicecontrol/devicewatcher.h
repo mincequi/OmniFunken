@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QThread>
 
+class Worker;
+
 class DeviceWatcher : public QObject
 {
     Q_OBJECT
@@ -20,16 +22,6 @@ public slots:
     void start(const QString &action, const UDevProperties &properties);
 
 private:
-    class Worker : public QObject
-    {
-        Q_OBJECT
-    public slots:
-        void doStart(const QString &action, const DeviceWatcher::UDevProperties &properties);
-
-    signals:
-        void ready();
-    };
-
     bool m_started;
     Worker *m_worker;
     QThread m_workerThread;

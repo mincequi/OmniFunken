@@ -26,4 +26,22 @@ private:
     bool m_started;
 }; // DeviceWatcher
 
+class WorkerThread : public QThread
+{
+    Q_OBJECT
+public:
+    explicit WorkerThread(QObject *parent);
+    void init(const QString &action, const DeviceWatcher::UDevProperties &properties);
+
+signals:
+    void ready();
+
+private:
+    void run() Q_DECL_OVERRIDE;
+
+private:
+    QString m_action;
+    DeviceWatcher::UDevProperties m_properties;
+}; // WorkerThread
+
 #endif // DEVICEWATCHER_H

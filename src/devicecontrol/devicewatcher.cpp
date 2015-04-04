@@ -5,11 +5,16 @@
 //#include <unistd.h>
 #include <fcntl.h>
 
-class Worker : public QObject
+class WorkerThread : public QThread
 {
     Q_OBJECT
-public slots:
-    void doStart(const QString &action, const DeviceWatcher::UDevProperties &properties)
+    void init(const QString &action, const DeviceWatcher::UDevProperties &properties)
+    {
+        m_action = action;
+        m_properties = properties;
+    }
+
+    void run() Q_DECL_OVERRIDE
     {
         struct udev *udev = udev_new();
         struct udev_monitor *mon = udev_monitor_new_from_netlink(udev, "udev");
@@ -30,22 +35,22 @@ public slots:
             if (!dev) continue;
 
             // Check for our action.
-            if (udev_device_get_action(dev) == action) {
+            if (udev_device_get_action(dev) == m_action) {
                 struct udev_list_entry *list_entry = udev_device_get_properties_list_entry(dev);
 
                 // Iterate over our properties
                 int numPropertiesFound = 0;
-                for (const QString &key : properties.keys()) {
+                for (const QString &key : m_properties.keys()) {
                     struct udev_list_entry *entry = udev_list_entry_get_by_name(list_entry, key.toLatin1());
                     if (!entry) continue;
-                    if (udev_list_entry_get_value(entry) == properties.value(key)) {
+                    if (udev_list_entry_get_value(entry) == m_properties.value(key)) {
                         numPropertiesFound++;
                     }
                 }
 
                 udev_device_unref(dev);
 
-                if (numPropertiesFound == properties.size()) {
+                if (numPropertiesFound == m_properties.size()) {
                     emit ready();
                     udev_unref(udev);
                     break;
@@ -56,21 +61,20 @@ public slots:
 
 signals:
     void ready();
+
+private:
+    QString m_action;
+    DeviceWatcher::UDevProperties m_properties;
 };
 
-DeviceWatcher::DeviceWatcher(QObject *parent) : QObject(parent)
+DeviceWatcher::DeviceWatcher(QObject *parent) :
+    QObject(parent),
+    m_started(false)
 {
-    m_worker = new Worker();
-    m_worker->moveToThread(&m_workerThread);
-    connect(&m_workerThread, &QThread::finished, m_worker, &QObject::deleteLater);
-    connect(m_worker, &Worker::ready, [this]() { m_started = false; emit ready(); });
-    m_workerThread.start();
 }
 
 DeviceWatcher::~DeviceWatcher()
 {
-    m_workerThread.quit();
-    m_workerThread.wait();
 }
 
 void DeviceWatcher::start(const QString &action, const UDevProperties &properties)
@@ -78,7 +82,10 @@ void DeviceWatcher::start(const QString &action, const UDevProperties &propertie
     if (m_started) return;
 
     m_started = true;
-    QMetaObject::invokeMethod(m_worker, "doStart", Qt::QueuedConnection,
-                              Q_ARG(QString, action),
-                              Q_ARG(UDevProperties, properties));
+
+    WorkerThread *workerThread = new WorkerThread(this);
+    workerThread->init(action, properties);
+    connect(workerThread, &WorkerThread::ready, this, [this]() { m_started = false; emit ready(); });
+    connect(workerThread, &WorkerThread::finished, workerThread, &QObject::deleteLater);
+    workerThread->start();
 }

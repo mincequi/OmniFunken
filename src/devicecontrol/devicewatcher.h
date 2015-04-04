@@ -23,8 +23,6 @@ public slots:
 
 private:
     bool m_started;
-    Worker *m_worker;
-    QThread m_workerThread;
 }; // DeviceWatcher
 
 #endif // DEVICEWATCHER_H

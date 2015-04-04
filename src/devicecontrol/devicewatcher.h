@@ -9,9 +9,9 @@ class Worker;
 class DeviceWatcher : public QObject
 {
     Q_OBJECT
+public:
     typedef QMap<QString,QString> UDevProperties;
 
-public:
     explicit DeviceWatcher(QObject *parent = 0);
     ~DeviceWatcher();
 

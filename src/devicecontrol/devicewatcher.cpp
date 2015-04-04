@@ -1,6 +1,8 @@
 #include "devicewatcher.h"
 
 #include <libudev.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 devicewatcher::devicewatcher(QObject *parent) : QObject(parent)
 {
@@ -19,10 +21,10 @@ void devicewatcher::start()
     udev_monitor_filter_add_match_subsystem_devtype(mon, "sound", NULL);
     udev_monitor_enable_receiving(mon);
 
-#ifdef USE_SELECT
     // Get the file descriptor (fd) for the monitor.
-    fd = udev_monitor_get_fd(mon);
+    int fd = udev_monitor_get_fd(mon);
 
+#ifdef USE_SELECT
     // We use select() system call to not use blocking udev_monitor_receive_device() call.
     while (1) {
         fd_set fds;
@@ -42,10 +44,15 @@ void devicewatcher::start()
         if (ret > 0 && FD_ISSET(fd, &fds)) {
             printf("\nselect() says there should be data\n");
 #else
-    while (true) {
+    // Set file descriptor to blocking mode.
+    int flags = fcntl(fd, F_GETFL);
+    // Set the new flags with O_NONBLOCK masked out
+    fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+
+    while (1) {
 #endif
-        // Call to receive the device. This will block.
-        dev = udev_monitor_receive_device(mon);
+        // Call to receive the device. The monitor socket is by default set to NONBLOCK!
+        struct udev_device *dev = udev_monitor_receive_device(mon);
         if (dev) {
             printf("Got Device\n");
             printf("   Node: %s\n", udev_device_get_devnode(dev));

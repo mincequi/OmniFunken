@@ -25,6 +25,7 @@ public slots:
 private:
     class WorkerThread : public QThread
     {
+        Q_OBJECT
     public:
         explicit WorkerThread(QObject *parent);
         void init(const QString &action, const DeviceWatcher::UDevProperties &properties);

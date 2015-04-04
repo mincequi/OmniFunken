@@ -22,7 +22,7 @@ void DeviceWatcher::start(const QString &action, const UDevProperties &propertie
 
     WorkerThread *workerThread = new WorkerThread(this);
     workerThread->init(action, properties);
-    connect(workerThread, &WorkerThread::ready, this, [this]() { m_started = false; emit ready(); });
+    connect(workerThread, &WorkerThread::ready, [this]() { m_started = false; emit ready(); });
     connect(workerThread, &WorkerThread::finished, workerThread, &QObject::deleteLater);
     workerThread->start();
 }

@@ -1,6 +1,5 @@
 #include "devicewatcher.h"
 
-#include <QMap>
 #include <libudev.h>
 //#include <unistd.h>
 #include <fcntl.h>

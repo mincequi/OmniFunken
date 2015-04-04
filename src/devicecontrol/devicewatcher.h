@@ -1,6 +1,7 @@
 #ifndef DEVICEWATCHER_H
 #define DEVICEWATCHER_H
 
+#include <QMap>
 #include <QObject>
 #include <QThread>
 

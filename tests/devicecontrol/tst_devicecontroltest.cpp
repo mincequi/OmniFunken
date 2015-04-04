@@ -18,6 +18,8 @@ private Q_SLOTS:
     void powerOn();
     void powerOff();
 
+    void watchDevice();
+
 private:
     DeviceControlAbstract *m_deviceControl;
 };
@@ -59,6 +61,11 @@ void DeviceControlTest::powerOn()
 
 void DeviceControlTest::powerOff()
 {
+}
+
+void DeviceControlTest::watchDevice()
+{
+
 }
 
 QTEST_MAIN(DeviceControlTest)

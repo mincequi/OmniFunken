@@ -22,6 +22,23 @@ public slots:
     void start(const QString &action, const UDevProperties &properties);
 
 private:
+    class WorkerThread : public QThread
+    {
+    public:
+        explicit WorkerThread(QObject *parent);
+        void init(const QString &action, const DeviceWatcher::UDevProperties &properties);
+
+    signals:
+        void ready();
+
+    private:
+        void run() Q_DECL_OVERRIDE;
+
+    private:
+        QString m_action;
+        DeviceWatcher::UDevProperties m_properties;
+    };
+
     bool m_started;
 }; // DeviceWatcher
 

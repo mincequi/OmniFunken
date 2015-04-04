@@ -24,10 +24,7 @@ private:
     {
         Q_OBJECT
     public slots:
-        void doStart(const QString &action, const UDevProperties &properties) {
-
-            emit ready();
-        }
+        void doStart(const QString &action, const DeviceWatcher::UDevProperties &properties);
 
     signals:
         void ready();

@@ -2,6 +2,7 @@
 #define DEVICEWATCHER_H
 
 #include <QObject>
+#include <QThread>
 
 class DeviceWatcher : public QObject
 {

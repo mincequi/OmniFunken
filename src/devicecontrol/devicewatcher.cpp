@@ -30,7 +30,7 @@ void DeviceWatcher::start(const QString &action, const UDevProperties &propertie
                               Q_ARG(UDevProperties, properties));
 }
 
-DeviceWatcher::Worker::doStart(const QString &action, const UDevProperties &properties)
+DeviceWatcher::Worker::doStart(const QString &action, const DeviceWatcher::UDevProperties &properties)
 {
     struct udev *udev = udev_new();
     struct udev_monitor *mon = udev_monitor_new_from_netlink(udev, "udev");

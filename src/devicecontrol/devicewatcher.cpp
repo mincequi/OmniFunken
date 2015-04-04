@@ -33,6 +33,12 @@ WorkerThread::WorkerThread(QObject *parent) : QThread(parent)
 {
 }
 
+void WorkerThread::init(const QString &action, const DeviceWatcher::UDevProperties &properties)
+{
+    m_action = action;
+    m_properties = properties;
+}
+
 void WorkerThread::run()
 {
     struct udev *udev = udev_new();

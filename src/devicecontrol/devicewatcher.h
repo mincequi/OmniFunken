@@ -6,6 +6,8 @@
 class DeviceWatcher : public QObject
 {
     Q_OBJECT
+    typedef QMap<QString,QString> UDevProperties;
+
 public:
     explicit DeviceWatcher(QObject *parent = 0);
     ~DeviceWatcher();
@@ -14,14 +16,14 @@ signals:
     void ready();
 
 public slots:
-    void start(const QString& action, const QMap<QString,QString>& properties);
+    void start(const QString &action, const UDevProperties &properties);
 
 private:
     class Worker : public QObject
     {
         Q_OBJECT
     public slots:
-        void doStart(const QString &action, const QMap<QString,QString> &properties) {
+        void doStart(const QString &action, const UDevProperties &properties) {
 
             emit ready();
         }

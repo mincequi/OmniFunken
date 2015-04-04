@@ -20,17 +20,17 @@ DeviceWatcher::~DeviceWatcher()
     m_workerThread.wait();
 }
 
-void DeviceWatcher::start(const QString &action, const QMap<QString,QString> &properties)
+void DeviceWatcher::start(const QString &action, const UDevProperties &properties)
 {
     if (m_started) return;
 
     m_started = true;
     QMetaObject::invokeMethod(m_worker, "doStart", Qt::QueuedConnection,
                               Q_ARG(QString, action),
-                              Q_ARG(QMap<QString,QString>, properties));
+                              Q_ARG(UDevProperties, properties));
 }
 
-DeviceWatcher::Worker::doStart(const QString &action, const QMap<QString,QString> &properties)
+DeviceWatcher::Worker::doStart(const QString &action, const UDevProperties &properties)
 {
     struct udev *udev = udev_new();
     struct udev_monitor *mon = udev_monitor_new_from_netlink(udev, "udev");

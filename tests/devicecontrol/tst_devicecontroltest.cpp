@@ -3,6 +3,7 @@
 
 #include <devicecontrol/devicecontrolabstract.h>
 #include <devicecontrol/devicecontrolfactory.h>
+#include <devicecontrol/devicewatcher.h>
 
 class DeviceControlTest : public QObject
 {
@@ -21,11 +22,13 @@ private Q_SLOTS:
     void watchDevice();
 
 private:
-    DeviceControlAbstract *m_deviceControl;
+    DeviceControlAbstract   *m_deviceControl;
+    DeviceWatcher           *m_deviceWatcher;
 };
 
 DeviceControlTest::DeviceControlTest() :
-    m_deviceControl(NULL)
+    m_deviceControl(NULL),
+    m_deviceWatcher(new DeviceWatcher(this))
 {
 }
 
@@ -65,7 +68,14 @@ void DeviceControlTest::powerOff()
 
 void DeviceControlTest::watchDevice()
 {
+    DeviceWatcher::UDevProperties properties;
+    properties["ID_MODEL"] = "Primare_I22_v1.0";
+    connect(m_deviceWatcher, &DeviceWatcher::ready, []() { qDebug() << "device ready"; });
+    m_deviceWatcher->start("add", properties);
 
+    QEventLoop loop;
+    connect(m_deviceWatcher, &DeviceWatcher::ready, &loop, &QEventLoop::quit);
+    loop.exec();
 }
 
 QTEST_MAIN(DeviceControlTest)

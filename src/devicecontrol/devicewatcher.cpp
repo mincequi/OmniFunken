@@ -1,9 +1,7 @@
 #include "devicewatcher.h"
 
 #include <libudev.h>
-//#include <unistd.h>
 #include <fcntl.h>
-
 
 DeviceWatcher::DeviceWatcher(QObject *parent) :
     QObject(parent),

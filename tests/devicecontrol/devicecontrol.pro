@@ -22,9 +22,13 @@ DEFINES += SRCDIR=\\\"$$PWD/\\\"
 INCLUDEPATH += ../../src \
 	/usr/include/qt5
 
+LIBS += -ludev
+
 SOURCES += ../../src/devicecontrol/devicecontrolfactory.cpp \
-    ../../src/devicecontrol/devicecontrolrs232.cpp
+    ../../src/devicecontrol/devicecontrolrs232.cpp \
+    ../../src/devicecontrol/devicewatcher.cpp
 
 HEADERS += ../../src/devicecontrol/devicecontrolabstract.h \
     ../../src/devicecontrol/devicecontrolfactory.h \
-    ../../src/devicecontrol/devicecontrolrs232.h
+    ../../src/devicecontrol/devicecontrolrs232.h \
+    ../../src/devicecontrol/devicewatcher.h

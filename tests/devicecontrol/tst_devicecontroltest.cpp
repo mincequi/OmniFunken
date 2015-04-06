@@ -54,12 +54,12 @@ void DeviceControlTest::initTestCase()
 
 void DeviceControlTest::cleanupTestCase()
 {
-    m_deviceControl->close();
+    //m_deviceControl->close();
 }
 
 void DeviceControlTest::powerOn()
 {
-    m_deviceControl->powerOn();
+    //m_deviceControl->powerOn();
 }
 
 void DeviceControlTest::powerOff()

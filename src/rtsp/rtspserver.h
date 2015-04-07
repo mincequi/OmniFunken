@@ -44,7 +44,6 @@ private:
     void handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress);
 
 private:
-    //QString     m_macAddress;
     quint8      m_macAddress[6];
     QTcpServer *m_tcpServer;
     ulong       m_dacpId;

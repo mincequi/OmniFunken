@@ -17,6 +17,8 @@ public:
 
     // called at startup
     virtual bool init(const QSettings::SettingsMap &settings) { Q_UNUSED(settings) return true; }
+    // Returns true if device is ready/init succeeded.
+    virtual bool ready() { return true; }
     // called at shutdown
     virtual void deinit() {}
 

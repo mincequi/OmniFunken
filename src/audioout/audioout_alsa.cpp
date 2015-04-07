@@ -7,6 +7,7 @@
 
 AudioOutAlsa::AudioOutAlsa() :
     m_deviceName("hw:0"),
+    m_ready(false)
     m_pcm(0),
     m_block(true),
     m_format(SND_PCM_FORMAT_UNKNOWN),
@@ -44,7 +45,14 @@ bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
         int size = Airtunes::framesPerPacket*Airtunes::channels*sampleSize/8;
         m_conversionBuffer = new char[size]();
     }
-    return true;
+
+    m_ready = true;
+    return m_ready;
+}
+
+bool AudioOutAlsa::ready()
+{
+    return m_ready;
 }
 
 void AudioOutAlsa::deinit()

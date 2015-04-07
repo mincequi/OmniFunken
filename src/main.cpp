@@ -7,6 +7,7 @@
 #include "audioout/audioout_abstract.h"
 #include "devicecontrol/devicecontrolabstract.h"
 #include "devicecontrol/devicecontrolfactory.h"
+//#include "devicecontrol/devicewatcher.h"
 #include "rtp/rtpbuffer.h"
 #include "rtp/rtpreceiver.h"
 #include "rtsp/rtspserver.h"
@@ -19,6 +20,25 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+void onAnnounce(RtpReceiver* rtpReceiver, AudioOutAbstract* audioOut, const RtspMessage::Announcement& announcement)
+{
+    if (!audioOut->ready()) {
+        DeviceWatcher *deviceWatcher = new DeviceWatcher();
+        DeviceWatcher::UDevProperties properties;
+        properties["ID_MODEL"] = "Primare_I22_v1.0";
+
+        QEventLoop loop;
+        deviceWatcher->start("add", properties);
+        QObject::connect(deviceWatcher, &DeviceWatcher::ready, []() { qDebug() << "device ready"; });
+        QObject::connect(deviceWatcher, &DeviceWatcher::ready, &loop, &QEventLoop::quit);
+        QObject::connect(deviceWatcher, &DeviceWatcher::ready, deviceWatcher, &QObject::deleteLater);
+        loop.exec();
+
+        QSettings::SettingsMap settings;
+        audioOut->init(settings);
+    }
+    rtpReceiver->announce(announcement);
+}
 
 int main(int argc, char *argv[])
 {
@@ -91,7 +111,7 @@ int main(int argc, char *argv[])
     DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl(&settings);
 
     // wire components
-    QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
+    //QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
     QObject::connect(rtspServer, &RtspServer::senderSocketAvailable, rtpReceiver, &RtpReceiver::setSenderSocket);
     QObject::connect(rtspServer, &RtspServer::receiverSocketRequired, rtpReceiver, &RtpReceiver::bindSocket);
     QObject::connect(rtspServer, SIGNAL(record(quint16)), rtpBuffer, SLOT(flush(quint16)));
@@ -106,13 +126,18 @@ int main(int argc, char *argv[])
             qDebug("open deviceControl");
             deviceControl->open();
             qDebug("deviceControl opened");
-            //deviceControl->powerOn();
+            deviceControl->powerOn();
             //deviceControl->setInput();
         });
         QObject::connect(rtspServer, &RtspServer::volume, deviceControl, &DeviceControlAbstract::setVolume);
     } else {
         QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
     }
+
+    QObject::connect(rtspServer, &RtspServer::announce, [rtpReceiver, audioOut](const RtspMessage::Announcement& announcement) {
+         onAnnounce(rtpReceiver, audioOut, announcement);
+    });
+    //QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
 
     // startup
     rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());

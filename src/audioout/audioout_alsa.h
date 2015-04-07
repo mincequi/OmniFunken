@@ -14,6 +14,7 @@ public:
     virtual const char *name() const override;
     virtual void setDevice(const QString &device) override;
     virtual bool init(const QSettings::SettingsMap &settings) override;
+    virtual bool ready() override;
     virtual void deinit() override;
     virtual void start() override;
     virtual void stop() override;
@@ -26,6 +27,7 @@ private:
     const char* convertSamplesToNativeFormat(char *frames, snd_pcm_uframes_t size);
 
     QString	m_deviceName;
+    bool    m_ready;
     snd_pcm_t   *m_pcm;
     bool        m_block;
     snd_pcm_format_t    m_format;

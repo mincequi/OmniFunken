@@ -28,9 +28,6 @@ AudioOutAbstract* AudioOutFactory::createAudioOut(const QString &key, const QStr
 {
     AudioOutAbstract* audioOut = registry->value(key, dummy);
     audioOut->setDevice(device);
-    if (!audioOut->init(settings)) {
-        return dummy;
-    } else {
-        return audioOut;
-    }
+    audioOut->init(settings);
+    return audioOut;
 }

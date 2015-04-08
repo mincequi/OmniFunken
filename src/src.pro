@@ -23,7 +23,8 @@ macx {
     LIBS += -L/usr/local/Cellar/libao/1.2.0/lib
 }
 
-#INCLUDEPATH += "/usr/include/qt5"
+# Needed for qt serial port
+INCLUDEPATH += "/usr/include/qt5"
 
 LIBS += -lcrypto -lao
 

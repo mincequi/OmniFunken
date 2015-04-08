@@ -49,7 +49,7 @@ void Service::initAudioOut()
 {
     // init audio driver
     QSettings::SettingsMap settings;
-    AudioOutAbstract *m_audioOut = AudioOutFactory::createAudioOut(config().audioOut(), config().audioDevice(), settings);
+    m_audioOut = AudioOutFactory::createAudioOut(config().audioOut(), config().audioDevice(), settings);
 
     // init rtsp/rtp components
     RtspServer  *rtspServer = new RtspServer(Util::getMacAddress());

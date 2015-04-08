@@ -7,7 +7,7 @@
 #include "audioout/audioout_abstract.h"
 #include "devicecontrol/devicecontrolabstract.h"
 #include "devicecontrol/devicecontrolfactory.h"
-//#include "devicecontrol/devicewatcher.h"
+#include "devicecontrol/devicewatcher.h"
 #include "rtp/rtpbuffer.h"
 #include "rtp/rtpreceiver.h"
 #include "rtsp/rtspserver.h"
@@ -66,13 +66,13 @@ int main(int argc, char *argv[])
     settings.endGroup();
 
     // command line options
-    QString defaultName("OmniFunken@"); defaultName.append(QHostInfo::localHostName());
     QCommandLineParser parser;
     parser.setApplicationDescription("OmniFunken aims to be a general purpose media render daemon.");
     parser.addVersionOption();
     parser.addHelpOption();
     //QCommandLineOption verboseOption(QStringList() << "v" << "verbose", "Set verbose mode.");
     //parser.addOption(verboseOption);
+    QString defaultName("OmniFunken@"); defaultName.append(QHostInfo::localHostName());
     QCommandLineOption nameOption(QStringList() << "n" << "name", "Set propagated name.", "name", defaultName);
     parser.addOption(nameOption);
     QCommandLineOption portOption(QStringList() << "p" << "port", "Set RTSP port.", "port", "5002");

@@ -7,7 +7,7 @@
 
 AudioOutAlsa::AudioOutAlsa() :
     m_deviceName("hw:0"),
-    m_ready(false)
+    m_ready(false),
     m_pcm(0),
     m_block(true),
     m_format(SND_PCM_FORMAT_UNKNOWN),

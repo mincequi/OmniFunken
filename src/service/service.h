@@ -26,10 +26,10 @@ protected:
     virtual void deinitNetwork();
     virtual void initZeroconf();
     virtual void deinitZeroconf();
-    ServiceConfig serviceConfig() const;
+    ServiceConfig config() const;
 
 private:
-    ServiceConfig m_serviceConfig;
+    ServiceConfig m_config;
 };
 
 #endif // SERVICE_H

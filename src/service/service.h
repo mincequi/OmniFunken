@@ -4,6 +4,8 @@
 #include <QObject>
 #include "serviceconfig.h"
 
+class DeviceControlAbstract;
+
 class Service : public QObject
 {
     Q_OBJECT
@@ -18,6 +20,7 @@ public slots:
     void close();
 
 protected:
+    ServiceConfig config() const;
     virtual void initAudioOut();
     virtual void deinitAudioOut();
     virtual void initDeviceControl();
@@ -26,10 +29,11 @@ protected:
     virtual void deinitNetwork();
     virtual void initZeroconf();
     virtual void deinitZeroconf();
-    ServiceConfig config() const;
 
 private:
     ServiceConfig m_config;
+
+    DeviceControlAbstract *m_deviceControl;
 };
 
 #endif // SERVICE_H

@@ -13,7 +13,7 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++0x
 
 CONFIG += debug_and_release
 
@@ -23,7 +23,7 @@ macx {
     LIBS += -L/usr/local/Cellar/libao/1.2.0/lib
 }
 
-INCLUDEPATH += "/usr/include/qt5"
+#INCLUDEPATH += "/usr/include/qt5"
 
 LIBS += -lcrypto -lao
 
@@ -55,7 +55,8 @@ SOURCES += main.cpp \
     signalhandler.cpp \
     service/serviceconfig.cpp \
     service/service.cpp \
-    airtunes/airtunesserviceconfig.cpp
+    airtunes/airtunesserviceconfig.cpp \
+    core/core.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp \
@@ -90,7 +91,8 @@ HEADERS += \
     audiofilter/audiofilterabstract.h \
     service/service.h \
     service/serviceconfig.h \
-    airtunes/airtunesserviceconfig.h
+    airtunes/airtunesserviceconfig.h \
+    core/core.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h \

@@ -1,7 +1,12 @@
 #include "service.h"
 
+#include "player.h"
+#include "util.h"
 #include "audioout/audioout_abstract.h"
 #include "audioout/audiooutfactory.h"
+#include "core/core.h"
+#include "devicecontrol/devicecontrolabstract.h"
+#include "devicecontrol/devicecontrolfactory.h"
 #include "rtsp/rtspserver.h"
 #include "rtp/rtpbuffer.h"
 #include "rtp/rtpreceiver.h"
@@ -35,15 +40,19 @@ void Service::close()
     deinitAudioOut();
 }
 
+ServiceConfig Service::config() const
+{
+    return m_config;
+}
+
 void Service::initAudioOut()
 {
     // init audio driver
-    AudioOutAbstract *m_audioOut = AudioOutFactory::createAudioOut(config().audioOut(),
-                                                                 config().audioDevice(),
-                                                                 audioSettings);
+    QSettings::SettingsMap settings;
+    AudioOutAbstract *m_audioOut = AudioOutFactory::createAudioOut(config().audioOut(), config().audioDevice(), settings);
 
     // init rtsp/rtp components
-    RtspServer  *rtspServer = new RtspServer(macAddress);
+    RtspServer  *rtspServer = new RtspServer(Util::getMacAddress());
     RtpBuffer   *rtpBuffer = new RtpBuffer(config().latency());
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
 
@@ -51,7 +60,7 @@ void Service::initAudioOut()
     Player      *player = new Player(rtpBuffer, m_audioOut);
 
     // init device control
-    DeviceControlAbstract *deviceControl = DeviceControlFactory::createDeviceControl(&settings);
+    m_deviceControl = DeviceControlFactory::createDeviceControl(ofCore->settings());
 
     // wire components
     //QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
@@ -63,16 +72,15 @@ void Service::initAudioOut()
     QObject::connect(rtspServer, &RtspServer::teardown, rtpReceiver, &RtpReceiver::teardown);
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
 
-    if (deviceControl) {
-        QObject::connect(&a, &QCoreApplication::aboutToQuit, [deviceControl]() { deviceControl->deinit(); } );
-        QObject::connect(rtspServer, &RtspServer::announce, [deviceControl]() {
-            qDebug("open deviceControl");
-            deviceControl->open();
-            qDebug("deviceControl opened");
-            deviceControl->powerOn();
+    if (m_deviceControl) {
+        QObject::connect(rtspServer, &RtspServer::announce, [this](const RtspMessage::Announcement &announcement) {
+            //qDebug("open deviceControl");
+            m_deviceControl->open();
+            //qDebug("deviceControl opened");
+            m_deviceControl->powerOn();
             //deviceControl->setInput();
         });
-        QObject::connect(rtspServer, &RtspServer::volume, deviceControl, &DeviceControlAbstract::setVolume);
+        QObject::connect(rtspServer, &RtspServer::volume, m_deviceControl, &DeviceControlAbstract::setVolume);
     } else {
         QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
     }
@@ -83,7 +91,7 @@ void Service::initAudioOut()
     QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
 
     // startup
-    rtspServer->listen(QHostAddress::AnyIPv4, parser.value(portOption).toInt());
+    rtspServer->listen(QHostAddress::AnyIPv4, config().port());
 }
 
 void Service::deinitAudioOut()
@@ -97,7 +105,9 @@ void Service::initDeviceControl()
 
 void Service::deinitDeviceControl()
 {
-
+    if (m_deviceControl) {
+        m_deviceControl->deinit();
+    }
 }
 
 void Service::initNetwork()
@@ -113,8 +123,8 @@ void Service::deinitNetwork()
 void Service::initZeroconf()
 {
     // register service
-    ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd(macAddress);
-    dnsSd->registerService(parser.value(nameOption).toLatin1(), parser.value(portOption).toInt());
+    ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd(Util::getMacAddress());
+    dnsSd->registerService(config().name().toLatin1(), config().port());
 }
 
 void Service::deinitZeroconf()

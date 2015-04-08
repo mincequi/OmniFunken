@@ -21,7 +21,6 @@ Service::Service(const ServiceConfig &serviceConfig, QObject *parent) :
 
 Service::~Service()
 {
-    close();
 }
 
 void Service::open()

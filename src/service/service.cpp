@@ -7,6 +7,7 @@
 #include "core/core.h"
 #include "devicecontrol/devicecontrolabstract.h"
 #include "devicecontrol/devicecontrolfactory.h"
+#include "devicecontrol/devicewatcher.h"
 #include "rtsp/rtspserver.h"
 #include "rtp/rtpbuffer.h"
 #include "rtp/rtpreceiver.h"
@@ -72,7 +73,7 @@ void Service::initAudioOut()
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
 
     if (m_deviceControl) {
-        QObject::connect(rtspServer, &RtspServer::announce, [this](const RtspMessage::Announcement &announcement) {
+        QObject::connect(rtspServer, &RtspServer::announce, [this]() {
             //qDebug("open deviceControl");
             m_deviceControl->open();
             //qDebug("deviceControl opened");
@@ -84,10 +85,8 @@ void Service::initAudioOut()
         QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
     }
 
-    // QObject::connect(rtspServer, &RtspServer::announce, [rtpReceiver, m_audioOut](const RtspMessage::Announcement& announcement) {
-    //      onAnnounce(rtpReceiver, m_audioOut, announcement);
-    // });
-    QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
+    QObject::connect(rtspServer, &RtspServer::announce, this, &Service::onAnnounce);
+    QObject::connect(rtspServer, &RtspServer::announce, rtpReceiver, &RtpReceiver::announce);
 
     // startup
     rtspServer->listen(QHostAddress::AnyIPv4, config().port());
@@ -95,11 +94,13 @@ void Service::initAudioOut()
 
 void Service::deinitAudioOut()
 {
+    if (m_audioOut) {
+        m_audioOut->deinit();
+    }
 }
 
 void Service::initDeviceControl()
 {
-
 }
 
 void Service::deinitDeviceControl()
@@ -111,12 +112,10 @@ void Service::deinitDeviceControl()
 
 void Service::initNetwork()
 {
-
 }
 
 void Service::deinitNetwork()
 {
-
 }
 
 void Service::initZeroconf()
@@ -128,5 +127,28 @@ void Service::initZeroconf()
 
 void Service::deinitZeroconf()
 {
+}
 
+void Service::onAnnounce()
+{
+    // If audio device is not yet ready
+    if (!m_audioOut->ready()) {
+        DeviceWatcher *deviceWatcher = new DeviceWatcher();
+        DeviceWatcher::UDevProperties properties;
+        properties["ID_MODEL"] = "Primare_I22_v1.0";
+
+        QEventLoop loop;
+        deviceWatcher->start("add", properties);
+        QObject::connect(deviceWatcher, &DeviceWatcher::ready, []() { qDebug() << "device ready"; });
+        QObject::connect(deviceWatcher, &DeviceWatcher::ready, &loop, &QEventLoop::quit);
+        QObject::connect(deviceWatcher, &DeviceWatcher::ready, deviceWatcher, &QObject::deleteLater);
+        loop.exec();
+
+        QSettings::SettingsMap settings;
+        m_audioOut->init(settings);
+
+        if (m_deviceControl) {
+            m_deviceControl->setInput();
+        }
+    }
 }

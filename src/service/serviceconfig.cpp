@@ -26,32 +26,49 @@ ServiceConfig::CommandLineParseResult ServiceConfig::parseCommandLine(QCommandLi
     QCommandLineOption audioDeviceOption(QStringList() << "ad" << "audiodevice", "Set audio device.", "audiodevice", "hw:0");
     parser.addOption(audioDeviceOption);
 
+    if (!parser.parse(QCoreApplication::arguments())) {
+        if (errorMessage) *errorMessage = parser.errorText();
+        return CommandLineError;
+    }
+
     m_name = parser.value(nameOption);
     m_port = parser.value(portOption).toInt();
     m_latency = parser.value(latencyOption).toInt();
     m_audioOut = parser.value(audioOutOption);
     m_audioDevice = parser.value(audioDeviceOption);
+
+    qDebug() << __func__ << "name: " << m_name
+             << ", port: " << m_port
+             << ", latency: " << m_latency
+             << ", audioOut: " << m_audioOut
+             << ", audioDevice: " << m_audioDevice;
+
+    return CommandLineOk;
 }
 
 QString ServiceConfig::name() const
 {
-    return "OmniFunken";
+    return m_name;
 }
 
 quint16 ServiceConfig::port() const
 {
+    return m_port;
 }
 
 quint16 ServiceConfig::latency() const
 {
+    return m_latency;
 }
 
 QString ServiceConfig::audioOut() const
 {
+    return m_audioOut;
 }
 
 QString ServiceConfig::audioDevice() const
 {
+    return m_audioDevice;
 }
 
 QString ServiceConfig::zeroconfType() const

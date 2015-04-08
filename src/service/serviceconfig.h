@@ -17,7 +17,7 @@ public:
     ServiceConfig();
     ~ServiceConfig();
 
-    CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString *errorMessage);
+    CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString *errorMessage = NULL);
 
     QString name() const;
     quint16 port() const;

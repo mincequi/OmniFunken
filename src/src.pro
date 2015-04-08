@@ -52,6 +52,7 @@ SOURCES += main.cpp \
     rtsp/rtspmessage.cpp \
     rtsp/rtspserver.cpp \
     devicecontrol/devicecontrolrs232.cpp \
+    devicecontrol/devicewatcher.cpp \
     signalhandler.cpp \
     service/serviceconfig.cpp \
     service/service.cpp \
@@ -59,8 +60,7 @@ SOURCES += main.cpp \
     core/core.cpp
 
 unix:!macx {
-    SOURCES += audioout/audioout_alsa.cpp \
-        devicecontrol/devicewatcher.cpp
+    SOURCES += audioout/audioout_alsa.cpp
 }
 
 
@@ -73,6 +73,8 @@ HEADERS += \
     util.h \
     devicecontrol/devicecontrolfactory.h \
     devicecontrol/devicecontrolabstract.h \
+    devicecontrol/devicecontrolrs232.h \
+    devicecontrol/devicewatcher.h \
     audioout/audioout_abstract.h \
     audioout/audioout_ao.h \
     audioout/audiooutfactory.h \
@@ -86,7 +88,6 @@ HEADERS += \
     rtp/rtpreceiver.h \
     rtsp/rtspserver.h \
     rtsp/rtspmessage.h \
-    devicecontrol/devicecontrolrs232.h \
     signalhandler.h \
     audiofilter/audiofilterabstract.h \
     service/service.h \
@@ -95,7 +96,6 @@ HEADERS += \
     core/core.h
 
 unix:!macx {
-    HEADERS += audioout/audioout_alsa.h \
-        devicecontrol/devicewatcher.h
+    HEADERS += audioout/audioout_alsa.h
 }
 

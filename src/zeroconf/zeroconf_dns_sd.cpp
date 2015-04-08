@@ -1,9 +1,7 @@
 #include "zeroconf_dns_sd.h"
 
 #include <dns_sd.h>
-
 #include <QtEndian>
-
 
 ZeroconfDnsSd::ZeroconfDnsSd(const QString &macAddress, QObject *parent) :
     QObject(parent),
@@ -13,9 +11,9 @@ ZeroconfDnsSd::ZeroconfDnsSd(const QString &macAddress, QObject *parent) :
     m_macAddress.remove(QChar(':'));
 }
 
-int ZeroconfDnsSd::registerService(const char *name, uint16_t port)
+int ZeroconfDnsSd::registerService(const QString &name, quint16 port)
 {
-    QByteArray mdnsName(m_macAddress.toLatin1());
+    QString mdnsName(m_macAddress);
     mdnsName.append("@");
     mdnsName.append(name);
 
@@ -46,7 +44,7 @@ int ZeroconfDnsSd::registerService(const char *name, uint16_t port)
     error = DNSServiceRegister(&m_dnssref,
                                0,
                                kDNSServiceInterfaceIndexAny,
-                               mdnsName.constData(),
+                               mdnsName.toLatin1(),
                                "_raop._tcp",
                                "",
                                NULL,

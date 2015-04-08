@@ -16,12 +16,11 @@ Service::Service(const ServiceConfig &serviceConfig, QObject *parent) :
     QObject(parent),
     m_config(serviceConfig)
 {
-
 }
 
 Service::~Service()
 {
-
+    close();
 }
 
 void Service::open()

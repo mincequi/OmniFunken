@@ -1,7 +1,9 @@
 #include "devicewatcher.h"
 
+#ifdef Q_OS_LINUX
 #include <libudev.h>
 #include <fcntl.h>
+#endif
 
 DeviceWatcher::DeviceWatcher(QObject *parent) :
     QObject(parent),
@@ -26,8 +28,8 @@ void DeviceWatcher::start(const QString &action, const UDevProperties &propertie
     workerThread->start();
 }
 
-
-WorkerThread::WorkerThread(QObject *parent) : QThread(parent)
+WorkerThread::WorkerThread(QObject *parent) :
+    QThread(parent)
 {
 }
 
@@ -39,6 +41,7 @@ void WorkerThread::init(const QString &action, const DeviceWatcher::UDevProperti
 
 void WorkerThread::run()
 {
+#ifdef Q_OS_LINUX
     struct udev *udev = udev_new();
     struct udev_monitor *mon = udev_monitor_new_from_netlink(udev, "udev");
 
@@ -80,5 +83,6 @@ void WorkerThread::run()
             }
         }
     } // while
+#endif
 }
 

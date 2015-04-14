@@ -1,9 +1,14 @@
-#ifndef CORE_H
-#define CORE_H
+#ifndef OFCORE_H
+#define OFCORE_H
 
+#include "global.h"
+#include <QCommandLineParser>
 #include <QSettings>
 
 #define ofCore Core::instance()
+
+class AudioOutAbstract;
+class DeviceControlAbstract;
 
 class Core : public QObject
 {
@@ -15,31 +20,27 @@ public:
     // it returns a Core.
     static Core *instance();
 
+    CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString *errorMessage = NULL);
+
+    // Provide settings provided by configuration file
     QSettings *settings();
 
-    /*
-    ActionManager *actionManager();
-    MessageManager *messageManager();
-    EditorManager *editorManager();
-    ProgressManager *progressManager();
-    ScriptManager *scriptManager();
-    VariableManager *variableManager();
-    VcsManager *vcsManager();
-    MimeDatabase *mimeDatabase();
-    HelpManager *helpManager();
-    */
+    AudioOutAbstract *audioOut();
+    DeviceControlAbstract *deviceControl();
+
+    void powerOnDevice();
 
 public slots:
     void shutdown();
 
-signals:
-    void coreAboutToOpen();
-    void coreOpened();
-    void coreAboutToClose();
-
 private:
     Core();
     ~Core();
+
+    QString m_audioOutName;
+    QString m_audioDeviceName;
+    AudioOutAbstract *m_audioOut;
+    DeviceControlAbstract *m_deviceControl;
 };
 
-#endif // CORE_H
+#endif // OFCORE_H

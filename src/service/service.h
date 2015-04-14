@@ -22,8 +22,6 @@ public slots:
 
 protected:
     ServiceConfig config() const;
-    virtual void initAudioOut();
-    virtual void deinitAudioOut();
     virtual void initDeviceControl();
     virtual void deinitDeviceControl();
     virtual void initNetwork();

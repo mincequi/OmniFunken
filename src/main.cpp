@@ -1,10 +1,11 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 
-#include "airtunes/airtunesserviceconfig.h"
-#include "service/service.h"
 #include "daemon.h"
 #include "signalhandler.h"
+#include "airtunes/airtunesserviceconfig.h"
+#include "core/core.h"
+#include "service/service.h"
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +26,8 @@ int main(int argc, char *argv[])
     //parser.addOption(verboseOption);
     QCommandLineOption daemonOption(QStringList() << "d" << "daemon", "Start as daemon.");
     parser.addOption(daemonOption);
+
+    ofCore->parseCommandLine(parser);
 
     AirTunesServiceConfig airTunesServiceConfig;
     airTunesServiceConfig.parseCommandLine(parser);

@@ -21,10 +21,10 @@ ServiceConfig::CommandLineParseResult ServiceConfig::parseCommandLine(QCommandLi
     parser.addOption(portOption);
     QCommandLineOption latencyOption(QStringList() << "l" << "latency", "Set latency in milliseconds.", "latency", "500");
     parser.addOption(latencyOption);
-    QCommandLineOption audioOutOption(QStringList() << "ao" << "audioout", "Set audio backend.", "audioout", "ao");
-    parser.addOption(audioOutOption);
-    QCommandLineOption audioDeviceOption(QStringList() << "ad" << "audiodevice", "Set audio device.", "audiodevice", "hw:0");
-    parser.addOption(audioDeviceOption);
+    //    QCommandLineOption audioOutOption(QStringList() << "ao" << "audioout", "Set audio backend.", "audioout", "ao");
+    //    parser.addOption(audioOutOption);
+    //    QCommandLineOption audioDeviceOption(QStringList() << "ad" << "audiodevice", "Set audio device.", "audiodevice", "hw:0");
+    //    parser.addOption(audioDeviceOption);
 
     if (!parser.parse(QCoreApplication::arguments())) {
         if (errorMessage) *errorMessage = parser.errorText();
@@ -34,14 +34,14 @@ ServiceConfig::CommandLineParseResult ServiceConfig::parseCommandLine(QCommandLi
     m_name = parser.value(nameOption);
     m_port = parser.value(portOption).toInt();
     m_latency = parser.value(latencyOption).toInt();
-    m_audioOut = parser.value(audioOutOption);
-    m_audioDevice = parser.value(audioDeviceOption);
+//    m_audioOut = parser.value(audioOutOption);
+//    m_audioDevice = parser.value(audioDeviceOption);
 
     qDebug() << __func__ << "name: " << m_name
              << ", port: " << m_port
-             << ", latency: " << m_latency
-             << ", audioOut: " << m_audioOut
-             << ", audioDevice: " << m_audioDevice;
+             << ", latency: " << m_latency;
+//             << ", audioOut: " << m_audioOut
+//             << ", audioDevice: " << m_audioDevice;
 
     return CommandLineOk;
 }
@@ -61,15 +61,15 @@ quint16 ServiceConfig::latency() const
     return m_latency;
 }
 
-QString ServiceConfig::audioOut() const
-{
-    return m_audioOut;
-}
+//QString ServiceConfig::audioOut() const
+//{
+//    return m_audioOut;
+//}
 
-QString ServiceConfig::audioDevice() const
-{
-    return m_audioDevice;
-}
+//QString ServiceConfig::audioDevice() const
+//{
+//    return m_audioDevice;
+//}
 
 QString ServiceConfig::zeroconfType() const
 {

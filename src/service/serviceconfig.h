@@ -7,8 +7,7 @@
 class ServiceConfig
 {
 public:
-    enum CommandLineParseResult
-    {
+    enum CommandLineParseResult {
         CommandLineOk,
         CommandLineError
     };
@@ -22,8 +21,8 @@ public:
     QString name() const;
     quint16 port() const;
     quint16 latency() const;
-    QString audioOut() const;
-    QString audioDevice() const;
+    //    QString audioOut() const;
+    //    QString audioDevice() const;
 
     virtual QString zeroconfType() const;
 

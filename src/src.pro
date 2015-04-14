@@ -94,7 +94,8 @@ HEADERS += \
     service/service.h \
     service/serviceconfig.h \
     airtunes/airtunesserviceconfig.h \
-    core/core.h
+    core/core.h \
+    global.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

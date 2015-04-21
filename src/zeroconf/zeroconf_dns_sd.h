@@ -13,8 +13,8 @@ class ZeroconfDnsSd : public QObject, public ZeroconfInterface
 public:
     explicit ZeroconfDnsSd(const QString &macAddress, QObject *parent = 0);
 
-    int registerService(const QString &name, quint16 port) override;
-    void unregisterService() override;
+    int registerService(const QString &name, quint16 port) Q_DECL_OVERRIDE;
+    void unregisterService() Q_DECL_OVERRIDE;
 
 signals:
 

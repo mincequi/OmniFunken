@@ -13,15 +13,15 @@ class DeviceControlRs232 : public DeviceControlAbstract
 public:
     DeviceControlRs232();
 
-    virtual const char *name() const override;
-    virtual bool init(const QString &device, const QString &group, QSettings *settings) override;
-    virtual void deinit() override;
-    virtual void open() override;
-    virtual void close() override;
-    virtual void powerOn() override;
-    virtual void powerOff() override;
-    virtual void setInput() override;
-    virtual void setVolume(float volume) override;
+    virtual const char *name() const Q_DECL_OVERRIDE;
+    virtual bool init(const QString &device, const QString &group, QSettings *settings) Q_DECL_OVERRIDE;
+    virtual void deinit() Q_DECL_OVERRIDE;
+    virtual void open() Q_DECL_OVERRIDE;
+    virtual void close() Q_DECL_OVERRIDE;
+    virtual void powerOn() Q_DECL_OVERRIDE;
+    virtual void powerOff() Q_DECL_OVERRIDE;
+    virtual void setInput() Q_DECL_OVERRIDE;
+    virtual void setVolume(float volume) Q_DECL_OVERRIDE;
 
 private slots:
     void handleTimeout();

@@ -11,16 +11,16 @@ class AudioOutAlsa : public AudioOutAbstract
 public:
     AudioOutAlsa();
 
-    virtual const char *name() const override;
-    virtual void setDevice(const QString &device) override;
-    virtual bool init(const QSettings::SettingsMap &settings) override;
-    virtual bool ready() override;
-    virtual void deinit() override;
-    virtual void start() override;
-    virtual void stop() override;
-    virtual void play(char *data, int bytes) override;
-    virtual bool hasVolumeControl() override;
-    virtual void setVolume(float volume) override;
+    virtual const char *name() const Q_DECL_OVERRIDE;
+    virtual void setDevice(const QString &device) Q_DECL_OVERRIDE;
+    virtual bool init(const QSettings::SettingsMap &settings) Q_DECL_OVERRIDE;
+    virtual bool ready() Q_DECL_OVERRIDE;
+    virtual void deinit() Q_DECL_OVERRIDE;
+    virtual void start() Q_DECL_OVERRIDE;
+    virtual void stop() Q_DECL_OVERRIDE;
+    virtual void play(char *data, int bytes) Q_DECL_OVERRIDE;
+    virtual bool hasVolumeControl() Q_DECL_OVERRIDE;
+    virtual void setVolume(float volume) Q_DECL_OVERRIDE;
 
 private:
     bool probeNativeFormat();

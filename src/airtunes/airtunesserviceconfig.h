@@ -9,7 +9,7 @@ public:
     AirTunesServiceConfig();
     ~AirTunesServiceConfig();
 
-    virtual QString zeroconfType() const override;
+    virtual QString zeroconfType() const Q_DECL_OVERRIDE;
 };
 
 #endif // AIRTUNESSERVICECONFIG_H

@@ -77,6 +77,8 @@ DeviceControlAbstract *Core::deviceControl()
 
 void Core::powerOnDevice()
 {
+    qDebug() << __func__ << "enter";
+
     // switch it on, if necessary
     if (m_audioOut->ready()) {
         return;
@@ -112,7 +114,7 @@ void Core::powerOnDevice()
     deviceWatcher->start(action, properties);
     QObject::connect(deviceWatcher, &DeviceWatcher::ready, []() { qDebug() << "device ready"; });
     QObject::connect(deviceWatcher, &DeviceWatcher::ready, &loop, &QEventLoop::quit);
-    QTimer::singleShot(10000, &loop, &QEventLoop::quit);
+    QTimer::singleShot(10000, &loop, SLOT(quit()));
     QObject::connect(deviceWatcher, &DeviceWatcher::ready, deviceWatcher, &QObject::deleteLater);
     loop.exec();
 
@@ -121,6 +123,7 @@ void Core::powerOnDevice()
 
     // select input
     m_deviceControl->setInput();
+    qDebug() << __func__ << "exit"; 
 }
 
 void Core::shutdown()

@@ -20,6 +20,7 @@ RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, QObject *parent) :
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
 {
+    qDebug() << __PRETTY_FUNCTION__;
     teardown();
 
     m_announcement = announcement;

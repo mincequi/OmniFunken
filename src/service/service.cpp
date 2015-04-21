@@ -79,13 +79,6 @@ void Service::initNetwork()
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
 
     if (m_deviceControl) {
-        QObject::connect(rtspServer, &RtspServer::announce, [this]() {
-            //qDebug("open deviceControl");
-            m_deviceControl->open();
-            //qDebug("deviceControl opened");
-            m_deviceControl->powerOn();
-            //deviceControl->setInput();
-        });
         QObject::connect(rtspServer, &RtspServer::volume, m_deviceControl, &DeviceControlAbstract::setVolume);
     } else {
         QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
@@ -115,5 +108,6 @@ void Service::deinitZeroconf()
 
 void Service::onAnnounce()
 {
+    qDebug() << __PRETTY_FUNCTION__;
     ofCore->powerOnDevice();
 }

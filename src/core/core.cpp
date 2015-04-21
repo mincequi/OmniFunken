@@ -112,7 +112,7 @@ void Core::powerOnDevice()
     deviceWatcher->start(action, properties);
     QObject::connect(deviceWatcher, &DeviceWatcher::ready, []() { qDebug() << "device ready"; });
     QObject::connect(deviceWatcher, &DeviceWatcher::ready, &loop, &QEventLoop::quit);
-    QTimer::singleShot(10000, &loop, &QEventLoop::quit);
+    QTimer::singleShot(10000, &loop, SLOT(quit()));
     QObject::connect(deviceWatcher, &DeviceWatcher::ready, deviceWatcher, &QObject::deleteLater);
     loop.exec();
 

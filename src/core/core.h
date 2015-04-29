@@ -28,14 +28,13 @@ public:
     AudioOutAbstract *audioOut();
     DeviceControlAbstract *deviceControl();
 
-    void powerOnDevice();
-
 public slots:
     void shutdown();
 
 private:
     Core();
     ~Core();
+    void powerOnDevice();
 
     QString m_audioOutName;
     QString m_audioDeviceName;

@@ -11,6 +11,7 @@ class AudioOutAlsa : public AudioOutAbstract
 public:
     AudioOutAlsa();
 
+private:
     virtual const char *name() const Q_DECL_OVERRIDE;
     virtual void setDevice(const QString &device) Q_DECL_OVERRIDE;
     virtual bool init(const QSettings::SettingsMap &settings) Q_DECL_OVERRIDE;
@@ -22,7 +23,6 @@ public:
     virtual bool hasVolumeControl() Q_DECL_OVERRIDE;
     virtual void setVolume(float volume) Q_DECL_OVERRIDE;
 
-private:
     bool probeNativeFormat();
     const char* convertSamplesToNativeFormat(char *frames, snd_pcm_uframes_t size);
 

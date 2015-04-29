@@ -35,8 +35,6 @@ void Service::close()
     deinitZeroconf();
     deinitNetwork();
     deinitDeviceControl();
-
-    ofCore->audioOut()->deinit();
 }
 
 ServiceConfig Service::config() const
@@ -109,5 +107,4 @@ void Service::deinitZeroconf()
 void Service::onAnnounce()
 {
     qDebug() << __PRETTY_FUNCTION__;
-    ofCore->powerOnDevice();
 }

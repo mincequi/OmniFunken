@@ -58,14 +58,18 @@ AudioOutAbstract *Core::audioOut()
 {
     // Check if we have already an audio out device
     if (!m_audioOut) {
-        // request configured audio out device
-        QSettings::SettingsMap settings;
-        m_audioOut = AudioOutFactory::createAudioOut(m_audioOutName, m_audioDeviceName, settings);
+        // request registered audio out device
+        m_audioOut = AudioOutFactory::createAudioOut(m_audioOutName);
         if (!m_audioOut) {
             qWarning() << "AudioOut backend not available: " << m_audioOutName;
             return NULL;
         }
+        QSettings::SettingsMap settings;
+        m_audioOut->init(settings);
     }
+
+    // If device not ready, power it on
+    //powerOnDevice();
 
     return m_audioOut;
 }

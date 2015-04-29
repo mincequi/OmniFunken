@@ -11,6 +11,7 @@ class AudioOutAo : public AudioOutAbstract
 public:
     AudioOutAo();
 
+
     virtual const char *name() const Q_DECL_OVERRIDE;
     virtual bool init(const QSettings::SettingsMap &settings) Q_DECL_OVERRIDE;
     virtual void deinit() Q_DECL_OVERRIDE;

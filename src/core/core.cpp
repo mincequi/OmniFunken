@@ -81,6 +81,8 @@ DeviceControlAbstract *Core::deviceControl()
 
 void Core::powerOnDevice()
 {
+    qDebug() << __func__ << "enter";
+
     // switch it on, if necessary
     if (m_audioOut->ready()) {
         return;
@@ -125,6 +127,7 @@ void Core::powerOnDevice()
 
     // select input
     m_deviceControl->setInput();
+    qDebug() << __func__ << "exit"; 
 }
 
 void Core::shutdown()

@@ -66,14 +66,13 @@ void RtpReceiver::readPendingDatagrams()
     while (m_udpSocket.hasPendingDatagrams()) {
         QByteArray datagram;
         datagram.resize(m_udpSocket.pendingDatagramSize());
-        QHostAddress sender;
-        quint16 senderPort;
-        m_udpSocket.readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+        m_udpSocket.readDatagram(datagram.data(), datagram.size());
         RtpHeader header;
         readHeader(datagram.data(), &header);
         const char* payload = (datagram.data()+12);
         int payloadSize = datagram.size()-12;
         if (payloadSize < 16) {
+            //qDebug() << Q_FUNC_INFO << ": illegal payload size";
             return;
         }
 
@@ -91,8 +90,8 @@ void RtpReceiver::readPendingDatagrams()
             RtpPacket* bufferItem = m_rtpBuffer->obtainPacket(header.sequenceNumber);
             if (bufferItem) {
                 alac_decode_frame(m_alac, packet, bufferItem->payload, &(bufferItem->payloadSize));
-                m_rtpBuffer->commitPacket();
             }
+            m_rtpBuffer->commitPacket();
             break;
         }
         default:

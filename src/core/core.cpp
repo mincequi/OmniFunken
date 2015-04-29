@@ -64,18 +64,22 @@ AudioOutAbstract *Core::audioOut()
             qWarning() << "AudioOut backend not available: " << m_audioOutName;
             return NULL;
         }
+        m_audioOut->setDevice(m_audioDeviceName);
         QSettings::SettingsMap settings;
         m_audioOut->init(settings);
     }
 
     // If device not ready, power it on
-    //powerOnDevice();
+    powerOnDevice();
 
     return m_audioOut;
 }
 
 DeviceControlAbstract *Core::deviceControl()
 {
+    if (m_deviceControl) {
+        m_deviceControl->open();
+    }
     return m_deviceControl;
 }
 
@@ -154,5 +158,10 @@ Core::~Core()
     if (m_audioOut) {
         m_audioOut->deinit();
         m_audioOut = NULL;
+    }
+
+    if (m_deviceControl) {
+        m_deviceControl->deinit();
+        m_deviceControl = NULL;
     }
 }

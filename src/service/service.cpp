@@ -25,7 +25,6 @@ Service::~Service()
 
 void Service::open()
 {
-    initDeviceControl();
     initNetwork();
     initZeroconf();
 }
@@ -34,23 +33,11 @@ void Service::close()
 {
     deinitZeroconf();
     deinitNetwork();
-    deinitDeviceControl();
 }
 
 ServiceConfig Service::config() const
 {
     return m_config;
-}
-
-void Service::initDeviceControl()
-{
-}
-
-void Service::deinitDeviceControl()
-{
-    if (m_deviceControl) {
-        m_deviceControl->deinit();
-    }
 }
 
 void Service::initNetwork()
@@ -63,9 +50,6 @@ void Service::initNetwork()
     // init player
     Player      *player = new Player(rtpBuffer, ofCore->audioOut());
 
-    // init device control
-    m_deviceControl = DeviceControlFactory::createDeviceControl(ofCore->settings());
-
     // wire components
     //QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
     QObject::connect(rtspServer, &RtspServer::senderSocketAvailable, rtpReceiver, &RtpReceiver::setSenderSocket);
@@ -76,8 +60,8 @@ void Service::initNetwork()
     QObject::connect(rtspServer, &RtspServer::teardown, rtpReceiver, &RtpReceiver::teardown);
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
 
-    if (m_deviceControl) {
-        QObject::connect(rtspServer, &RtspServer::volume, m_deviceControl, &DeviceControlAbstract::setVolume);
+    if (ofCore->deviceControl()) {
+        QObject::connect(rtspServer, &RtspServer::volume, ofCore->deviceControl(), &DeviceControlAbstract::setVolume);
     } else {
         QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
     }

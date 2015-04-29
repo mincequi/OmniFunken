@@ -32,6 +32,8 @@ bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
     Q_UNUSED(settings)
 
+    qDebug() << __PRETTY_FUNCTION__;
+
     if (!probeNativeFormat()) {
         return false;
     }
@@ -57,6 +59,8 @@ bool AudioOutAlsa::ready()
 
 void AudioOutAlsa::deinit()
 {
+    qDebug() << __PRETTY_FUNCTION__;
+
     stop();
     if (m_conversionBuffer) {
         delete[] m_conversionBuffer;
@@ -65,6 +69,8 @@ void AudioOutAlsa::deinit()
 
 void AudioOutAlsa::start()
 {
+    qDebug() << __PRETTY_FUNCTION__;
+
     if (m_pcm) {
         return;
     }
@@ -125,8 +131,8 @@ void AudioOutAlsa::start()
 
 void AudioOutAlsa::stop()
 {
+    qDebug() << __PRETTY_FUNCTION__;
     if (m_pcm) {
-        qDebug() << __func__;
         snd_pcm_drain(m_pcm);
         snd_pcm_close(m_pcm);
         m_pcm = 0;

@@ -31,6 +31,8 @@ void Player::play()
 
 void Player::teardown()
 {
+    qDebug() << __PRETTY_FUNCTION__;
+
     if (m_playWorker->isRunning()) {
         //m_playWorker->quit();
         m_playWorker->wait();
@@ -67,7 +69,12 @@ void Player::PlayWorker::run()
 
     float prevVolume = 0.0;
 
-    while(const RtpPacket *packet = m_player->m_rtpBuffer->takePacket()) {
+    while(true) {
+        const RtpPacket *packet = m_player->m_rtpBuffer->takePacket();
+        if (!packet) {
+            qWarning() << __PRETTY_FUNCTION__ << ": no packet from buffer.";
+            break;
+        }
         m_player->m_mutex.lock();
         float volume = m_player->m_volume;
         m_player->m_mutex.unlock();

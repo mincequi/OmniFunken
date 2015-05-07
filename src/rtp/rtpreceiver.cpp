@@ -14,10 +14,12 @@ RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval, QObject *p
     m_rtpBuffer(rtpBuffer),
     m_retryInterval(retryInterval)
 
-{   
-    connect(&m_udpSocket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
-    //connect(m_rtpBuffer, SIGNAL(missingSequence(quint16,quint16)), this, SLOT(requestRetransmit(quint16,quint16)));
-    connect(&m_retryTimer, &QTimer::timeout, this, &RtpReceiver::requestRetransmit, Qt::QueuedConnection);
+{
+    m_udpSocket = new QUdpSocket(this);
+    m_retryTimer = new QTimer(this);
+
+    connect(m_udpSocket, &QUdpSocket::readyRead, this, &RtpReceiver::readPendingDatagrams);
+    connect(m_retryTimer, &QTimer::timeout, this, &RtpReceiver::requestRetransmit);
 }
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
@@ -29,7 +31,7 @@ void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
     AES_set_decrypt_key(reinterpret_cast<const unsigned char*>(announcement.rsaAesKey.data()), 128, &m_aesKey);
     initAlac(announcement.fmtp);
 
-    m_retryTimer.start(m_retryInterval);
+    m_retryTimer->start(m_retryInterval);
 }
 
 void RtpReceiver::setSenderSocket(airtunes::PayloadType payloadType, quint16 controlPort)
@@ -47,17 +49,17 @@ void RtpReceiver::bindSocket(airtunes::PayloadType payloadType, quint16 *port)
 {
     Q_UNUSED(payloadType);
 
-    if (!m_udpSocket.localPort()) {
-        m_udpSocket.bind();
+    if (!m_udpSocket->localPort()) {
+        m_udpSocket->bind();
     }
 
-    *port = m_udpSocket.localPort();
+    *port = m_udpSocket->localPort();
 }
 
 void RtpReceiver::teardown()
 {
-    m_retryTimer.stop();
-    m_udpSocket.close();
+    m_retryTimer->stop();
+    m_udpSocket->close();
 
     if (m_alac) {
         alac_free(m_alac);
@@ -67,10 +69,10 @@ void RtpReceiver::teardown()
 
 void RtpReceiver::readPendingDatagrams()
 {
-    while (m_udpSocket.hasPendingDatagrams()) {
+    while (m_udpSocket->hasPendingDatagrams()) {
         QByteArray datagram;
-        datagram.resize(m_udpSocket.pendingDatagramSize());
-        m_udpSocket.readDatagram(datagram.data(), datagram.size());
+        datagram.resize(m_udpSocket->pendingDatagramSize());
+        m_udpSocket->readDatagram(datagram.data(), datagram.size());
         RtpHeader header;
         readHeader(datagram.data(), &header);
         const char* payload = (datagram.data()+12);
@@ -119,7 +121,7 @@ void RtpReceiver::requestRetransmit()
         *(unsigned short *)(req+4) = qToBigEndian(sequence.first);  // missed seqnum
         *(unsigned short *)(req+6) = qToBigEndian(sequence.count);  // count
 
-        m_udpSocket.writeDatagram(req, 8, m_announcement.senderAddress, m_senderControlPort);
+        m_udpSocket->writeDatagram(req, 8, m_announcement.senderAddress, m_senderControlPort);
     }
 }
 

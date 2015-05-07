@@ -56,14 +56,14 @@ private:
 private:
     quint16     m_senderControlPort;
 
-    QUdpSocket  m_udpSocket;
+    QUdpSocket  *m_udpSocket;
     AES_KEY     m_aesKey;
     alac_file   *m_alac;
     RtspMessage::Announcement m_announcement;
 
     RtpBuffer   *m_rtpBuffer;
 
-    QTimer      m_retryTimer;
+    QTimer      *m_retryTimer;
     quint16     m_retryInterval;
 };
 

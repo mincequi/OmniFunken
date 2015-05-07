@@ -18,8 +18,8 @@ RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval, QObject *p
     m_udpSocket = new QUdpSocket(this);
     m_retryTimer = new QTimer(this);
 
-    connect(m_udpSocket, &QUdpSocket::readyRead, this, &RtpReceiver::readPendingDatagrams, Qt::QueuedConnection);
-    connect(m_retryTimer, &QTimer::timeout, this, &RtpReceiver::requestRetransmit, Qt::QueuedConnection);
+    connect(m_udpSocket, &QUdpSocket::readyRead, this, &RtpReceiver::readPendingDatagrams);
+    connect(m_retryTimer, &QTimer::timeout, this, &RtpReceiver::requestRetransmit);
 }
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
@@ -86,6 +86,8 @@ void RtpReceiver::readPendingDatagrams()
         case airtunes::Sync:
             break;
         case airtunes::RetransmitResponse: {
+            qDebug() << Q_FUNC_INFO << "RetransmitResponse";
+            break;
             header.sequenceNumber = qFromBigEndian(*((quint16*)(datagram.data()+6)));
             payload = payload+4;
             payloadSize = payloadSize-4;

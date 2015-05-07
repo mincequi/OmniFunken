@@ -18,9 +18,9 @@ public:
 
 signals:
     void announce(const RtspMessage::Announcement & announcement);
-    void senderSocketAvailable(Airtunes::PayloadType payloadType, quint16 port);
+    void senderSocketAvailable(airtunes::PayloadType payloadType, quint16 port);
     // note: does *probably* not work with queued connections
-    void receiverSocketRequired(Airtunes::PayloadType payloadType, quint16 *port);
+    void receiverSocketRequired(airtunes::PayloadType payloadType, quint16 *port);
     void record(quint16 seq);
     void flush(quint16 seq);
     void volume(float db);

@@ -25,7 +25,7 @@ public:
         bool    extension;
         quint8  csrcCount;
         bool    marker;
-        Airtunes::PayloadType payloadType;
+        airtunes::PayloadType payloadType;
         quint16 sequenceNumber;
         quint32 timestamp;
         quint32 ssrc;
@@ -38,8 +38,8 @@ signals:
 
 public slots:
     void announce(const RtspMessage::Announcement &announcement);
-    void setSenderSocket(Airtunes::PayloadType payloadType, quint16 port);
-    void bindSocket(Airtunes::PayloadType payloadType, quint16 *port);
+    void setSenderSocket(airtunes::PayloadType payloadType, quint16 port);
+    void bindSocket(airtunes::PayloadType payloadType, quint16 *port);
     void teardown();
 
 private slots:
@@ -54,6 +54,9 @@ private:
     void initAlac(const QByteArray &fmtp);
     void decodeAlac();
 
+    void requestMissingPackets();
+
+private:
     quint16     m_senderControlPort;
 
     QUdpSocket  m_udpSocket;

@@ -1,10 +1,10 @@
 #ifndef RTPBUFFER_H
 #define RTPBUFFER_H
 
+#include <QList>
 #include <QMutex>
 #include <QObject>
 #include <QTimer>
-#include <QVector>
 
 struct RtpPacket;
 
@@ -12,16 +12,23 @@ class RtpBuffer : public QObject
 {
     Q_OBJECT
 public:
-    explicit RtpBuffer(int latency = 500, QObject *parent = 0);
+    struct Sequence {
+        quint16 first;
+        quint16 count;
+    };
+
+    // framesPerPacket = stereo frames per second.
+    RtpBuffer(uint framesPerPacket, uint latency = 500, QObject *parent = 0);
     ~RtpBuffer();
-    // packetSize (bytes per frame = packetSize * numChannels * numBitsPerChannel)
-    void setPacketSize(int frames);
 
     // producer thread
     RtpPacket* obtainPacket(quint16 sequenceNumber);
     void commitPacket();
     // consumer thread
     const RtpPacket* takePacket();
+
+    // get missing sequences
+    QList<Sequence> missingSequences() const;
 
     void silence(char **silence, int *size) const;
 
@@ -52,7 +59,7 @@ private:
     void setStatus(Status status);
 
     enum PacketOrder {
-        Discard,    // packet is too late
+        TooLate,    // packet is too late
         Early,      // missing packets
         Expected,   // packet is in expected order
         Late,       // packet is late (eventually from request resend)
@@ -62,17 +69,17 @@ private:
 
     void requestMissingPackets();
 
+private:
     Status      m_status;
 
-    const int   m_latency;
+    const uint  m_framesPerPacket;
+    const uint  m_latency;
     int         m_desiredFill;
     int         m_capacity;
     int         m_first;
     int         m_last;
     RtpPacket   *m_data;
-    QVector<RtpPacket> m_qdata;
     char        *m_silence;
-    int         m_packetSize;
 
     mutable QMutex  m_mutex;
     QTimer          m_timer;

@@ -44,7 +44,7 @@ void Service::initNetwork()
 {
     // init rtsp/rtp components
     RtspServer  *rtspServer = new RtspServer(Util::getMacAddress());
-    RtpBuffer   *rtpBuffer = new RtpBuffer(config().latency());
+    RtpBuffer   *rtpBuffer = new RtpBuffer( airtunes::framesPerPacket, config().latency());
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer);
 
     // init player

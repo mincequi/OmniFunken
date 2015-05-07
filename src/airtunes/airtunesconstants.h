@@ -3,7 +3,7 @@
 
 #include <QtGlobal>
 
-namespace Airtunes
+namespace airtunes
 {
     const quint16 framesPerPacket = 352;
     const quint32 sampleRate = 44100;

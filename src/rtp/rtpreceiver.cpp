@@ -107,7 +107,8 @@ void RtpReceiver::readPendingDatagrams()
 
 void RtpReceiver::requestRetransmit()
 {
-    for (const RtpBuffer::Sequence& sequence : m_rtpBuffer->missingSequences()) {
+    auto sequences = m_rtpBuffer->missingSequences();
+    for (const RtpBuffer::Sequence& sequence : sequences) {
         qWarning() << __PRETTY_FUNCTION__ << sequence.first << sequence.count;
 
         char req[8];    // *not* a standard RTCP NACK

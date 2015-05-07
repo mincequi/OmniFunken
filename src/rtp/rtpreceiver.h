@@ -43,6 +43,7 @@ public slots:
 private slots:
     void readPendingDatagrams();
     void requestRetransmit();
+    //void doRequestRetransmit(quint16 seq, quint16 count);
 
 private:
     void readHeader(const char* data, RtpHeader *header);

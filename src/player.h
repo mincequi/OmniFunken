@@ -22,9 +22,6 @@ public slots:
     void teardown();
     void setVolume(float volume);
 
-private slots:
-    void updateRateControl(quint16 size);
-
 private:
     class PlayWorker : public QThread
     {

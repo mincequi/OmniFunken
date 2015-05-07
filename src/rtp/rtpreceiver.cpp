@@ -7,15 +7,17 @@
 
 #include <QtEndian>
 
-RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, QObject *parent) :
+RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval, QObject *parent) :
     QObject(parent),
     m_senderControlPort(0),
     m_alac(NULL),
-    m_rtpBuffer(rtpBuffer)
+    m_rtpBuffer(rtpBuffer),
+    m_retryInterval(retryInterval)
 
 {   
     connect(&m_udpSocket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
-    connect(m_rtpBuffer, SIGNAL(missingSequence(quint16,quint16)), this, SLOT(requestRetransmit(quint16,quint16)));
+    //connect(m_rtpBuffer, SIGNAL(missingSequence(quint16,quint16)), this, SLOT(requestRetransmit(quint16,quint16)));
+    connect(&m_retryTimer, &QTimer::timeout, this, &RtpReceiver::requestRetransmit);
 }
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
@@ -26,6 +28,8 @@ void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
     m_announcement = announcement;
     AES_set_decrypt_key(reinterpret_cast<const unsigned char*>(announcement.rsaAesKey.data()), 128, &m_aesKey);
     initAlac(announcement.fmtp);
+
+    m_retryTimer.start(m_retryInterval);
 }
 
 void RtpReceiver::setSenderSocket(airtunes::PayloadType payloadType, quint16 controlPort)
@@ -52,6 +56,7 @@ void RtpReceiver::bindSocket(airtunes::PayloadType payloadType, quint16 *port)
 
 void RtpReceiver::teardown()
 {
+    m_retryTimer.stop();
     m_udpSocket.close();
 
     if (m_alac) {
@@ -91,7 +96,6 @@ void RtpReceiver::readPendingDatagrams()
                 alac_decode_frame(m_alac, packet, rtpPacket->payload, &(rtpPacket->payloadSize));
             }
             m_rtpBuffer->commitPacket();
-            requestMissingPackets();
             break;
         }
         default:
@@ -101,17 +105,21 @@ void RtpReceiver::readPendingDatagrams()
     }
 }
 
-void RtpReceiver::requestRetransmit(quint16 first, quint16 num)
+void RtpReceiver::requestRetransmit()
 {
-    char req[8];    // *not* a standard RTCP NACK
-    req[0] = 0x80;
-    req[1] = 0x55|0x80;  // Apple 'resend'
+    for (const RtpBuffer::Sequence& sequence : m_rtpBuffer->missingSequences()) {
+        qWarning() << __PRETTY_FUNCTION__ << sequence.first << sequence.count;
 
-    *(unsigned short *)(req+2) = qToBigEndian(1);  // our seqnum
-    *(unsigned short *)(req+4) = qToBigEndian(first);  // missed seqnum
-    *(unsigned short *)(req+6) = qToBigEndian(num);  // count
+        char req[8];    // *not* a standard RTCP NACK
+        req[0] = 0x80;
+        req[1] = 0x55|0x80;  // Apple 'resend'
 
-    m_udpSocket.writeDatagram(req, 8, m_announcement.senderAddress, m_senderControlPort);
+        *(unsigned short *)(req+2) = qToBigEndian(1);  // our seqnum
+        *(unsigned short *)(req+4) = qToBigEndian(sequence.first);  // missed seqnum
+        *(unsigned short *)(req+6) = qToBigEndian(sequence.count);  // count
+
+        m_udpSocket.writeDatagram(req, 8, m_announcement.senderAddress, m_senderControlPort);
+    }
 }
 
 void RtpReceiver::readHeader(const char* data, RtpHeader *header)
@@ -157,8 +165,3 @@ void RtpReceiver::decrypt(const char *in, unsigned char *out, int length)
     AES_cbc_encrypt(reinterpret_cast<const unsigned char*>(in), out, encryptedSize, &m_aesKey, iv, AES_DECRYPT);
     memcpy(out+encryptedSize, in+encryptedSize, length-encryptedSize);
 }
-
-void RtpReceiver::requestMissingPackets()
-{
-}
-

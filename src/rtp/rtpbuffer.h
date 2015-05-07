@@ -4,7 +4,6 @@
 #include <QList>
 #include <QMutex>
 #include <QObject>
-#include <QTimer>
 
 struct RtpPacket;
 
@@ -27,6 +26,9 @@ public:
     // consumer thread
     const RtpPacket* takePacket();
 
+    // size, fill level
+    quint16 size() const;
+
     // get missing sequences
     QList<Sequence> missingSequences() const;
 
@@ -34,16 +36,10 @@ public:
 
 signals:
     void ready();
-    void full();
-    void missingSequence(quint16 first, quint16 num);
-    void notify(quint16 size);
 
 public slots:
     void flush(quint16 sequenceNumber);
     void teardown();
-
-private slots:
-    void timeout();
 
 private:
     enum Status {
@@ -67,8 +63,6 @@ private:
     };
     PacketOrder orderPacket(quint16);
 
-    void requestMissingPackets();
-
 private:
     Status      m_status;
 
@@ -82,7 +76,6 @@ private:
     char        *m_silence;
 
     mutable QMutex  m_mutex;
-    QTimer          m_timer;
 };
 
 #endif // RTPBUFFER_H

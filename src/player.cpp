@@ -13,7 +13,6 @@ Player::Player(RtpBuffer *rtpBuffer, AudioOutAbstract *audioOut, QObject *parent
     m_volume(0.0f)
 {
     connect(m_rtpBuffer, SIGNAL(ready()), this, SLOT(play()));
-    connect(m_rtpBuffer, SIGNAL(notify(quint16)), this, SLOT(updateRateControl(quint16)));
 
     m_audioOutTimer = new QTimer(this);
     m_audioOutTimer->setSingleShot(true);
@@ -50,11 +49,6 @@ void Player::setVolume(float volume)
         m_volume = volume;
         m_mutex.unlock();
     }
-}
-
-void Player::updateRateControl(quint16 size)
-{
-    qDebug() << __func__ << ": buffer size: " << size;
 }
 
 Player::PlayWorker::PlayWorker(Player *player)

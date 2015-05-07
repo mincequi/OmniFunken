@@ -11,6 +11,7 @@
 #include <QFile>
 #include <QList>
 #include <QObject>
+#include <QTimer>
 #include <QUdpSocket>
 
 class RtpBuffer;
@@ -31,10 +32,7 @@ public:
         quint32 ssrc;
     };
 
-    explicit RtpReceiver(RtpBuffer *rtpBuffer, QObject *parent = 0);
-
-signals:
-
+    explicit RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval = 25, QObject *parent = 0);
 
 public slots:
     void announce(const RtspMessage::Announcement &announcement);
@@ -44,7 +42,7 @@ public slots:
 
 private slots:
     void readPendingDatagrams();
-    void requestRetransmit(quint16 first, quint16 num);
+    void requestRetransmit();
 
 private:
     void readHeader(const char* data, RtpHeader *header);
@@ -53,8 +51,6 @@ private:
 
     void initAlac(const QByteArray &fmtp);
     void decodeAlac();
-
-    void requestMissingPackets();
 
 private:
     quint16     m_senderControlPort;
@@ -65,6 +61,9 @@ private:
     RtspMessage::Announcement m_announcement;
 
     RtpBuffer   *m_rtpBuffer;
+
+    QTimer      m_retryTimer;
+    quint16     m_retryInterval;
 };
 
 #endif // RTPRECEIVER_H

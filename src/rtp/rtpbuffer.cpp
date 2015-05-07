@@ -18,8 +18,6 @@ RtpBuffer::RtpBuffer(uint framesPerPacket, uint latency, QObject *parent) :
     m_desiredFill = (44100*m_latency)/(m_framesPerPacket*1000);
     m_capacity = Util::roundToPowerOfTwo(m_desiredFill*2);
     alloc();
-
-    connect(&m_timer, SIGNAL(timeout()), this, SLOT(timeout()));
 }
 
 RtpBuffer::~RtpBuffer()
@@ -68,7 +66,6 @@ void RtpBuffer::commitPacket()
     if ((m_status == Filling) && (fill >= m_desiredFill)) {
         qDebug() << __func__ << ": start playing at: " << m_data[m_first].sequenceNumber << ", last: " << m_last << ": " << m_data[m_last].sequenceNumber;
         m_status = Ready;
-        m_timer.start(10000);
         m_mutex.unlock();
         emit ready();
         return;
@@ -91,7 +88,6 @@ const RtpPacket* RtpBuffer::takePacket()
     // we might catch a packet which is marked as flush but is not received yet
     if (packet->flush) {
         qDebug() << __func__ << ": flush packet: " << packet->sequenceNumber;
-        m_timer.stop();
         m_status = Filling;
         packet->flush = false;
         return NULL;
@@ -100,7 +96,6 @@ const RtpPacket* RtpBuffer::takePacket()
     switch (packet->status) {
     case RtpPacket::PacketFree:
         qWarning() << __func__ << ": free packet: " << packet->sequenceNumber;
-        m_timer.stop();
         m_status = Init;
         return NULL;
         break;
@@ -110,7 +105,6 @@ const RtpPacket* RtpBuffer::takePacket()
     case RtpPacket::PacketOk:
         if (m_first == m_last) {
             qDebug() << __func__ << ": buffer empty";
-            m_timer.stop();
             m_status = Init;
         } else {
             m_first = (m_first+1) % m_capacity;
@@ -123,6 +117,13 @@ const RtpPacket* RtpBuffer::takePacket()
     }
 
     return packet;
+}
+
+quint16 RtpBuffer::size() const
+{
+    QMutexLocker locker(&m_mutex);
+
+    return m_data[m_last].sequenceNumber-m_data[m_first].sequenceNumber;
 }
 
 QList<RtpBuffer::Sequence> RtpBuffer::missingSequences() const
@@ -166,7 +167,6 @@ void RtpBuffer::flush(quint16 sequenceNumber)
     // if flush
     if (m_status == Ready) {
         qDebug() << __func__ << ": flush at: " << sequenceNumber;
-        m_timer.stop();
         m_status = Flushing;
 
         RtpPacket* packet = &(m_data[sequenceNumber%m_capacity]);
@@ -182,7 +182,6 @@ void RtpBuffer::teardown()
 {
     QMutexLocker locker(&m_mutex);
 
-    m_timer.stop();
     m_status = Init;
     m_first = 0;
     m_last = 0;
@@ -190,14 +189,6 @@ void RtpBuffer::teardown()
     for (int i = 0; i < m_capacity; ++i) {
         m_data[i].init();
     }
-}
-
-void RtpBuffer::timeout()
-{
-    m_mutex.lock();
-    quint16 size = m_data[m_last].sequenceNumber-m_data[m_first].sequenceNumber;
-    m_mutex.unlock();
-    emit notify(size);
 }
 
 void RtpBuffer::alloc()
@@ -235,12 +226,6 @@ void RtpBuffer::setStatus(Status status)
         return;
     }
 
-    if (status == Ready) {
-        m_timer.start(1000);
-    } else {
-        m_timer.stop();
-    }
-
     m_status = status;
 }
 
@@ -276,39 +261,5 @@ RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
             qDebug() << __func__ << ": late packet: " << sequenceNumber << ", last: " << m_data[m_last].sequenceNumber;
             return Late;
         }
-    }
-}
-
-void RtpBuffer::requestMissingPackets()
-{
-    int startOfSequence = -1;
-    int endOfSequence   = -1;
-
-    for (int i = m_first; i != m_last; i = (i+1)%m_capacity) {
-        // find startOfSequence of missing packets
-        if (m_data[i].status == RtpPacket::PacketMissing && startOfSequence == -1) {
-            startOfSequence = m_data[i].sequenceNumber;
-        }
-        // find endOfSequence of missing packets
-        if ((m_data[(i+1)%m_capacity].status != RtpPacket::PacketMissing) && startOfSequence != -1) {
-            endOfSequence = m_data[i].sequenceNumber;
-
-            // request every fifth time
-            if (((m_data[startOfSequence%m_capacity].requestCount)%5)==0) {
-                qDebug("requestMissingPackets: %d to %d", quint16(startOfSequence), quint16(endOfSequence));
-                emit missingSequence(startOfSequence, (endOfSequence-startOfSequence+1));
-            }
-
-            // increment counter
-            for (quint16 j = startOfSequence; j != endOfSequence+1; ++j) {
-                m_data[j%m_capacity].requestCount++;
-            }
-
-            startOfSequence = -1;
-            endOfSequence   = -1;
-        }
-    }
-    if (startOfSequence != -1 || endOfSequence != -1) {
-        qFatal(__func__);
     }
 }

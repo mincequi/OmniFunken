@@ -17,7 +17,7 @@ RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval, QObject *p
 {   
     connect(&m_udpSocket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
     //connect(m_rtpBuffer, SIGNAL(missingSequence(quint16,quint16)), this, SLOT(requestRetransmit(quint16,quint16)));
-    connect(&m_retryTimer, &QTimer::timeout, this, &RtpReceiver::requestRetransmit);
+    connect(&m_retryTimer, &QTimer::timeout, this, &RtpReceiver::requestRetransmit, Qt::QueuedConnection);
 }
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)

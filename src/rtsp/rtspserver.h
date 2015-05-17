@@ -1,11 +1,9 @@
 #ifndef RTSPSERVER_H
 #define RTSPSERVER_H
 
-#include "rtspmessage.h"
 #include "airtunes/airtunesconstants.h"
-
+#include "rtspmessage.h"
 #include <QTcpServer>
-
 
 class RtspServer : public QObject
 {
@@ -19,7 +17,7 @@ public:
 signals:
     void announce(const RtspMessage::Announcement & announcement);
     void senderSocketAvailable(airtunes::PayloadType payloadType, quint16 port);
-    // note: does *probably* not work with queued connections
+    // Note: It is not possible to use a QueuedConnection to connect to this signal
     void receiverSocketRequired(airtunes::PayloadType payloadType, quint16 *port);
     void record(quint16 seq);
     void flush(quint16 seq);

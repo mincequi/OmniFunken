@@ -29,7 +29,7 @@ INCLUDEPATH += "/usr/include/qt5"
 LIBS += -lcrypto -lao
 
 unix:!macx {
-    LIBS += -ldns_sd -lasound -ludev
+    LIBS += -ldns_sd -lasound -ludev -lboost_system
 }
 
 CONFIG(release, debug|release) {
@@ -49,7 +49,8 @@ SOURCES += main.cpp \
     zeroconf/zeroconf_dns_sd.cpp \
     rtp/rtpbuffer.cpp \
     rtp/rtpbufferalt.cpp \
-    rtp/rtpreceiver.cpp \
+    #rtp/rtpreceiver.cpp \
+    rtp/rtpreceiverboost.cpp \
     rtsp/rtspmessage.cpp \
     rtsp/rtspserver.cpp \
     devicecontrol/devicecontrolrs232.cpp \
@@ -58,7 +59,9 @@ SOURCES += main.cpp \
     service/serviceconfig.cpp \
     service/service.cpp \
     airtunes/airtunesserviceconfig.cpp \
-    core/core.cpp
+    core/core.cpp \
+    rtp/rtpretransmissionrequester.cpp \
+    rtp/rtpheader.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -72,6 +75,8 @@ HEADERS += \
     daemon.h \
     omnifunken.h \
     util.h \
+    airplay/airplay.h \
+    airtunes/airtunesconstants.h \
     devicecontrol/devicecontrolfactory.h \
     devicecontrol/devicecontrolabstract.h \
     devicecontrol/devicecontrolrs232.h \
@@ -79,14 +84,11 @@ HEADERS += \
     audioout/audioout_abstract.h \
     audioout/audioout_ao.h \
     audioout/audiooutfactory.h \
-    zeroconf/zeroconf.h \
-    zeroconf/zeroconf_dns_sd.h \
-    airplay/airplay.h \
     rtp/rtppacket.h \
     rtp/rtpbuffer.h \
     rtp/rtpbufferalt.h \
-    airtunes/airtunesconstants.h \
-    rtp/rtpreceiver.h \
+    #rtp/rtpreceiver.h \
+    rtp/rtpreceiverboost.h \
     rtsp/rtspserver.h \
     rtsp/rtspmessage.h \
     signalhandler.h \
@@ -95,7 +97,11 @@ HEADERS += \
     service/serviceconfig.h \
     airtunes/airtunesserviceconfig.h \
     core/core.h \
-    global.h
+    global.h \
+    rtp/rtpretransmissionrequester.h \
+    zeroconf/zeroconf.h \
+    zeroconf/zeroconf_dns_sd.h \
+    rtp/rtpheader.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

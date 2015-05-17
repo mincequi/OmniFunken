@@ -24,9 +24,6 @@ protected:
     virtual void initZeroconf();
     virtual void deinitZeroconf();
 
-private slots:
-    void onAnnounce();
-
 private:
     ServiceConfig m_config;
 };

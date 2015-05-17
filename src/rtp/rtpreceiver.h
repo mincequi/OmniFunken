@@ -1,20 +1,17 @@
 #ifndef RTPRECEIVER_H
 #define RTPRECEIVER_H
 
+#include "alac.h"
+#include "rtpbuffer.h"
 #include "airtunes/airtunesconstants.h"
 #include "rtsp/rtspmessage.h"
 
-#include "alac.h"
-
 #include <openssl/aes.h>
 
-#include <QFile>
-#include <QList>
 #include <QObject>
-#include <QTimer>
-#include <QUdpSocket>
 
-class RtpBuffer;
+class QElapsedTimer;
+class QUdpSocket;
 
 class RtpReceiver : public QObject
 {
@@ -33,6 +30,7 @@ public:
     };
 
     explicit RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval = 25, QObject *parent = 0);
+    QUdpSocket* socket() { return m_udpSocket; }
 
 public slots:
     void announce(const RtspMessage::Announcement &announcement);
@@ -43,15 +41,12 @@ public slots:
 private slots:
     void readPendingDatagrams();
     void requestRetransmit();
-    //void doRequestRetransmit(quint16 seq, quint16 count);
 
 private:
     void readHeader(const char* data, RtpHeader *header);
-    void writeHeader(const RtpHeader *header, char* data);
     void decrypt(const char *in, unsigned char *out, int length);
 
     void initAlac(const QByteArray &fmtp);
-    void decodeAlac();
 
 private:
     quint16     m_senderControlPort;
@@ -63,8 +58,8 @@ private:
 
     RtpBuffer   *m_rtpBuffer;
 
-    QTimer      *m_retryTimer;
-    quint16     m_retryInterval;
+    quint16         m_retryInterval;
+    QElapsedTimer   *m_elapsedTimer;
 };
 
 #endif // RTPRECEIVER_H

@@ -1,5 +1,4 @@
 #include "rtspserver.h"
-#include "rtspmessage.h"
 
 #include <QRegExp>
 #include <QTcpSocket>

@@ -1,11 +1,13 @@
 #include "rtpreceiver.h"
-#include "rtp/rtpbuffer.h"
-#include "rtp/rtppacket.h"
+#include "rtppacket.h"
 #include "alac.h"
 
 #include <assert.h>
 
+#include <QElapsedTimer>
 #include <QtEndian>
+#include <QUdpSocket>
+
 
 RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval, QObject *parent) :
     QObject(parent),
@@ -16,22 +18,19 @@ RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval, QObject *p
 
 {
     m_udpSocket = new QUdpSocket(this);
-    m_retryTimer = new QTimer(this);
+    m_elapsedTimer = new QElapsedTimer();
 
     connect(m_udpSocket, &QUdpSocket::readyRead, this, &RtpReceiver::readPendingDatagrams);
-    connect(m_retryTimer, &QTimer::timeout, this, &RtpReceiver::requestRetransmit);
 }
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
 {
-    qDebug() << __PRETTY_FUNCTION__;
     teardown();
 
+    m_elapsedTimer->start();
     m_announcement = announcement;
     AES_set_decrypt_key(reinterpret_cast<const unsigned char*>(announcement.rsaAesKey.data()), 128, &m_aesKey);
     initAlac(announcement.fmtp);
-
-    m_retryTimer->start(m_retryInterval);
 }
 
 void RtpReceiver::setSenderSocket(airtunes::PayloadType payloadType, quint16 controlPort)
@@ -58,7 +57,6 @@ void RtpReceiver::bindSocket(airtunes::PayloadType payloadType, quint16 *port)
 
 void RtpReceiver::teardown()
 {
-    m_retryTimer->stop();
     m_udpSocket->close();
 
     if (m_alac) {
@@ -79,15 +77,13 @@ void RtpReceiver::readPendingDatagrams()
         int payloadSize = datagram.size()-12;
         if (payloadSize < 16) {
             //qDebug() << Q_FUNC_INFO << ": illegal payload size";
-            return;
+            continue;
         }
 
         switch (header.payloadType) {
         case airtunes::Sync:
             break;
         case airtunes::RetransmitResponse: {
-            qDebug() << Q_FUNC_INFO << "RetransmitResponse";
-            break;
             header.sequenceNumber = qFromBigEndian(*((quint16*)(datagram.data()+6)));
             payload = payload+4;
             payloadSize = payloadSize-4;
@@ -107,14 +103,18 @@ void RtpReceiver::readPendingDatagrams()
             break;
         }
     }
+
+    if (m_elapsedTimer->elapsed() > m_retryInterval) {
+        requestRetransmit();
+        m_elapsedTimer->restart();
+    }
 }
 
 void RtpReceiver::requestRetransmit()
 {
     auto sequences = m_rtpBuffer->missingSequences();
     for (const RtpBuffer::Sequence& sequence : sequences) {
-        qWarning() << __PRETTY_FUNCTION__ << sequence.first << sequence.count;
-
+        qWarning() << Q_FUNC_INFO << sequence.first << sequence.count;
         char req[8];    // *not* a standard RTCP NACK
         req[0] = 0x80;
         req[1] = 0x55|0x80;  // Apple 'resend'

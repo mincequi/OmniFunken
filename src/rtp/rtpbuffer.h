@@ -16,6 +16,13 @@ public:
         quint16 count;
     };
 
+    enum State {
+        Empty,
+        Filling,
+        Ready,
+        Flushing
+    };
+
     // framesPerPacket = stereo frames per second.
     RtpBuffer(uint framesPerPacket, uint latency = 500, QObject *parent = 0);
     ~RtpBuffer();
@@ -36,23 +43,17 @@ public:
 
 signals:
     void ready();
+    void stateChanged(RtpBuffer::State state);
 
 public slots:
     void flush(quint16 sequenceNumber);
     void teardown();
 
 private:
-    enum Status {
-        Init,
-        Filling,
-        Ready,
-        Flushing
-    };
-
     void alloc();
     void free();
 
-    void setStatus(Status status);
+    void setState(State state);
 
     enum PacketOrder {
         TooLate,    // packet is too late
@@ -63,8 +64,11 @@ private:
     };
     PacketOrder orderPacket(quint16);
 
+    void emitStateChanged(RtpBuffer::State state);
+
 private:
-    Status      m_status;
+    State       m_state;
+    State       m_lastEmittedState;
 
     const uint  m_framesPerPacket;
     const uint  m_latency;
@@ -77,5 +81,7 @@ private:
 
     mutable QMutex  m_mutex;
 };
+
+Q_DECLARE_METATYPE(RtpBuffer::State)
 
 #endif // RTPBUFFER_H

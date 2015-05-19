@@ -2,7 +2,6 @@
 #define RTPRECEIVERBOOST_H
 
 #include "alac.h"
-#include "rtpbuffer.h"
 #include "airtunes/airtunesconstants.h"
 #include "rtsp/rtspmessage.h"
 
@@ -14,6 +13,7 @@
 #include <QObject>
 #include <QThread>
 
+class RtpBuffer;
 class QElapsedTimer;
 
 class RtpReceiver : public QObject

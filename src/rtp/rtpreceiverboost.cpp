@@ -1,4 +1,6 @@
 #include "rtpreceiverboost.h"
+
+#include "rtpbuffer.h"
 #include "rtpheader.h"
 #include "rtppacket.h"
 #include "alac.h"
@@ -17,7 +19,6 @@ RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval, QObject *p
     m_rtpBuffer(rtpBuffer),
     m_retryInterval(retryInterval),
     m_udpWorker(NULL)
-
 {
 }
 
@@ -140,6 +141,7 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
         }
         case airtunes::AudioData: {
             unsigned char packet[2048];
+            if (payloadSize <= 0) break; // need to check payloadSize, since we get broken payloads from time to time
             decrypt(payload, packet, payloadSize);
             RtpPacket* rtpPacket = m_rtpBuffer->obtainPacket(header.sequenceNumber);
             if (rtpPacket) {

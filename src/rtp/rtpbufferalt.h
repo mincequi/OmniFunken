@@ -3,6 +3,8 @@
 
 #include <QList>
 #include <QObject>
+#include <QSemaphore>
+#include <QWaitCondition>
 
 struct RtpPacket;
 
@@ -17,8 +19,10 @@ public:
 
     // producer thread
     RtpPacket* obtainPacket(quint16 sequenceNumber);
-    void commitPacket();
+    void commitPacket(RtpPacket* packet);
+
     // consumer thread
+    void waitUntilReady();
     const RtpPacket* takePacket();
 
 private:
@@ -26,14 +30,19 @@ private:
     void free();
 
 private:
-    const uint  m_framesPerPacket;
-    const uint  m_latency;
-    const uint  m_desiredFill;
-    const uint  m_capacity;
-    int         m_first;
-    int         m_last;
-    RtpPacket   *m_data;
-    char        *m_silence;
+    const uint      m_framesPerPacket;
+    const uint      m_latency;
+    const int       m_desiredFill;
+    const quint16   m_capacity;
+    RtpPacket       *m_data;
+    char            *m_silence;
+
+    QSemaphore      m_fill;
+    QWaitCondition  m_ready;
+    QMutex          m_readyMutex;
+
+    quint16     m_first;
+    quint16     m_last;
 };
 } // namespace alt
 #endif // RTPBUFFER_H

@@ -3,16 +3,18 @@
 
 #include "airtunes/airtunesconstants.h"
 
+#include <stdint.h>
+
 struct RtpHeader {
-    quint8  version;
+    uint8_t version;
     bool    padding;
     bool    extension;
-    quint8  csrcCount;
+    uint8_t csrcCount;
     bool    marker;
     airtunes::PayloadType payloadType;
-    quint16 sequenceNumber;
-    quint32 timestamp;
-    quint32 ssrc;
+    uint16_t sequenceNumber;
+    uint32_t timestamp;
+    uint32_t ssrc;
 };
 
 void readHeader(const char* data, RtpHeader *header);

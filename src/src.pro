@@ -17,19 +17,18 @@ QMAKE_CXXFLAGS += -std=c++0x
 
 CONFIG += debug_and_release
 
-
 macx {
-    INCLUDEPATH += "/usr/local/Cellar/libao/1.2.0/include/"
-    LIBS += -L/usr/local/Cellar/libao/1.2.0/lib
+    INCLUDEPATH += "/usr/local/include/"
+    LIBS += -L/usr/local/lib
 }
 
 # Needed for qt serial port
 INCLUDEPATH += "/usr/include/qt5"
 
-LIBS += -lcrypto -lao
+LIBS += -lcrypto -lao -lboost_system
 
 unix:!macx {
-    LIBS += -ldns_sd -lasound -ludev -lboost_system
+    LIBS += -ldns_sd -lasound -ludev
 }
 
 CONFIG(release, debug|release) {
@@ -47,7 +46,6 @@ SOURCES += main.cpp \
     audioout/audiooutfactory.cpp \
     audioout/audioout_ao.cpp \
     zeroconf/zeroconf_dns_sd.cpp \
-    rtp/rtpbuffer.cpp \
     rtp/rtpbufferalt.cpp \
     #rtp/rtpreceiver.cpp \
     rtp/rtpreceiverboost.cpp \
@@ -61,7 +59,8 @@ SOURCES += main.cpp \
     airtunes/airtunesserviceconfig.cpp \
     core/core.cpp \
     rtp/rtpretransmissionrequester.cpp \
-    rtp/rtpheader.cpp
+    rtp/rtpheader.cpp \
+    rtp/rtpbuffer.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp

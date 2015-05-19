@@ -43,7 +43,7 @@ RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
         m_last = sequenceNumber % m_capacity;
     case Late:
         if (m_state == Empty) {
-            qDebug() << __func__ << ": buffer now filling";
+            qDebug()<<Q_FUNC_INFO<<": buffer now filling";
             setState(Filling);
         }
         if (m_data[sequenceNumber % m_capacity].status == RtpPacket::PacketOk) {
@@ -66,7 +66,7 @@ void RtpBuffer::commitPacket()
 {
     quint16 fill = (m_data[m_last].sequenceNumber-m_data[m_first].sequenceNumber);
     if ((m_state == Filling) && (fill >= m_desiredFill)) {
-        qDebug() << __func__ << ": start playing at: " << m_data[m_first].sequenceNumber << ", last: " << m_last << ": " << m_data[m_last].sequenceNumber;
+        qDebug()<<Q_FUNC_INFO<<": start playing at: " << m_data[m_first].sequenceNumber << ", last: " << m_last << ": " << m_data[m_last].sequenceNumber;
         setState(Ready);
         m_mutex.unlock();
         emitStateChanged(Ready);
@@ -88,22 +88,22 @@ const RtpPacket* RtpBuffer::takePacket()
 
         // we might catch a packet which is marked as flush but is not received yet
         if (packet->flush) {
-            qDebug() << __func__ << ": flush packet: " << packet->sequenceNumber;
+            qDebug()<<Q_FUNC_INFO<<": flush packet: " << packet->sequenceNumber;
             setState(Filling);
             packet->flush = false;
         } else {
             switch (packet->status) {
             case RtpPacket::PacketFree:
-                qWarning() << __func__ << ": free packet: " << packet->sequenceNumber;
+                qWarning()<<Q_FUNC_INFO<<": free packet: " << packet->sequenceNumber;
                 setState(Empty);
                 packet = NULL;
                 break;
             case RtpPacket::PacketMissing:
-                qWarning() << __func__ << ": missing packet: " << packet->sequenceNumber;
+                qWarning()<<Q_FUNC_INFO<< "missing packet: "<<packet->sequenceNumber<<", payload size: "<<packet->payloadSize;
                 memcpy(packet->payload, m_silence, packet->payloadSize);
             case RtpPacket::PacketOk:
                 if (m_first == m_last) {
-                    qDebug() << __func__ << ": buffer empty";
+                    qDebug()<<Q_FUNC_INFO<<": buffer empty";
                     setState(Empty);
                 } else {
                     m_first = (m_first+1) % m_capacity;
@@ -171,7 +171,7 @@ void RtpBuffer::flush(quint16 sequenceNumber)
 
     // if flush
     if (m_state == Ready) {
-        qDebug() << __func__ << ": flush at: " << sequenceNumber;
+        qDebug()<<Q_FUNC_INFO<<": flush at: " << sequenceNumber;
         setState(Flushing);
 
         RtpPacket* packet = &(m_data[sequenceNumber%m_capacity]);
@@ -248,12 +248,12 @@ RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
 
     // if packet is too late. this should happen rarely.
     if (firstDiff > 0) {
-        qDebug() << __func__ << ": packet too late: " << sequenceNumber;
+        qDebug()<<Q_FUNC_INFO<<": packet too late: " << sequenceNumber;
         return TooLate;
     } else if (diff == 1) {
         return Expected;
     } else if (diff > 1) {
-        qDebug() << __func__ << ": early packet/lost packets";
+        //qDebug()<<Q_FUNC_INFO<<": early packet/lost packets";
         // mark missing
         for (quint16 i = m_data[m_last].sequenceNumber+1; i != sequenceNumber; ++i) {
             m_data[i%m_capacity].status = RtpPacket::PacketMissing;
@@ -261,11 +261,11 @@ RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
         }
         return Early;
     } else if (diff == 0) {
-        qDebug() << __func__ << ": packet sent twice: " << sequenceNumber;
+        //qDebug()<<Q_FUNC_INFO<<": packet sent twice: " << sequenceNumber;
         // TODO memcmp packets
         return Twice;
     } else /*if (diff < 0)*/ {
-        qDebug() << __func__ << ": late packet: " << sequenceNumber << ", last: " << m_data[m_last].sequenceNumber;
+        //qDebug()<<Q_FUNC_INFO<<": late packet: " << sequenceNumber << ", last: " << m_data[m_last].sequenceNumber;
         return Late;
     }
 }

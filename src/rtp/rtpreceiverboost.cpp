@@ -206,12 +206,14 @@ void RtpReceiver::UdpWorker::doRequestRetransmit()
         *(unsigned short *)(req+6) = qToBigEndian(sequence.count);  // count
 
         m_socket->async_send_to(boost::asio::buffer(req, 8),
-                               m_retryEndpoint,
-                               boost::bind(&RtpReceiver::UdpWorker::onRequestRetransmit, this, ph::error, ph::bytes_transferred));
+                                m_retryEndpoint,
+                                boost::bind(&RtpReceiver::UdpWorker::onRequestRetransmit, this, ph::error, ph::bytes_transferred));
     }
 }
 
 void RtpReceiver::UdpWorker::onRequestRetransmit(const boost::system::error_code& error, std::size_t bytesTransferred)
 {
-    qWarning()<<Q_FUNC_INFO<<" error: " << error;
+    if (error) {
+        qWarning()<<Q_FUNC_INFO<<" error occurred: "<<error;
+    }
 }

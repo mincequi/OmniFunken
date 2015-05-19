@@ -64,6 +64,12 @@ void Player::PlayWorker::run()
     float prevVolume = 0.0;
 
     while(true) {
+        static quint32 count = 0;
+        if ((count%125) == 0) {
+            qDebug()<<Q_FUNC_INFO<< "fill: "<<m_player->m_rtpBuffer->size();
+        }
+        ++count;
+
         const RtpPacket *packet = m_player->m_rtpBuffer->takePacket();
         if (!packet) {
             qWarning() << __PRETTY_FUNCTION__ << ": no packet from buffer.";

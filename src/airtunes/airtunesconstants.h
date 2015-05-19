@@ -1,14 +1,14 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <QtGlobal>
+#include <sys/types.h>
 
 namespace airtunes
 {
-    const quint16 framesPerPacket = 352;
-    const quint32 sampleRate = 44100;
-    const quint16 sampleSize = 16;
-    const quint8  channels = 2;
+    const uint framesPerPacket = 352;
+    const uint sampleRate = 44100;
+    const uint sampleSize = 16;
+    const uint channels = 2;
 
     enum PayloadType {
         TimingRequest       = 82,

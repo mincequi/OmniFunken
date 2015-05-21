@@ -37,6 +37,7 @@ RtspServer::RtspServer(const QString &macAddress, QObject *parent)
     : QObject(parent),
       m_dacpId(0)
 {
+    // Store mac address
     QStringList stringList = macAddress.split(":");
     for (int i = 0; i < stringList.size(); ++i) {
         bool ok = false;
@@ -63,7 +64,8 @@ void RtspServer::onNewConnection()
 {
     QTcpSocket *tcpSocket = m_tcpServer->nextPendingConnection();
     connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(onRequest()));
-    connect(tcpSocket, SIGNAL(disconnected()), tcpSocket, SLOT(deleteLater()));
+    connect(tcpSocket, &QTcpSocket::disconnected, [this]() { emit disconnected; });
+    connect(tcpSocket, &QTcpSocket::disconnected, tcpSocket, &QTcpSocket::deleteLater);
 }
 
 void RtspServer::onRequest()
@@ -107,14 +109,15 @@ void RtspServer::onRequest()
 void RtspServer::handleOptions(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(request);
-    //qDebug() << __func__;
+    qDebug()<<Q_FUNC_INFO;
+    
     response->insert("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, SET_PARAMETER");
 }
 
 void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
-    qDebug() << __func__;
+    qDebug()<<Q_FUNC_INFO;
 
     bool ok;
     m_dacpId = request.header("dacp-id").toULong(&ok, 16);
@@ -165,7 +168,7 @@ void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *respons
 
 void RtspServer::handleSetup(const RtspMessage &request, RtspMessage *response)
 {
-    qDebug() << __func__;
+    qDebug()<<Q_FUNC_INFO;
 
     quint16 senderControlPort = 0;
     quint16 senderTimingPort = 0;
@@ -224,7 +227,8 @@ void RtspServer::handleRecord(const RtspMessage &request, RtspMessage *response)
             seq = rx.cap(1).toUInt();
         }
     }
-    qDebug() << __func__ << ": " << seq;
+    
+    qDebug()<<Q_FUNC_INFO<< seq;
     if (seq != -1) {
         emit record(seq);
     }
@@ -244,14 +248,15 @@ void RtspServer::handleFlush(const RtspMessage &request, RtspMessage *response)
             seq = rx.cap(1).toUInt();
         }
     }
-    qDebug() << __func__ << ": " << seq;
+    
+    qDebug()<<Q_FUNC_INFO<< seq;
     emit flush(seq);
 }
 
 void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
-    qDebug(__func__);
+    qDebug()<<Q_FUNC_INFO;
 
     // only teardown if it is announced client
     bool ok;
@@ -263,10 +268,11 @@ void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *respons
 void RtspServer::handleSetParameter(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
+    
     bool ok = false;
     float db = request.header("volume").toFloat(&ok);
     if (ok) {
-        qDebug() << __func__ << ": volume: " << db;
+        qDebug()<<Q_FUNC_INFO<< "volume: " << db;
         emit volume(db);
     }
 }

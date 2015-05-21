@@ -14,7 +14,7 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++0x
 
 SOURCES += tst_devicecontroltest.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"

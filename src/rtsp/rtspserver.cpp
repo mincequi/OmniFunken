@@ -64,7 +64,7 @@ void RtspServer::onNewConnection()
 {
     QTcpSocket *tcpSocket = m_tcpServer->nextPendingConnection();
     connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(onRequest()));
-    connect(tcpSocket, &QTcpSocket::disconnected, [this]() { emit disconnected; });
+    connect(tcpSocket, &QTcpSocket::disconnected, [this]() { emit disconnected(); });
     connect(tcpSocket, &QTcpSocket::disconnected, tcpSocket, &QTcpSocket::deleteLater);
 }
 

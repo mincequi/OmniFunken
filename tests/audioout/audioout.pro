@@ -15,11 +15,11 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++0x
 
 macx {
-    INCLUDEPATH += "/usr/local/Cellar/libao/1.2.0/include/"
-    LIBS += -L/usr/local/Cellar/libao/1.2.0/lib
+    INCLUDEPATH += "/usr/local/include/"
+    LIBS += -L/usr/local/lib
 }
 
 LIBS += -lao

@@ -8,8 +8,6 @@
 
 struct RtpPacket;
 
-namespace alt
-{
 class RtpBuffer
 {
 public:
@@ -24,6 +22,9 @@ public:
     // consumer thread
     void waitUntilReady();
     const RtpPacket* takePacket();
+
+    // silence for missing packets
+    void silence(char **silence, int *size) const;
 
 private:
     void alloc();
@@ -44,5 +45,4 @@ private:
     quint16     m_first;
     quint16     m_last;
 };
-} // namespace alt
 #endif // RTPBUFFER_H

@@ -9,10 +9,10 @@
 #include "devicecontrol/devicecontrolfactory.h"
 #include "devicecontrol/devicewatcher.h"
 #include "rtsp/rtspserver.h"
-#include "rtp/rtpbuffer.h"
+#include "rtp/rtpbufferalt.h"
 //#include "rtp/rtpreceiver.h"
 #include "rtp/rtpreceiverboost.h"
-#include "rtp/rtpretransmissionrequester.h"
+//#include "rtp/rtpretransmissionrequester.h"
 #include "zeroconf/zeroconf_dns_sd.h"
 
 Service::Service(const ServiceConfig &serviceConfig, QObject *parent) :
@@ -46,20 +46,19 @@ void Service::initNetwork()
 {
     // init rtsp/rtp components
     RtspServer  *rtspServer = new RtspServer(Util::getMacAddress(), this);
-    RtpBuffer   *rtpBuffer = new RtpBuffer(airtunes::framesPerPacket, config().latency(), this);
+    RtpBuffer   *rtpBuffer = new RtpBuffer(airtunes::framesPerPacket, config().latency());
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer, config().latency()/10, this);
 
     // init player
     Player      *player = new Player(rtpBuffer, ofCore->audioOut(), this);
 
     // wire components
-    //QObject::connect(rtspServer, SIGNAL(announce(RtspMessage::Announcement)), rtpReceiver, SLOT(announce(RtspMessage::Announcement)));
     QObject::connect(rtspServer, &RtspServer::senderSocketAvailable, rtpReceiver, &RtpReceiver::setSenderSocket);
-    //QObject::connect(rtspServer, &RtspServer::senderSocketAvailable, rtpRetransmissionRequester, &RtpRetransmissionRequester::setSenderSocket);
     QObject::connect(rtspServer, &RtspServer::receiverSocketRequired, rtpReceiver, &RtpReceiver::bindSocket);
-    QObject::connect(rtspServer, SIGNAL(record(quint16)), rtpBuffer, SLOT(flush(quint16)));
-    QObject::connect(rtspServer, SIGNAL(flush(quint16)), rtpBuffer, SLOT(flush(quint16)));
-    QObject::connect(rtspServer, &RtspServer::teardown, rtpBuffer, &RtpBuffer::teardown);
+    QObject::connect(rtspServer, &RtspServer::record, player, &Player::play);
+    //QObject::connect(rtspServer, SIGNAL(record(quint16)), rtpBuffer, SLOT(flush(quint16)));
+    //QObject::connect(rtspServer, SIGNAL(flush(quint16)), rtpBuffer, SLOT(flush(quint16)));
+    //QObject::connect(rtspServer, &RtspServer::teardown, rtpBuffer, &RtpBuffer::teardown);
     QObject::connect(rtspServer, &RtspServer::teardown, rtpReceiver, &RtpReceiver::teardown);
     QObject::connect(rtspServer, &RtspServer::teardown, player, &Player::teardown);
 
@@ -70,7 +69,6 @@ void Service::initNetwork()
     }
 
     QObject::connect(rtspServer, &RtspServer::announce, rtpReceiver, &RtpReceiver::announce);
-    //QObject::connect(rtspServer, &RtspServer::announce, rtpRetransmissionRequester, &RtpRetransmissionRequester::announce);
 
     // startup
     rtspServer->listen(QHostAddress::AnyIPv4, config().port());

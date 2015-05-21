@@ -1,6 +1,6 @@
 #include "rtpreceiverboost.h"
 
-#include "rtpbuffer.h"
+#include "rtpbufferalt.h"
 #include "rtpheader.h"
 #include "rtppacket.h"
 #include "alac.h"
@@ -135,19 +135,22 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
         case airtunes::Sync:
             break;
         case airtunes::RetransmitResponse: {
+            break; // @TODO: we do not submit retransmits to the buffer for now
             header.sequenceNumber = qFromBigEndian(*((quint16*)(m_receiveBuffer.data()+6)));
             payload = payload+4;
             payloadSize = payloadSize-4;
+            assert(payloadSize > 0); // need to check payloadSize, since we get broken payloads from time to time
         }
         case airtunes::AudioData: {
+            assert(payloadSize > 0);
             unsigned char packet[2048];
-            if (payloadSize <= 0) break; // need to check payloadSize, since we get broken payloads from time to time
             decrypt(payload, packet, payloadSize);
             RtpPacket* rtpPacket = m_rtpBuffer->obtainPacket(header.sequenceNumber);
             if (rtpPacket) {
                 alac_decode_frame(m_alac, packet, rtpPacket->payload, &(rtpPacket->payloadSize));
+                m_rtpBuffer->commitPacket(rtpPacket);
             }
-            m_rtpBuffer->commitPacket();
+            //m_rtpBuffer->commitPacket();
             break;
         }
         default:
@@ -156,10 +159,13 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
         }
     }
 
+    // @TODO: we do not request retransmits for now
+    /*
     if (m_elapsedTimer->elapsed() > m_retryInterval) {
         doRequestRetransmit();
         m_elapsedTimer->restart();
     }
+    */
 
     doReceive();
 }
@@ -196,6 +202,7 @@ void RtpReceiver::UdpWorker::decrypt(const char *in, unsigned char *out, int len
 
 void RtpReceiver::UdpWorker::doRequestRetransmit()
 {
+    /*
     auto sequences = m_rtpBuffer->missingSequences();
     for (const RtpBuffer::Sequence& sequence : sequences) {
         qWarning() << Q_FUNC_INFO << sequence.first << sequence.count;
@@ -211,6 +218,7 @@ void RtpReceiver::UdpWorker::doRequestRetransmit()
                                 m_retryEndpoint,
                                 boost::bind(&RtpReceiver::UdpWorker::onRequestRetransmit, this, ph::error, ph::bytes_transferred));
     }
+    */
 }
 
 void RtpReceiver::UdpWorker::onRequestRetransmit(const boost::system::error_code& error, std::size_t bytesTransferred)

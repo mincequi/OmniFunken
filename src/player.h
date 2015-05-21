@@ -33,7 +33,6 @@ private:
     };
 
 private:
-    QTimer      *m_pullTimer;
     RtpBuffer   *m_rtpBuffer;
     AudioOutAbstract *m_audioOut;
     QTimer      *m_audioOutTimer;

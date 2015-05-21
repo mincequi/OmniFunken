@@ -9,6 +9,7 @@ AudioOutAo::AudioOutAo() :
     m_aoOptions(NULL)
 {
     AudioOutFactory::registerAudioOut(this);
+    //m_aoOptions = &(ao_option){.key = "buffer_time", .value = "125", .next = NULL};
 }
 
 const char *AudioOutAo::name() const
@@ -47,6 +48,7 @@ bool AudioOutAo::init(const QSettings::SettingsMap &settings)
         format.channels = 2;
         format.byte_format = AO_FMT_NATIVE;
 
+        //ao_option bufferOption {"buffer_time", "20", NULL};
         m_aoDevice = ao_open_live(m_driverId, &format, m_aoOptions);
     }
 #endif

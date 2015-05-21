@@ -46,11 +46,6 @@ SOURCES += main.cpp \
     audioout/audiooutfactory.cpp \
     audioout/audioout_ao.cpp \
     zeroconf/zeroconf_dns_sd.cpp \
-    rtp/rtpbufferalt.cpp \
-    #rtp/rtpreceiver.cpp \
-    rtp/rtpreceiverboost.cpp \
-    rtsp/rtspmessage.cpp \
-    rtsp/rtspserver.cpp \
     devicecontrol/devicecontrolrs232.cpp \
     devicecontrol/devicewatcher.cpp \
     signalhandler.cpp \
@@ -58,9 +53,14 @@ SOURCES += main.cpp \
     service/service.cpp \
     airtunes/airtunesserviceconfig.cpp \
     core/core.cpp \
-    rtp/rtpretransmissionrequester.cpp \
     rtp/rtpheader.cpp \
-    rtp/rtpbuffer.cpp
+    #rtp/rtpbuffer.cpp \
+    rtp/rtpbufferalt.cpp \
+    #rtp/rtpreceiver.cpp \
+    rtp/rtpreceiverboost.cpp \
+    #rtp/rtpretransmissionrequester.cpp \
+    rtsp/rtspmessage.cpp \
+    rtsp/rtspserver.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -84,10 +84,11 @@ HEADERS += \
     audioout/audioout_ao.h \
     audioout/audiooutfactory.h \
     rtp/rtppacket.h \
-    rtp/rtpbuffer.h \
+    #rtp/rtpbuffer.h \
     rtp/rtpbufferalt.h \
     #rtp/rtpreceiver.h \
     rtp/rtpreceiverboost.h \
+    #rtp/rtpretransmissionrequester.h \
     rtsp/rtspserver.h \
     rtsp/rtspmessage.h \
     signalhandler.h \
@@ -97,7 +98,6 @@ HEADERS += \
     airtunes/airtunesserviceconfig.h \
     core/core.h \
     global.h \
-    rtp/rtpretransmissionrequester.h \
     zeroconf/zeroconf.h \
     zeroconf/zeroconf_dns_sd.h \
     rtp/rtpheader.h

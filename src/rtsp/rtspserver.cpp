@@ -224,10 +224,10 @@ void RtspServer::handleRecord(const RtspMessage &request, RtspMessage *response)
             seq = rx.cap(1).toUInt();
         }
     }
-    qDebug() << __func__ << ": " << seq;
-    if (seq != -1) {
+    qDebug()<<Q_FUNC_INFO<< ": " << seq;
+    //if (seq != -1) {
         emit record(seq);
-    }
+    //}
 }
 
 void RtspServer::handleFlush(const RtspMessage &request, RtspMessage *response)
@@ -244,7 +244,7 @@ void RtspServer::handleFlush(const RtspMessage &request, RtspMessage *response)
             seq = rx.cap(1).toUInt();
         }
     }
-    qDebug() << __func__ << ": " << seq;
+    qDebug()<<Q_FUNC_INFO<< ": " << seq;
     emit flush(seq);
 }
 
@@ -266,7 +266,7 @@ void RtspServer::handleSetParameter(const RtspMessage &request, RtspMessage *res
     bool ok = false;
     float db = request.header("volume").toFloat(&ok);
     if (ok) {
-        qDebug() << __func__ << ": volume: " << db;
+        qDebug()<<Q_FUNC_INFO<< ": volume: " << db;
         emit volume(db);
     }
 }

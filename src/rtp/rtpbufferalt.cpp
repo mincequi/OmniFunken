@@ -6,9 +6,8 @@
 #include <airtunes/airtunesconstants.h>
 
 #include <QtDebug>
+#include <QThread>
 
-namespace alt
-{
 RtpBuffer::RtpBuffer(uint framesPerPacket, uint latency) :
     m_framesPerPacket(framesPerPacket),
     m_latency(latency),
@@ -53,7 +52,7 @@ void RtpBuffer::commitPacket(RtpPacket* packet)
     quint16 newPackets = packet->sequenceNumber-m_data[m_last].sequenceNumber;
 
     // Mark missing packets
-    for (quint16 i = m_data[m_last].sequenceNumber+1; i != packet->sequenceNumber; ++i) {
+    for (quint16 i = m_data[m_last].sequenceNumber+1; (i != packet->sequenceNumber) && (m_first != m_last); ++i) {
         m_data[i%m_capacity].status = RtpPacket::PacketMissing;
         m_data[i%m_capacity].sequenceNumber = i;
     }
@@ -64,7 +63,14 @@ void RtpBuffer::commitPacket(RtpPacket* packet)
     // We have new packets
     m_fill.release(newPackets);
 
-    //
+    // Dump buffer size
+    static quint32 count = 0;
+    if ((count%125) == 0) {
+        qDebug()<<Q_FUNC_INFO<< "fill: "<<m_fill.available();
+    }
+    ++count;
+
+    // Wake player thread
     if (m_fill.available() >= m_desiredFill) {
         m_ready.wakeAll();
     }
@@ -72,7 +78,10 @@ void RtpBuffer::commitPacket(RtpPacket* packet)
 
 void RtpBuffer::waitUntilReady()
 {
+    //QThread::msleep(500);
+    m_readyMutex.lock();
     m_ready.wait(&m_readyMutex);
+    m_readyMutex.unlock();
 }
 
 const RtpPacket* RtpBuffer::takePacket()
@@ -99,6 +108,12 @@ const RtpPacket* RtpBuffer::takePacket()
     }
 
     return packet;
+}
+
+void RtpBuffer::silence(char **silence, int *size) const
+{
+    *silence = m_silence;
+    *size   = m_framesPerPacket*airtunes::channels*(airtunes::sampleSize/8);
 }
 
 void RtpBuffer::alloc()
@@ -131,4 +146,3 @@ void RtpBuffer::free()
         m_silence = NULL;
     }
 }
-} // namespace alt

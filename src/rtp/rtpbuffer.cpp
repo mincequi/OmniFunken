@@ -1,4 +1,4 @@
-#include "rtpbuffer.h"
+#include "rtpbufferalt.h"
 
 #include "rtppacket.h"
 #include "util.h"
@@ -46,10 +46,12 @@ RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
             qDebug()<<Q_FUNC_INFO<<": buffer now filling";
             setState(Filling);
         }
+        /*
         if (m_data[sequenceNumber % m_capacity].status == RtpPacket::PacketOk) {
             qDebug()<<Q_FUNC_INFO<< "packet already received";
             return NULL;
         }
+        */
         break;
     default:
         qFatal(__func__);

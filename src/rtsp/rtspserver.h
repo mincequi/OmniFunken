@@ -23,6 +23,7 @@ signals:
     void flush(quint16 seq);
     void volume(float db);
     void teardown();
+    void disconnected();
 
 public slots:
     void reset();

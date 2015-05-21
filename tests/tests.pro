@@ -1,4 +1,4 @@
 TEMPLATE = subdirs
 
-SUBDIRS += audioout devicecontrol
-
+SUBDIRS += audioout devicecontrol \
+    rtp

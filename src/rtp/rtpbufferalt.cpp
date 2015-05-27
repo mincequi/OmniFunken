@@ -9,7 +9,7 @@
 #include <QtDebug>
 #include <QThread>
 
-RtpBuffer::RtpBuffer(uint framesPerPacket, uint latency, uint timeout, QObject *parent) :
+RtpBuffer::RtpBuffer(uint framesPerPacket, uint latency, QObject *parent) :
     QObject(parent),
     m_framesPerPacket(framesPerPacket),
     m_latency(latency),
@@ -17,9 +17,9 @@ RtpBuffer::RtpBuffer(uint framesPerPacket, uint latency, uint timeout, QObject *
     m_capacity(Util::roundToPowerOfTwo(m_desiredFill*2)),
     m_data(NULL),
     m_silence(NULL),
-    m_front(0),
-    m_back(0),
-    m_timeout(timeout)
+    m_begin(0),
+    m_end(0),
+    m_ready(false)
 {
     alloc();
 }
@@ -31,6 +31,8 @@ RtpBuffer::~RtpBuffer()
 
 RtpPacket* RtpBuffer::obtainPacket(const RtpHeader& rtpHeader, bool isRetransmit)
 {
+    QMutexLocker locker(&m_indexMutex);
+
     RtpPacket* packet = &(m_data[rtpHeader.sequenceNumber%m_capacity]);
 
     // Check if current sequence number is already received
@@ -41,22 +43,19 @@ RtpPacket* RtpBuffer::obtainPacket(const RtpHeader& rtpHeader, bool isRetransmit
 
     // If new packet is VERY late, we clear our buffer
     if (abs(seqDiff(rtpHeader.sequenceNumber) >= m_desiredFill)) {
+        qDebug()<<Q_FUNC_INFO<< "XXXXXXXXXXXXXXXXX CLEAR XXXXXXXXXXXXXXXXXX";
         clear();
     }
 
-    // If our buffer is empty then this is the first packet (and our last one).
+    // If our buffer is empty then this is the first packet.
     if (empty()) {
-        m_indexMutex.lock();
-        m_front = rtpHeader.sequenceNumber;
-        m_back = rtpHeader.sequenceNumber;
-        m_indexMutex.unlock();
+        m_begin = rtpHeader.sequenceNumber;
+        m_end = rtpHeader.sequenceNumber;
     }
     // Else check if buffer is almost full and clip it.
-    else if (size()/*+diffToLast(rtpHeader.sequenceNumber)*/ >= (m_capacity-1)) {
+    else if (size() >= (m_capacity-1)) {
         qWarning()<<Q_FUNC_INFO<< "buffer overflow, clipping front";
-        m_indexMutex.lock();
-        m_front = m_back-m_desiredFill;
-        m_indexMutex.unlock();
+        m_begin = m_end-m_desiredFill;
     }
 
     packet->sequenceNumber  = rtpHeader.sequenceNumber;
@@ -67,47 +66,46 @@ RtpPacket* RtpBuffer::obtainPacket(const RtpHeader& rtpHeader, bool isRetransmit
 
 void RtpBuffer::commitPacket(RtpPacket* packet)
 {
+    QMutexLocker locker(&m_indexMutex);
+
     // Mark packet as ok
     packet->status = RtpPacket::PacketOk;
 
     // Our packet count is the diff between this seqNo and the previous one.
-    qint16 newPackets = packet->sequenceNumber-m_back;
-    if (newPackets > 1) {
-        qWarning()<<Q_FUNC_INFO<< "missing packets, last: "<<m_back<<", this: "<<packet->sequenceNumber;
-    }
-    if (newPackets > m_desiredFill) {
-        qWarning()<<Q_FUNC_INFO<< "last: "<<m_data[m_back%m_capacity].timestamp<<", this: "<<packet->timestamp;
-        qFatal(Q_FUNC_INFO);
+    qint16 skippedPackets = packet->sequenceNumber-m_end;
+    if (skippedPackets > 0) {
+        qWarning()<<Q_FUNC_INFO<< "missing packets, last: "<<m_end<<", this: "<<packet->sequenceNumber;
     }
 
     // Mark missing packets
-    for (quint16 i = m_back+1; (i != packet->sequenceNumber) && (newPackets) && (size()); ++i) {
+    for (quint16 i = m_end; (i != packet->sequenceNumber); ++i) {
         m_data[i%m_capacity].status = RtpPacket::PacketMissing;
         m_data[i%m_capacity].sequenceNumber = i;
     }
 
-    // Our last packet is always this one for now
-    m_back = packet->sequenceNumber;
+    // End is one slot beyond last valid packet
+    m_end = packet->sequenceNumber+1;
 
     // Dump buffer size
     static quint32 count = 0;
-    if ((count%25) == 0) {
+    if ((count%250) == 0) {
         qDebug()<<Q_FUNC_INFO<< "fill: "<<size();
     }
     ++count;
 
     // Wake player thread
     if (size() >= m_desiredFill) {
+        m_ready = true;
         emit ready();
     }
 }
 
 const RtpPacket* RtpBuffer::takePacket()
 {
-    m_indexMutex.lock();
+    QMutexLocker locker(&m_indexMutex);
+
     RtpPacket* packet = front();
-    ++m_front;
-    m_indexMutex.unlock();
+    ++m_begin;
 
     switch (packet->status) {
     case RtpPacket::PacketFree:
@@ -134,14 +132,12 @@ void RtpBuffer::silence(char **silence, int *size) const
 
 quint16 RtpBuffer::size()
 {
-    QMutexLocker locker(&m_indexMutex);
-
-    return m_back-m_front;
+    return m_end-m_begin-1;
 }
 
 RtpPacket* RtpBuffer::front() const
 {
-    return &(m_data[m_front%m_capacity]);
+    return &(m_data[m_begin%m_capacity]);
 }
 
 bool RtpBuffer::empty() const
@@ -151,20 +147,20 @@ bool RtpBuffer::empty() const
 
 qint16 RtpBuffer::seqDiff(quint16 sequenceNumber)
 {
-    return sequenceNumber-m_back;
+    return sequenceNumber-m_end;
 }
 
 void RtpBuffer::clear()
 {
-    for (quint16 i; i < m_capacity; ++i) {
+    for (quint16 i = 0; i < m_capacity; ++i) {
         m_data[i].init();
     }
 }
 
 void RtpBuffer::syncTo(const RtpHeader& rtpHeader)
 {
-    m_front = rtpHeader.sequenceNumber-1;
-    m_back = rtpHeader.sequenceNumber;
+    m_begin = rtpHeader.sequenceNumber-1;
+    m_end = rtpHeader.sequenceNumber;
 }
 
 void RtpBuffer::alloc()

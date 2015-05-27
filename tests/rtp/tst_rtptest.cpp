@@ -125,7 +125,7 @@ void RtpTest::regular_data()
 
 void RtpTest::slowProducer()
 {
-    RtpBuffer *rtpBuffer= new RtpBuffer(airtunes::framesPerPacket, 500, 5000);
+    RtpBuffer *rtpBuffer= new RtpBuffer(airtunes::framesPerPacket, 500);
     Producer *producer = new Producer(rtpBuffer, 8);
     Consumer *consumer = new Consumer(rtpBuffer);
 
@@ -136,7 +136,7 @@ void RtpTest::slowProducer()
 
 void RtpTest::fastProducer()
 {
-    RtpBuffer *rtpBuffer= new RtpBuffer(airtunes::framesPerPacket, 500, 5000);
+    RtpBuffer *rtpBuffer= new RtpBuffer(airtunes::framesPerPacket, 500);
     Producer *producer = new Producer(rtpBuffer, 6);
     Consumer *consumer = new Consumer(rtpBuffer);
 

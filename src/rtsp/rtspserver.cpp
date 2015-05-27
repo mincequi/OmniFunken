@@ -109,7 +109,7 @@ void RtspServer::onRequest()
 void RtspServer::handleOptions(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(request);
-    qDebug()<<Q_FUNC_INFO;
+    //qDebug()<<Q_FUNC_INFO;
 
     response->insert("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, SET_PARAMETER");
 }

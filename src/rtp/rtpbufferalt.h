@@ -6,27 +6,41 @@
 #include <QSemaphore>
 #include <QWaitCondition>
 
+struct RtpHeader;
 struct RtpPacket;
 
-class RtpBuffer
+class RtpBuffer : public QObject
 {
+    Q_OBJECT
 public:
     // framesPerPacket = stereo frames per second.
-    RtpBuffer(uint framesPerPacket, uint latency = 500);
+    RtpBuffer(uint framesPerPacket, uint latency = 500, uint timeout = 15000, QObject *parent = 0);
     ~RtpBuffer();
 
     // producer thread
-    RtpPacket* obtainPacket(quint16 sequenceNumber);
+    RtpPacket* obtainPacket(const RtpHeader& rtpHeader, bool isRetransmit = false);
     void commitPacket(RtpPacket* packet);
 
     // consumer thread
-    void waitUntilReady();
     const RtpPacket* takePacket();
 
     // silence for missing packets
     void silence(char **silence, int *size) const;
 
+    // size, fill level
+    quint16 size();
+
+signals:
+    void ready();
+
 private:
+    RtpPacket* front() const;
+    bool empty() const;
+    qint16 seqDiff(quint16 sequenceNumber);
+    void clear();
+
+    void syncTo(const RtpHeader& rtpHeader);
+
     void alloc();
     void free();
 
@@ -38,11 +52,10 @@ private:
     RtpPacket       *m_data;
     char            *m_silence;
 
-    QSemaphore      m_fill;
-    QWaitCondition  m_ready;
-    QMutex          m_readyMutex;
+    QMutex      m_indexMutex;
+    quint16     m_front;    // owned by consumer thread
+    quint16     m_back;     // owned by producer thread
 
-    quint16     m_first;
-    quint16     m_last;
+    const uint  m_timeout;
 };
 #endif // RTPBUFFER_H

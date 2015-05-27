@@ -12,7 +12,8 @@ Player::Player(RtpBuffer *rtpBuffer, AudioOutAbstract *audioOut, QObject *parent
     m_audioOut(audioOut),
     m_volume(0.0f)
 {
-    //connect(m_rtpBuffer, SIGNAL(ready()), this, SLOT(play()));
+    // Start playing when buffer is ready
+    connect(m_rtpBuffer, SIGNAL(ready()), this, SLOT(play()));
 
     // Timer to close device in case of timeout
     m_audioOutTimer = new QTimer(this);
@@ -27,7 +28,7 @@ Player::Player(RtpBuffer *rtpBuffer, AudioOutAbstract *audioOut, QObject *parent
 
 void Player::play()
 {
-    qDebug()<<Q_FUNC_INFO;
+    //qDebug()<<Q_FUNC_INFO;
 
     m_audioOutTimer->stop();
     m_audioOut->start();
@@ -39,7 +40,6 @@ void Player::teardown()
     qDebug()<<Q_FUNC_INFO;
 
     if (m_playWorker->isRunning()) {
-        //m_playWorker->quit();
         m_playWorker->wait();
     }
     m_audioOutTimer->stop();
@@ -69,17 +69,7 @@ void Player::PlayWorker::run()
 
     float prevVolume = 0.0;
 
-    m_player->m_rtpBuffer->waitUntilReady();
     while(true) {
-        // Dump buffer size
-        /*
-        static quint32 count = 0;
-        if ((count%125) == 0) {
-            qDebug()<<Q_FUNC_INFO<< "fill: "<<m_player->m_rtpBuffer->size();
-        }
-        ++count;
-        */
-
         const RtpPacket *packet = m_player->m_rtpBuffer->takePacket();
         if (!packet) {
             qWarning()<<Q_FUNC_INFO<< "no packet from buffer. Stopping playback.";

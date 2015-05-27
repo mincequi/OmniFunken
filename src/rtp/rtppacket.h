@@ -19,6 +19,7 @@ struct RtpPacket {
     }
 
     quint16         sequenceNumber;
+    quint32         timestamp;
     enum Status {
         PacketFree,
         PacketOk,

@@ -5,8 +5,9 @@
 #-------------------------------------------------
 
 QT       += testlib network
-
 QT       -= gui
+
+QMAKE_CXXFLAGS += -std=c++0x
 
 TARGET = tst_rtptest
 CONFIG   += console

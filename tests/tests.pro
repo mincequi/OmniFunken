@@ -1,4 +1,11 @@
 TEMPLATE = subdirs
 
-SUBDIRS += audioout devicecontrol \
-    rtp
+SUBDIRS += \
+    #audioout \
+    rtp \
+    rtsp
+
+unix:!macx {
+    SUBDIRS += \
+    #devicecontrol \
+}

@@ -1,10 +1,12 @@
 #include <QString>
 #include <QThread>
 #include <QtTest>
+#include <QCoreApplication>
 
 #include <audioout/audioout_ao.h>
 #include <airtunes/airtunesconstants.h>
 #include <rtp/rtpbufferalt.h>
+#include <rtp/rtpheader.h>
 #include <rtp/rtppacket.h>
 
 const uint numPacketsPerSecond = 44100/airtunes::framesPerPacket;
@@ -13,18 +15,22 @@ const quint16 initSeqNo = 65000;    // we want to wrap the buffer
 class Producer : public QThread
 {
 public:
-    Producer(RtpBuffer *rtpBuffer) :
-        m_rtpBuffer(rtpBuffer)
+    Producer(RtpBuffer *rtpBuffer, uint interval) :
+        m_rtpBuffer(rtpBuffer),
+        m_interval(interval)
     {
     }
 
 private:
     void run()
     {
+        qDebug()<<Q_FUNC_INFO<< "start producing...";
         std::srand(std::time(0));
-        for (quint16 i = initSeqNo; i != (quint16)(initSeqNo+(numPacketsPerSecond*30)); ++i) {
-            QThread::msleep(7);
-            RtpPacket *rtpPacket = m_rtpBuffer->obtainPacket(i);
+        for (quint16 i = initSeqNo; i != (quint16)(initSeqNo+(numPacketsPerSecond*10)); ++i) {
+            RtpHeader header { .sequenceNumber = i };
+
+            QThread::msleep(m_interval);
+            RtpPacket *rtpPacket = m_rtpBuffer->obtainPacket(header);
             for (uint j = 0; j < airtunes::framesPerPacket; ++j) {
                 *(((int*)(rtpPacket->payload)+j)) = std::rand();
             }
@@ -32,9 +38,11 @@ private:
             rtpPacket->sequenceNumber = i;
             m_rtpBuffer->commitPacket(rtpPacket);
         }
+        qDebug()<<Q_FUNC_INFO<< "...end producing";
     }
 
     RtpBuffer *m_rtpBuffer;
+    uint    m_interval;
 };
 
 class Consumer : public QThread
@@ -46,6 +54,9 @@ public:
         m_audioOut = new AudioOutAo();
         QSettings::SettingsMap settings;
         m_audioOut->init(settings);
+
+        // New connect syntax not possible here because of default argument of Thread::start.
+        connect(m_rtpBuffer, SIGNAL(ready()), this, SLOT(start()));
     }
     ~Consumer()
     {
@@ -57,7 +68,6 @@ private:
     void run()
     {
         m_audioOut->start();
-        m_rtpBuffer->waitUntilReady();
         while (true) {
             const RtpPacket *packet = m_rtpBuffer->takePacket();
             if (!packet) {
@@ -66,6 +76,14 @@ private:
             }
             m_audioOut->play(packet->payload, packet->payloadSize);
         } // while
+
+        // Add silence after playback
+        char *silence;
+        int silenceSize;
+        m_rtpBuffer->silence(&silence, &silenceSize);
+        m_audioOut->play(silence, silenceSize);
+
+        // Stop playback
         m_audioOut->stop();
     }
 
@@ -82,7 +100,8 @@ public:
 
 private Q_SLOTS:
     void regular_data();
-    void regular();
+    void slowProducer();
+    void fastProducer();
     //void highJitter();
     //void singleLoss();
     //void burstLoss();
@@ -104,17 +123,28 @@ void RtpTest::regular_data()
 //    QVERIFY2(true, "Failure");
 //}
 
-void RtpTest::regular()
+void RtpTest::slowProducer()
 {
-    RtpBuffer rtpBuffer(airtunes::framesPerPacket, 2000);
-    Producer producer(&rtpBuffer);
-    Consumer consumer(&rtpBuffer);
-    producer.start();
-    consumer.start();
-    producer.wait();
-    consumer.wait();
+    RtpBuffer *rtpBuffer= new RtpBuffer(airtunes::framesPerPacket, 500, 5000);
+    Producer *producer = new Producer(rtpBuffer, 8);
+    Consumer *consumer = new Consumer(rtpBuffer);
+
+    producer->start();
+    connect(producer, &Producer::finished, qApp, &QCoreApplication::quit);
+    qApp->exec();
 }
 
-QTEST_APPLESS_MAIN(RtpTest)
+void RtpTest::fastProducer()
+{
+    RtpBuffer *rtpBuffer= new RtpBuffer(airtunes::framesPerPacket, 500, 5000);
+    Producer *producer = new Producer(rtpBuffer, 6);
+    Consumer *consumer = new Consumer(rtpBuffer);
+
+    producer->start();
+    connect(consumer, &Consumer::finished, qApp, &QCoreApplication::quit);
+    qApp->exec();
+}
+
+QTEST_MAIN(RtpTest)
 
 #include "tst_rtptest.moc"

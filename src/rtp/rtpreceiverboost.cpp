@@ -145,7 +145,7 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
             assert(payloadSize > 0);
             unsigned char packet[2048];
             decrypt(payload, packet, payloadSize);
-            RtpPacket* rtpPacket = m_rtpBuffer->obtainPacket(header.sequenceNumber);
+            RtpPacket* rtpPacket = m_rtpBuffer->obtainPacket(header);
             if (rtpPacket) {
                 alac_decode_frame(m_alac, packet, rtpPacket->payload, &(rtpPacket->payloadSize));
                 m_rtpBuffer->commitPacket(rtpPacket);

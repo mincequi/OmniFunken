@@ -89,6 +89,7 @@ HEADERS += \
     #rtp/rtpreceiver.h \
     rtp/rtpreceiverboost.h \
     #rtp/rtpretransmissionrequester.h \
+    rtp/rtpstat.h \
     rtsp/rtspserver.h \
     rtsp/rtspmessage.h \
     signalhandler.h \

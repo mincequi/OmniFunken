@@ -1,6 +1,8 @@
 #ifndef RTPBUFFER_H
 #define RTPBUFFER_H
 
+#include "rtpstat.h"
+
 #include <QList>
 #include <QObject>
 #include <QSemaphore>
@@ -34,19 +36,29 @@ private:
     RtpPacket* obtainRegularPacket(const RtpHeader& rtpHeader);
     RtpPacket* obtainMissingPacket(const RtpHeader& rtpHeader);
 
-    // size, fill level
+    enum PacketRating {
+        Start,      // This packet starts a new stream
+        Duplicate,  // packet with this seqno has been sent twice
+        Expected,   // packet is in expected order
+        Early,      // packet is early, missing packets
+        Late,       // packet is late (eventually from retransmit)
+        TooLate,    // packet is too late (from retransmit)
+    };
+    PacketRating ratePacket(const RtpHeader& rtpHeader);
+
+    // Buffer helpers
     quint16 size();
     RtpPacket* front() const;
     bool empty() const;
     qint16 seqDiff(quint16 sequenceNumber);
-    void clear();
+    void flush();
 
-    void syncTo(const RtpHeader& rtpHeader);
-
+    // Memory
     void alloc();
     void free();
 
 private:
+    // General buffer settings and data
     const uint      m_framesPerPacket;
     const uint      m_latency;
     const int       m_desiredFill;
@@ -54,10 +66,14 @@ private:
     RtpPacket       *m_data;
     char            *m_silence;
 
+    quint16     m_begin;
+    quint16     m_end;
     QMutex      m_mutex;
-    quint16     m_begin;    // owned by consumer thread
-    quint16     m_end;     // owned by producer thread
 
+    // Needed to stop consumer
     bool        m_ready;
+
+    // Statistics
+    RtpStat     m_stat;
 };
 #endif // RTPBUFFER_H

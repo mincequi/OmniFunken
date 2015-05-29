@@ -15,7 +15,7 @@ struct RtpStat {
     uint32_t overflow;
     uint32_t underrun;
     
-    void init()     
+    void init() {
         put = 0;
         take = 0;
         duplicates = 0;

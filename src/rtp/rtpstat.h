@@ -15,17 +15,17 @@ struct RtpStat {
     uint32_t overflow;
     uint32_t underrun;
     
-    void init() {
-      put = 0;
-      take = 0;
-      duplicates = 0;
-      expected = 0;
-      early = 0;
-      late = 0;
-      lost = 0;
-      flush = 0;
-      overflow = 0;
-      underrun = 0;
+    void init()     
+        put = 0;
+        take = 0;
+        duplicates = 0;
+        expected = 0;
+        early = 0;
+        late = 0;
+        lost = 0;
+        flush = 0;
+        overflow = 0;
+        underrun = 0;
     }
     
     RtpStat() { init(); }

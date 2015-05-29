@@ -18,7 +18,7 @@ public:
     ~RtpBuffer();
 
     // producer thread
-    RtpPacket* obtainPacket(const RtpHeader& rtpHeader, bool isRetransmit = false);
+    RtpPacket* obtainPacket(const RtpHeader& rtpHeader);
     void commitPacket(RtpPacket* packet);
 
     // consumer thread
@@ -31,6 +31,9 @@ signals:
     void ready();
 
 private:
+    RtpPacket* obtainRegularPacket(const RtpHeader& rtpHeader);
+    RtpPacket* obtainMissingPacket(const RtpHeader& rtpHeader);
+
     // size, fill level
     quint16 size();
     RtpPacket* front() const;
@@ -51,7 +54,7 @@ private:
     RtpPacket       *m_data;
     char            *m_silence;
 
-    QMutex      m_indexMutex;
+    QMutex      m_mutex;
     quint16     m_begin;    // owned by consumer thread
     quint16     m_end;     // owned by producer thread
 

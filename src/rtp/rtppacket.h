@@ -11,7 +11,8 @@ struct RtpPacket {
         status(PacketFree),
         flush(false),
         payloadSize(0),
-        payload(NULL) {}
+        payload(NULL)
+    {}
     void init() {
         sequenceNumber = 0;
         status = PacketFree;
@@ -19,7 +20,6 @@ struct RtpPacket {
     }
 
     quint16         sequenceNumber;
-    quint32         timestamp;
     enum Status {
         PacketFree,
         PacketOk,

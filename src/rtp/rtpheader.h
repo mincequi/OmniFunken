@@ -10,7 +10,7 @@ struct RtpHeader {
     bool    padding;
     bool    extension;
     uint8_t csrcCount;
-    bool    marker;
+    //bool    marker;
     airtunes::PayloadType payloadType;
     uint16_t sequenceNumber;
     uint32_t timestamp;

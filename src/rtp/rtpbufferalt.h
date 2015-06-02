@@ -29,13 +29,17 @@ public:
     // silence for missing packets
     void silence(char **silence, int *size) const;
 
+    // get missing sequences
+    struct Sequence {
+        quint16 first;
+        quint16 count;
+    };
+    QList<Sequence> missingSequences();
+
 signals:
     void ready();
 
 private:
-    RtpPacket* obtainRegularPacket(const RtpHeader& rtpHeader);
-    RtpPacket* obtainMissingPacket(const RtpHeader& rtpHeader);
-
     enum PacketRating {
         Start,      // This packet starts a new stream
         Duplicate,  // packet with this seqno has been sent twice
@@ -48,9 +52,6 @@ private:
 
     // Buffer helpers
     quint16 size();
-    RtpPacket* front() const;
-    bool empty() const;
-    qint16 seqDiff(quint16 sequenceNumber);
     void flush();
 
     // Memory

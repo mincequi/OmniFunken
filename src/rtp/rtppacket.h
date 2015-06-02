@@ -14,7 +14,7 @@ struct RtpPacket {
         payload(NULL)
     {}
     void init() {
-        sequenceNumber = 0;
+        //sequenceNumber = 0;
         status = PacketFree;
         flush = false;
     }

@@ -15,22 +15,11 @@ Player::Player(RtpBuffer *rtpBuffer, AudioOutAbstract *audioOut, QObject *parent
     // Start playing when buffer is ready
     connect(m_rtpBuffer, SIGNAL(ready()), this, SLOT(play()));
 
-    // Timer to close device in case of timeout
-    m_audioOutTimer = new QTimer(this);
-    m_audioOutTimer->setSingleShot(true);
-    connect(m_audioOutTimer, &QTimer::timeout, [this]() {
-        qWarning()<<Q_FUNC_INFO<< " player timed out, closing audio device";
-        teardown();
-    });
-
     m_playWorker = new PlayWorker(this);
 }
 
 void Player::play()
 {
-    //qDebug()<<Q_FUNC_INFO;
-
-    m_audioOutTimer->stop();
     m_audioOut->start();
     m_playWorker->start();
 }
@@ -42,7 +31,6 @@ void Player::teardown()
     if (m_playWorker->isRunning()) {
         m_playWorker->wait();
     }
-    m_audioOutTimer->stop();
     m_audioOut->stop();
 }
 
@@ -92,15 +80,6 @@ void Player::PlayWorker::run()
         }
         m_player->m_audioOut->play(packet->payload, packet->payloadSize);
     } // while
-
-    // Feed silence to audio out
-    char *silence = NULL;
-    int size;
-    m_player->m_rtpBuffer->silence(&silence, &size);
-    m_player->m_audioOut->play(silence, size);
-
-    // Create timeout timer, which shall occur rarely
-    m_player->m_audioOutTimer->start(15000);
 
     qDebug()<<Q_FUNC_INFO<< "exit";
 }

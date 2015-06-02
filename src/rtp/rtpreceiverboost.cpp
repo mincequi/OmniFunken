@@ -67,19 +67,21 @@ RtpReceiver::UdpWorker::UdpWorker(const RtspMessage::Announcement &announcement,
     m_alac(NULL),
     m_rtpBuffer(rtpBuffer),
     m_senderControlPort(senderControlPort),
-    m_retryInterval(retryInterval)
+    m_retryInterval(retryInterval),
+    m_retryTimer(m_ioService, boost::posix_time::milliseconds(m_retryInterval))
 {
     m_socket = new udp::socket(m_ioService, udp::endpoint(udp::v4(), 0));
     initAlac(m_announcement.fmtp);
     AES_set_decrypt_key(reinterpret_cast<const unsigned char*>(m_announcement.rsaAesKey.data()), 128, &m_aesKey);
 
     m_elapsedTimer = new QElapsedTimer();
-    m_retryEndpoint = udp::endpoint(boost::asio::ip::address::from_string(m_announcement.senderAddress.toString().toStdString()),
-                                    m_senderControlPort);
+    m_retryEndpoint = udp::endpoint(boost::asio::ip::address::from_string(m_announcement.senderAddress.toString().toStdString()), m_senderControlPort);
 }
 
 RtpReceiver::UdpWorker::~UdpWorker()
 {
+    stop();
+
     if (m_socket) {
         delete m_socket;
     }
@@ -97,6 +99,8 @@ quint16 RtpReceiver::UdpWorker::port()
 
 void RtpReceiver::UdpWorker::stop()
 {
+    m_retryTimer.cancel();
+
     if (m_work) {
         delete m_work;
         m_work = NULL;
@@ -109,6 +113,7 @@ void RtpReceiver::UdpWorker::run()
     m_work = new boost::asio::io_service::work(m_ioService);
 
     m_elapsedTimer->start();
+    m_retryTimer.async_wait(boost::bind(&UdpWorker::doRequestRetransmit, this));
     doReceive();
     m_ioService.run();
 }
@@ -135,11 +140,14 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
         case airtunes::Sync:
             break;
         case airtunes::RetransmitResponse: {
-            break; // @TODO: we do not submit retransmits to the buffer for now
+            //break; // @TODO: we do not submit retransmits to the buffer for now
             header.sequenceNumber = qFromBigEndian(*((quint16*)(m_receiveBuffer.data()+6)));
             payload = payload+4;
             payloadSize = payloadSize-4;
-            assert(payloadSize > 0); // need to check payloadSize, since we get broken payloads from time to time
+            // need to check payloadSize, since we get broken payloads from time to time
+            if (payloadSize < 0) {
+                break;
+            }
         }
         case airtunes::AudioData: {
             assert(payloadSize > 0);
@@ -150,7 +158,6 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
                 alac_decode_frame(m_alac, packet, rtpPacket->payload, &(rtpPacket->payloadSize));
                 m_rtpBuffer->commitPacket(rtpPacket);
             }
-            //m_rtpBuffer->commitPacket();
             break;
         }
         default:
@@ -158,14 +165,6 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
             break;
         }
     }
-
-    // @TODO: we do not request retransmits for now
-    /*
-    if (m_elapsedTimer->elapsed() > m_retryInterval) {
-        doRequestRetransmit();
-        m_elapsedTimer->restart();
-    }
-    */
 
     doReceive();
 }
@@ -202,10 +201,10 @@ void RtpReceiver::UdpWorker::decrypt(const char *in, unsigned char *out, int len
 
 void RtpReceiver::UdpWorker::doRequestRetransmit()
 {
-    /*
     auto sequences = m_rtpBuffer->missingSequences();
     for (const RtpBuffer::Sequence& sequence : sequences) {
-        qWarning() << Q_FUNC_INFO << sequence.first << sequence.count;
+        qDebug()<<Q_FUNC_INFO<<"first:"<<sequence.first<<"count:"<<sequence.count;
+
         char req[8];    // *not* a standard RTCP NACK
         req[0] = 0x80;
         req[1] = 0x55|0x80;  // Apple 'resend'
@@ -218,12 +217,14 @@ void RtpReceiver::UdpWorker::doRequestRetransmit()
                                 m_retryEndpoint,
                                 boost::bind(&RtpReceiver::UdpWorker::onRequestRetransmit, this, ph::error, ph::bytes_transferred));
     }
-    */
+
+    m_retryTimer.expires_at(m_retryTimer.expires_at() + boost::posix_time::milliseconds(m_retryInterval));
+    m_retryTimer.async_wait(boost::bind(&UdpWorker::doRequestRetransmit, this));
 }
 
-void RtpReceiver::UdpWorker::onRequestRetransmit(const boost::system::error_code& error, std::size_t bytesTransferred)
+void RtpReceiver::UdpWorker::onRequestRetransmit(const boost::system::error_code& error, std::size_t /*bytesTransferred*/)
 {
     if (error) {
-        qWarning()<<Q_FUNC_INFO<<" error occurred: "<<error;
+        qWarning()<<Q_FUNC_INFO<<"error occurred:"<<error;
     }
 }

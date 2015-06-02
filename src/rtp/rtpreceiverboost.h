@@ -8,6 +8,7 @@
 #include <memory>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <openssl/aes.h>
 
 #include <QObject>
@@ -65,6 +66,7 @@ private:
         boost::asio::ip::udp::endpoint  m_retryEndpoint;
         quint16         m_retryInterval;
         QElapsedTimer   *m_elapsedTimer;
+        boost::asio::deadline_timer m_retryTimer;
     };
 
 private:

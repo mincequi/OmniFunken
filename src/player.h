@@ -35,7 +35,6 @@ private:
 private:
     RtpBuffer   *m_rtpBuffer;
     AudioOutAbstract *m_audioOut;
-    QTimer      *m_audioOutTimer;
     PlayWorker  *m_playWorker;
     float       m_volume;
     QMutex      m_mutex;

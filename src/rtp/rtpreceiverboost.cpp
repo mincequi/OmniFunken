@@ -74,7 +74,6 @@ RtpReceiver::UdpWorker::UdpWorker(const RtspMessage::Announcement &announcement,
     initAlac(m_announcement.fmtp);
     AES_set_decrypt_key(reinterpret_cast<const unsigned char*>(m_announcement.rsaAesKey.data()), 128, &m_aesKey);
 
-    m_elapsedTimer = new QElapsedTimer();
     m_retryEndpoint = udp::endpoint(boost::asio::ip::address::from_string(m_announcement.senderAddress.toString().toStdString()), m_senderControlPort);
 }
 
@@ -112,7 +111,6 @@ void RtpReceiver::UdpWorker::run()
 {
     m_work = new boost::asio::io_service::work(m_ioService);
 
-    m_elapsedTimer->start();
     m_retryTimer.async_wait(boost::bind(&UdpWorker::doRequestRetransmit, this));
     doReceive();
     m_ioService.run();
@@ -120,10 +118,9 @@ void RtpReceiver::UdpWorker::run()
 
 void RtpReceiver::UdpWorker::doReceive()
 {
-    m_socket->async_receive_from(
-                boost::asio::buffer(m_receiveBuffer),
-                m_remoteEndpoint,
-                boost::bind(&RtpReceiver::UdpWorker::onReceive, this, ph::error, ph::bytes_transferred));
+    m_socket->async_receive_from(boost::asio::buffer(m_receiveBuffer),
+                                 m_remoteEndpoint,
+                                 boost::bind(&RtpReceiver::UdpWorker::onReceive, this, ph::error, ph::bytes_transferred));
 }
 
 void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, std::size_t bytesTransferred)
@@ -140,7 +137,6 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
         case airtunes::Sync:
             break;
         case airtunes::RetransmitResponse: {
-            //break; // @TODO: we do not submit retransmits to the buffer for now
             header.sequenceNumber = qFromBigEndian(*((quint16*)(m_receiveBuffer.data()+6)));
             payload = payload+4;
             payloadSize = payloadSize-4;
@@ -150,11 +146,12 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
             }
         }
         case airtunes::AudioData: {
-            assert(payloadSize > 0);
-            unsigned char packet[2048];
-            decrypt(payload, packet, payloadSize);
+//            unsigned char packet[2048];
+//            decrypt(payload, packet, payloadSize);
             RtpPacket* rtpPacket = m_rtpBuffer->obtainPacket(header);
             if (rtpPacket) {
+                unsigned char packet[2048];
+                decrypt(payload, packet, payloadSize);
                 alac_decode_frame(m_alac, packet, rtpPacket->payload, &(rtpPacket->payloadSize));
                 m_rtpBuffer->commitPacket(rtpPacket);
             }

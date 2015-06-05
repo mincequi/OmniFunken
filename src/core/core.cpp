@@ -43,8 +43,7 @@ CommandLineParseResult Core::parseCommandLine(QCommandLineParser &parser, QStrin
     m_audioOutName = parser.value(audioOutOption);
     m_audioDeviceName = parser.value(audioDeviceOption);
 
-    qDebug() << ", audioOut: " << m_audioOutName
-             << ", audioDevice: " << m_audioDeviceName;
+    qDebug()<<Q_FUNC_INFO<<"audioOut:"<< m_audioOutName<<"audioDevice:"<<m_audioDeviceName;
 
     return CommandLineOk;
 }
@@ -70,7 +69,7 @@ AudioOutAbstract *Core::audioOut()
     }
 
     // If device not ready, power it on
-    powerOnDevice();
+    //powerOnDevice();
 
     return m_audioOut;
 }
@@ -85,7 +84,7 @@ DeviceControlAbstract *Core::deviceControl()
 
 void Core::powerOnDevice()
 {
-    qDebug() << __func__ << "enter";
+    qDebug()<<Q_FUNC_INFO<<"enter";
 
     // switch it on, if necessary
     if (m_audioOut->ready()) {
@@ -131,7 +130,7 @@ void Core::powerOnDevice()
 
     // select input
     m_deviceControl->setInput();
-    qDebug() << __func__ << "exit"; 
+    qDebug()<<Q_FUNC_INFO<<"exit";
 }
 
 void Core::shutdown()

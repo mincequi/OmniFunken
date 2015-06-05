@@ -1,15 +1,15 @@
 #include "player.h"
 
 #include <audioout/audioout_abstract.h>
+#include "core/core.h"
 #include <rtp/rtpbufferalt.h>
 #include <rtp/rtppacket.h>
 
 #include <QDebug>
 
-Player::Player(RtpBuffer *rtpBuffer, AudioOutAbstract *audioOut, QObject *parent) :
+Player::Player(RtpBuffer *rtpBuffer, QObject *parent) :
     QObject(parent),
     m_rtpBuffer(rtpBuffer),
-    m_audioOut(audioOut),
     m_volume(0.0f)
 {
     // Start playing when buffer is ready
@@ -20,7 +20,7 @@ Player::Player(RtpBuffer *rtpBuffer, AudioOutAbstract *audioOut, QObject *parent
 
 void Player::play()
 {
-    m_audioOut->start();
+    ofCore->audioOut()->start();
     m_playWorker->start();
 }
 
@@ -31,13 +31,13 @@ void Player::teardown()
     if (m_playWorker->isRunning()) {
         m_playWorker->wait();
     }
-    m_audioOut->stop();
+    ofCore->audioOut()->stop();
 }
 
 void Player::setVolume(float volume)
 {
-    if (m_audioOut->hasVolumeControl()) {
-        m_audioOut->setVolume(volume);
+    if (ofCore->audioOut()->hasVolumeControl()) {
+        ofCore->audioOut()->setVolume(volume);
     } else {
         m_mutex.lock();
         m_volume = volume;
@@ -53,7 +53,7 @@ Player::PlayWorker::PlayWorker(Player *player)
 
 void Player::PlayWorker::run()
 {
-    qDebug()<<Q_FUNC_INFO<< "enter";
+    qDebug()<<Q_FUNC_INFO<<"enter";
 
     float prevVolume = 0.0;
 
@@ -74,11 +74,11 @@ void Player::PlayWorker::run()
                 //*(qint16 *)(data+(i*2)) *= volume;
             }
         }
-        if (prevVolume != volume && m_player->m_audioOut->hasVolumeControl()) {
-            m_player->m_audioOut->setVolume(volume);
+        if (prevVolume != volume && ofCore->audioOut()->hasVolumeControl()) {
+            ofCore->audioOut()->setVolume(volume);
             prevVolume = volume;
         }
-        m_player->m_audioOut->play(packet->payload, packet->payloadSize);
+        ofCore->audioOut()->play(packet->payload, packet->payloadSize);
     } // while
 
     qDebug()<<Q_FUNC_INFO<< "exit";

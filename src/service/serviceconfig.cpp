@@ -37,9 +37,7 @@ ServiceConfig::CommandLineParseResult ServiceConfig::parseCommandLine(QCommandLi
 //    m_audioOut = parser.value(audioOutOption);
 //    m_audioDevice = parser.value(audioDeviceOption);
 
-    qDebug() << __func__ << "name: " << m_name
-             << ", port: " << m_port
-             << ", latency: " << m_latency;
+    qDebug()<<Q_FUNC_INFO<<"name:"<<m_name<<"port:"<<m_port<<"latency:"<<m_latency;
 //             << ", audioOut: " << m_audioOut
 //             << ", audioDevice: " << m_audioDevice;
 

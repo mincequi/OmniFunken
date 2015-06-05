@@ -50,7 +50,7 @@ void Service::initNetwork()
     RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer, config().latency()/10, this);
 
     // init player
-    Player      *player = new Player(rtpBuffer, ofCore->audioOut(), this);
+    Player      *player = new Player(rtpBuffer, this);
 
     // wire components
     QObject::connect(rtspServer, &RtspServer::senderSocketAvailable, rtpReceiver, &RtpReceiver::setSenderSocket);

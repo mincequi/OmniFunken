@@ -20,7 +20,8 @@ RtpBuffer::RtpBuffer(uint framesPerPacket, uint latency, QObject *parent) :
     m_begin(0),
     m_end(0),
     m_ready(false),
-    m_stat()
+    m_stat(),
+    m_lastPlayed(0)
 {
     alloc();
 }
@@ -107,7 +108,7 @@ const RtpPacket* RtpBuffer::takePacket()
 
     switch (packet->status) {
     case RtpPacket::PacketFree:
-        qWarning()<<Q_FUNC_INFO<<"last packet:"<<m_data[(m_begin-1)%m_capacity].sequenceNumber;
+        qWarning()<<Q_FUNC_INFO<<"last packet:"<<m_lastPlayed;
         return NULL;
         break;
     case RtpPacket::PacketMissing:
@@ -117,6 +118,7 @@ const RtpPacket* RtpBuffer::takePacket()
         if (packet->flush) {
             qDebug()<<Q_FUNC_INFO<<"flush packet:"<<packet->sequenceNumber;
         }
+        m_lastPlayed = packet->sequenceNumber;
         packet->init();
         break;
     default:
@@ -132,7 +134,7 @@ void RtpBuffer::silence(char **silence, int *size) const
     *size   = m_framesPerPacket*airtunes::channels*(airtunes::sampleSize/8);
 }
 
-QList<RtpBuffer::Sequence> RtpBuffer::missingSequences()
+QList<RtpBuffer::Sequence> RtpBuffer::missingSequences() const
 {
     QMutexLocker locker(&m_mutex);
 
@@ -207,8 +209,8 @@ RtpBuffer::PacketRating RtpBuffer::ratePacket(const RtpHeader& rtpHeader)
         m_stat.late++;
         return Late;
     }
-    // 3. Retransmitted packet (m_begin <= seqNo < m_end)
-    if ((rtpHeader.payloadType == airtunes::RetransmitResponse) && (packet->status != RtpPacket::PacketMissing)) {
+    // 3. Retransmitted packet
+    if ((rtpHeader.payloadType == airtunes::RetransmitResponse) /*&& (packet->status != RtpPacket::PacketMissing)*/) {
         qDebug()<<Q_FUNC_INFO<< "too late packet:"<<rtpHeader.sequenceNumber;
         m_stat.lost++;
         return TooLate;

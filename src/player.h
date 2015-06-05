@@ -6,8 +6,6 @@
 #include <QTimer>
 #include <QThread>
 
-
-class AudioOutAbstract;
 class RtpBuffer;
 
 class Player : public QObject
@@ -15,7 +13,7 @@ class Player : public QObject
     Q_OBJECT
     friend class PlayWorker;
 public:
-    explicit Player(RtpBuffer *rtpBuffer, AudioOutAbstract *audioOut, QObject *parent = 0);
+    explicit Player(RtpBuffer *rtpBuffer, QObject *parent = 0);
 
 public slots:
     void play();
@@ -34,7 +32,6 @@ private:
 
 private:
     RtpBuffer   *m_rtpBuffer;
-    AudioOutAbstract *m_audioOut;
     PlayWorker  *m_playWorker;
     float       m_volume;
     QMutex      m_mutex;

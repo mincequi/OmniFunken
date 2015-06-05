@@ -34,7 +34,7 @@ public:
         quint16 first;
         quint16 count;
     };
-    QList<Sequence> missingSequences();
+    QList<Sequence> missingSequences() const;
 
 signals:
     void ready();
@@ -69,12 +69,13 @@ private:
 
     quint16     m_begin;
     quint16     m_end;
-    QMutex      m_mutex;
+    mutable QMutex  m_mutex;
 
     // Needed to stop consumer
     bool        m_ready;
 
     // Statistics
     RtpStat     m_stat;
+    quint16     m_lastPlayed;
 };
 #endif // RTPBUFFER_H

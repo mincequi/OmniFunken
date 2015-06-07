@@ -59,17 +59,15 @@ AudioOutAbstract *Core::audioOut()
     if (!m_audioOut) {
         // request registered audio out device
         m_audioOut = AudioOutFactory::createAudioOut(m_audioOutName);
-        if (!m_audioOut) {
-            qWarning() << "AudioOut backend not available: " << m_audioOutName;
-            return NULL;
-        }
         m_audioOut->setDevice(m_audioDeviceName);
         QSettings::SettingsMap settings;
         m_audioOut->init(settings);
     }
 
     // If device not ready, power it on
-    //powerOnDevice();
+    if (!m_audioOut->ready()) {
+        powerOnDevice();
+    }
 
     return m_audioOut;
 }
@@ -86,18 +84,13 @@ void Core::powerOnDevice()
 {
     qDebug()<<Q_FUNC_INFO<<"enter";
 
-    // switch it on, if necessary
-    if (m_audioOut->ready()) {
-        return;
-    }
-
     if (!m_deviceControl) {
-        qDebug() << "No deviceControl available, cannot power on device.";
+        qDebug()<<Q_FUNC_INFO<<"No deviceControl available, cannot power on device.";
         return;
     }
 
-    qDebug() << "AudioOut device not (yet) available: " << m_audioDeviceName;
-    qDebug() << "trying to switch it on...";
+    qDebug()<<Q_FUNC_INFO<<"AudioOut device not (yet) available:"<<m_audioDeviceName;
+    qDebug()<<Q_FUNC_INFO<<"trying to switch it on...";
 
     // open deviceControl, switch device on
     m_deviceControl->open();
@@ -105,7 +98,6 @@ void Core::powerOnDevice()
 
     // wait until available or time out
     DeviceWatcher *deviceWatcher = new DeviceWatcher();
-
     DeviceWatcher::UDevProperties properties;
     //properties["ID_MODEL"] = "Primare_I22_v1.0";
     settings()->beginGroup("device_watcher");
@@ -148,7 +140,6 @@ Core::Core() :
 {
     s_settings = new QSettings("/etc/omnifunken.conf", QSettings::IniFormat, this);
 
-    // init device control
     m_deviceControl = DeviceControlFactory::createDeviceControl(s_settings);
 }
 

@@ -20,7 +20,7 @@ Q_GLOBAL_STATIC(registryType, registry)
 
 void AudioOutFactory::registerAudioOut(AudioOutAbstract* audioOut)
 {
-    qDebug() << __func__ << ": " << audioOut->name();
+    qDebug()<<Q_FUNC_INFO<<audioOut->name();
     registry->insert(audioOut->name(), audioOut);
 }
 

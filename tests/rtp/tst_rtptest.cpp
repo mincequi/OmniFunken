@@ -1,3 +1,5 @@
+#include <ctime>
+
 #include <QString>
 #include <QThread>
 #include <QtTest>
@@ -27,7 +29,8 @@ private:
         qDebug()<<Q_FUNC_INFO<< "start producing...";
         std::srand(std::time(0));
         for (quint16 i = initSeqNo; i != (quint16)(initSeqNo+(numPacketsPerSecond*10)); ++i) {
-            RtpHeader header { .sequenceNumber = i };
+            RtpHeader header;
+            header.sequenceNumber = i;
 
             QThread::msleep(m_interval);
             RtpPacket *rtpPacket = m_rtpBuffer->obtainPacket(header);

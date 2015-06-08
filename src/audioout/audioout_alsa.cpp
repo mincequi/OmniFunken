@@ -69,13 +69,11 @@ void AudioOutAlsa::deinit()
 
 void AudioOutAlsa::start()
 {
-    qDebug() << __PRETTY_FUNCTION__;
-
     if (m_pcm) {
         return;
     }
 
-    qDebug() << __func__;
+    qDebug()<<Q_FUNC_INFO;
 
     snd_pcm_hw_params_t *hw_params;
 

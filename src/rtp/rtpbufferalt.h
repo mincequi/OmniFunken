@@ -4,9 +4,8 @@
 #include "rtpstat.h"
 
 #include <QList>
+#include <QMutex>
 #include <QObject>
-#include <QSemaphore>
-#include <QWaitCondition>
 
 struct RtpHeader;
 struct RtpPacket;

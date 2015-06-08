@@ -28,24 +28,19 @@ Core *Core::instance()
     return s_instance;
 }
 
-CommandLineParseResult Core::parseCommandLine(QCommandLineParser &parser, QString *errorMessage)
+void Core::parseCommandLine(QCommandLineParser &parser)
 {
     QCommandLineOption audioOutOption(QStringList() << "ao" << "audioout", "Set audio backend.", "audioout", "ao");
     parser.addOption(audioOutOption);
     QCommandLineOption audioDeviceOption(QStringList() << "ad" << "audiodevice", "Set audio device.", "audiodevice", "hw:0");
     parser.addOption(audioDeviceOption);
 
-    if (!parser.parse(QCoreApplication::arguments())) {
-        if (errorMessage) *errorMessage = parser.errorText();
-        return CommandLineError;
-    }
+    parser.parse(QCoreApplication::arguments());
 
     m_audioOutName = parser.value(audioOutOption);
     m_audioDeviceName = parser.value(audioDeviceOption);
 
-    qDebug()<<Q_FUNC_INFO<<"audioOut:"<< m_audioOutName<<"audioDevice:"<<m_audioDeviceName;
-
-    return CommandLineOk;
+    qDebug()<<Q_FUNC_INFO<<"audioOut:"<<m_audioOutName<<"audioDevice:"<<m_audioDeviceName;
 }
 
 QSettings *Core::settings()

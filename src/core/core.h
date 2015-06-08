@@ -20,7 +20,7 @@ public:
     // it returns a Core.
     static Core *instance();
 
-    CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString *errorMessage = NULL);
+    void parseCommandLine(QCommandLineParser &parser);
 
     // Provide settings provided by configuration file
     QSettings *settings();

@@ -2,21 +2,14 @@
 #define SERVICECONFIG_H
 
 #include <QCommandLineParser>
-//#include <QString>
 
 class ServiceConfig
 {
 public:
-    enum CommandLineParseResult {
-        CommandLineOk,
-        CommandLineError
-    };
-
-public:
     ServiceConfig();
     ~ServiceConfig();
 
-    CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString *errorMessage = NULL);
+    void parseCommandLine(QCommandLineParser &parser);
 
     QString name() const;
     quint16 port() const;

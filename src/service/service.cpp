@@ -68,6 +68,7 @@ void Service::initNetwork()
         QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
     }
 
+    QObject::connect(rtspServer, &RtspServer::announce, [](){ ofCore->audioOut(); });
     QObject::connect(rtspServer, &RtspServer::announce, rtpReceiver, &RtpReceiver::announce);
 
     // startup

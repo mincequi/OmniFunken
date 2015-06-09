@@ -15,8 +15,21 @@ DeviceWatcher::~DeviceWatcher()
 {
 }
 
+void DeviceWatcher::setAction(const QString &action)
+{
+    m_action = action;
+}
+
+void DeviceWatcher::setUDevProperties(const UDevProperties &properties)
+{
+    m_properties = properties;
+}
+
 void DeviceWatcher::start(const QString &action, const UDevProperties &properties)
 {
+    m_action = action;
+    m_properties = properties;
+
     if (m_started) return;
 
     m_started = true;
@@ -43,13 +56,13 @@ void WorkerThread::run()
 {
 #ifdef Q_OS_LINUX
     struct udev *udev = udev_new();
-    struct udev_monitor *mon = udev_monitor_new_from_netlink(udev, "udev");
+    struct udev_monitor *monitor = udev_monitor_new_from_netlink(udev, "udev");
 
-    udev_monitor_filter_add_match_subsystem_devtype(mon, "sound", NULL);
-    udev_monitor_enable_receiving(mon);
+    udev_monitor_filter_add_match_subsystem_devtype(monitor, "sound", NULL);
+    udev_monitor_enable_receiving(monitor);
 
     // Get the file descriptor (fd) for the monitor.
-    int fd = udev_monitor_get_fd(mon);
+    int fd = udev_monitor_get_fd(monitor);
     // Set file descriptor to blocking mode.
     int flags = fcntl(fd, F_GETFL);
     // Set the new flags with O_NONBLOCK masked out
@@ -57,7 +70,7 @@ void WorkerThread::run()
 
     while (1) {
         // Call to receive the device. The monitor socket is by default set to NONBLOCK!
-        struct udev_device *dev = udev_monitor_receive_device(mon);
+        struct udev_device *dev = udev_monitor_receive_device(monitor);
         if (!dev) continue;
 
         // Check for our action.

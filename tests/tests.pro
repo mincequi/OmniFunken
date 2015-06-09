@@ -7,5 +7,5 @@ SUBDIRS += \
 
 unix:!macx {
     SUBDIRS += \
-    #devicecontrol \
+    devicecontrol
 }

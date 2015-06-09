@@ -60,7 +60,9 @@ SOURCES += main.cpp \
     rtp/rtpreceiverboost.cpp \
     #rtp/rtpretransmissionrequester.cpp \
     rtsp/rtspmessage.cpp \
-    rtsp/rtspserver.cpp
+    rtsp/rtspserver.cpp \
+    #rtsp/rtspserver_threaded.cpp \
+    rtsp/rtspworker.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -91,6 +93,7 @@ HEADERS += \
     #rtp/rtpretransmissionrequester.h \
     rtp/rtpstat.h \
     rtsp/rtspserver.h \
+    #rtsp/rtspserver_threaded.h \
     rtsp/rtspmessage.h \
     signalhandler.h \
     audiofilter/audiofilterabstract.h \
@@ -101,7 +104,8 @@ HEADERS += \
     global.h \
     zeroconf/zeroconf.h \
     zeroconf/zeroconf_dns_sd.h \
-    rtp/rtpheader.h
+    rtp/rtpheader.h \
+    rtsp/rtspworker.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

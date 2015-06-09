@@ -5,7 +5,6 @@
 #include <QObject>
 #include <QThread>
 
-class Worker;
 
 class DeviceWatcher : public QObject
 {
@@ -16,6 +15,9 @@ public:
     explicit DeviceWatcher(QObject *parent = 0);
     ~DeviceWatcher();
 
+    void setAction(const QString &action);
+    void setUDevProperties(const UDevProperties &properties);
+
 signals:
     void ready();
 
@@ -23,8 +25,11 @@ public slots:
     void start(const QString &action, const UDevProperties &properties);
 
 private:
-    bool m_started;
+    bool            m_started;
+    QString         m_action;
+    UDevProperties  m_properties;
 }; // DeviceWatcher
+
 
 class WorkerThread : public QThread
 {
@@ -43,5 +48,6 @@ private:
     QString m_action;
     DeviceWatcher::UDevProperties m_properties;
 }; // WorkerThread
+
 
 #endif // DEVICEWATCHER_H

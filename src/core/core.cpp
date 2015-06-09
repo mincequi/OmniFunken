@@ -5,11 +5,13 @@
 #include "devicecontrol/devicecontrolabstract.h"
 #include "devicecontrol/devicecontrolfactory.h"
 #include "devicecontrol/devicewatcher.h"
-#include <QDir>
+
 #include <QCoreApplication>
 #include <QDebug>
+#include <QDir>
 #include <QMutex>
 #include <QTimer>
+#include <QWaitCondition>
 
 // The Core Singleton
 static Core *s_instance = 0;
@@ -59,9 +61,12 @@ AudioOutAbstract *Core::audioOut()
         m_audioOut->init(settings);
     }
 
-    // If device not ready, power it on
+    // If device not ready, try to power it on
     if (!m_audioOut->ready()) {
-        powerOnDevice();
+        // This call blocks for a maximum of 5s
+        if (!powerOnDevice(5000)) {
+            return NULL;
+        }
     }
 
     return m_audioOut;
@@ -75,21 +80,22 @@ DeviceControlAbstract *Core::deviceControl()
     return m_deviceControl;
 }
 
-void Core::powerOnDevice()
+bool Core::powerOnDevice(uint time)
 {
     qDebug()<<Q_FUNC_INFO<<"enter";
 
-    if (!m_deviceControl) {
-        qDebug()<<Q_FUNC_INFO<<"No deviceControl available, cannot power on device.";
-        return;
+    if (!deviceControl()) {
+        qWarning()<<Q_FUNC_INFO<<"No deviceControl available, cannot power on device.";
+        return false;
     }
 
-    qDebug()<<Q_FUNC_INFO<<"AudioOut device not (yet) available:"<<m_audioDeviceName;
-    qDebug()<<Q_FUNC_INFO<<"trying to switch it on...";
+    qDebug()<<Q_FUNC_INFO<<"AudioOut device not (yet) available:"<<m_audioDeviceName<<"trying to switch it on...";
 
     // open deviceControl, switch device on
-    m_deviceControl->open();
-    m_deviceControl->powerOn();
+    deviceControl()->powerOn();
+
+    QMutex mutex;
+    QWaitCondition deviceReady;
 
     // wait until available or time out
     DeviceWatcher *deviceWatcher = new DeviceWatcher();
@@ -108,16 +114,60 @@ void Core::powerOnDevice()
     deviceWatcher->start(action, properties);
     QObject::connect(deviceWatcher, &DeviceWatcher::ready, []() { qDebug() << "device ready"; });
     QObject::connect(deviceWatcher, &DeviceWatcher::ready, &loop, &QEventLoop::quit);
-    QTimer::singleShot(10000, &loop, SLOT(quit()));
+    QTimer::singleShot(time, &loop, SLOT(quit()));
+    QObject::connect(deviceWatcher, &DeviceWatcher::ready, deviceWatcher, &QObject::deleteLater);
+    loop.exec();
+
+    QSettings::SettingsMap settings;
+    return m_audioOut->init(settings);
+
+    // select input
+    //m_deviceControl->setInput();
+    //qDebug()<<Q_FUNC_INFO<<"exit";
+}
+
+bool Core::powerOnDevice2(uint time)
+{
+    if (!deviceControl()) {
+        qWarning()<<Q_FUNC_INFO<<"No deviceControl available, cannot power on device.";
+        return false;
+    }
+
+    qDebug()<<Q_FUNC_INFO<<"AudioOut device not (yet) available:"<<m_audioDeviceName<<"trying to switch it on...";
+
+    // open deviceControl, switch device on
+    deviceControl()->powerOn();
+
+    QMutex mutex;
+    QWaitCondition deviceReady;
+
+    // wait until available or time out
+    DeviceWatcher *deviceWatcher = new DeviceWatcher();
+    DeviceWatcher::UDevProperties properties;
+    //properties["ID_MODEL"] = "Primare_I22_v1.0";
+    settings()->beginGroup("device_watcher");
+    QStringList keys = settings()->childKeys();
+    for (const QString &key : keys) {
+        if (key.compare("action", Qt::CaseInsensitive) == 0) continue;
+        properties.insert(key, settings()->value(key).toString());
+    }
+    QString action = settings()->value("action", "add").toString();
+    settings()->endGroup();
+
+    QEventLoop loop;
+    deviceWatcher->start(action, properties);
+    QObject::connect(deviceWatcher, &DeviceWatcher::ready, []() { qDebug() << "device ready"; });
+    QObject::connect(deviceWatcher, &DeviceWatcher::ready, &loop, &QEventLoop::quit);
+    QTimer::singleShot(time, &loop, SLOT(quit()));
     QObject::connect(deviceWatcher, &DeviceWatcher::ready, deviceWatcher, &QObject::deleteLater);
     loop.exec();
 
     QSettings::SettingsMap settings;
     m_audioOut->init(settings);
 
-    // select input
-    m_deviceControl->setInput();
-    qDebug()<<Q_FUNC_INFO<<"exit";
+    // Returns true, if device is ready, false otherwise
+    mutex.lock();
+    return deviceReady.wait(&mutex, time);
 }
 
 void Core::shutdown()

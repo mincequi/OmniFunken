@@ -25,8 +25,8 @@ public:
     // Provide settings provided by configuration file
     QSettings *settings();
 
-    AudioOutAbstract *audioOut();
-    DeviceControlAbstract *deviceControl();
+    AudioOutAbstract        *audioOut();
+    DeviceControlAbstract   *deviceControl();
 
 public slots:
     void shutdown();
@@ -34,7 +34,9 @@ public slots:
 private:
     Core();
     ~Core();
-    void powerOnDevice();
+
+    bool powerOnDevice(uint time = UINT_MAX);
+    bool powerOnDevice2(uint time = UINT_MAX);
 
     QString m_audioOutName;
     QString m_audioDeviceName;

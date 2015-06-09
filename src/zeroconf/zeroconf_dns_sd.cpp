@@ -1,13 +1,15 @@
 #include "zeroconf_dns_sd.h"
 
+#include "util.h"
+
 #include <dns_sd.h>
 #include <QtEndian>
 
-ZeroconfDnsSd::ZeroconfDnsSd(const QString &macAddress, QObject *parent) :
+ZeroconfDnsSd::ZeroconfDnsSd(QObject *parent) :
     QObject(parent),
-    m_macAddress(macAddress),
     m_dnssref(0)
 {
+    m_macAddress = Util::getMacAddress();
     m_macAddress.remove(QChar(':'));
 }
 

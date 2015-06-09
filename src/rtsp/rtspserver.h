@@ -5,14 +5,12 @@
 #include "rtspmessage.h"
 #include <QTcpServer>
 
-class RtspServer : public QObject
+class RtspServer : public QTcpServer
 {
     Q_OBJECT
     
 public:
-    RtspServer(const QString &macAddress, QObject *parent = 0);
-
-    bool listen(const QHostAddress &address = QHostAddress::Any, quint16 port = 0);
+    RtspServer(QObject *parent = 0);
 
 signals:
     void announce(const RtspMessage::Announcement & announcement);
@@ -23,13 +21,14 @@ signals:
     void flush(quint16 seq);
     void volume(float db);
     void teardown();
-    void disconnected();
+
+protected:
+    virtual void incomingConnection(qintptr socketDescriptor) Q_DECL_OVERRIDE;
 
 public slots:
     void reset();
 
 private slots:
-    void onNewConnection();
     void onRequest();
 
 private:
@@ -44,7 +43,6 @@ private:
 
 private:
     quint8      m_macAddress[6];
-    QTcpServer *m_tcpServer;
     ulong       m_dacpId;
 };
 

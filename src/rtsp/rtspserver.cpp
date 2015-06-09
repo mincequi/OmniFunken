@@ -1,5 +1,8 @@
 #include "rtspserver.h"
 
+#include "rtspworker.h"
+#include "util.h"
+
 #include <QRegExp>
 #include <QTcpSocket>
 #include <QtEndian>
@@ -33,39 +36,32 @@ static char airportRsaPrivateKey[] = "-----BEGIN RSA PRIVATE KEY-----\n"
 "-----END RSA PRIVATE KEY-----";
 
 
-RtspServer::RtspServer(const QString &macAddress, QObject *parent)
-    : QObject(parent),
+RtspServer::RtspServer(QObject *parent)
+    : QTcpServer(parent),
       m_dacpId(0)
 {
     // Store mac address
+    QString macAddress = Util::getMacAddress();
     QStringList stringList = macAddress.split(":");
     for (int i = 0; i < stringList.size(); ++i) {
         bool ok = false;
         m_macAddress[i] = stringList.at(i).toInt(&ok, 16);
     }
-
-    m_tcpServer = new QTcpServer(this);
-}
-
-bool RtspServer::listen(const QHostAddress &address, quint16 port)
-{
-    connect(m_tcpServer, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
-    return m_tcpServer->listen(address, port);
 }
 
 void RtspServer::reset()
 {
-    if (m_tcpServer->isListening()) {
-        m_tcpServer->close();
+    if (isListening()) {
+        close();
     }
 }
 
-void RtspServer::onNewConnection()
+void RtspServer::incomingConnection(qintptr socketDescriptor)
 {
-    QTcpSocket *tcpSocket = m_tcpServer->nextPendingConnection();
-    connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(onRequest()));
-    connect(tcpSocket, &QTcpSocket::disconnected, [this]() { emit disconnected(); });
-    connect(tcpSocket, &QTcpSocket::disconnected, tcpSocket, &QTcpSocket::deleteLater);
+     QTcpSocket *tcpSocket = new QTcpSocket();
+     tcpSocket->setSocketDescriptor(socketDescriptor);
+     connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(onRequest()));
+     connect(tcpSocket, &QTcpSocket::disconnected, tcpSocket, &QTcpSocket::deleteLater);
 }
 
 void RtspServer::onRequest()

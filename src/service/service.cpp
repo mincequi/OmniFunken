@@ -1,7 +1,6 @@
 #include "service.h"
 
 #include "player.h"
-#include "util.h"
 #include "audioout/audioout_abstract.h"
 #include "audioout/audiooutfactory.h"
 #include "core/core.h"
@@ -45,14 +44,16 @@ ServiceConfig Service::config() const
 void Service::initNetwork()
 {
     // init rtsp/rtp components
-    RtspServer  *rtspServer = new RtspServer(Util::getMacAddress(), this);
+    RtspServer  *rtspServer = new RtspServer();
     RtpBuffer   *rtpBuffer = new RtpBuffer(airtunes::framesPerPacket, config().latency());
-    RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer, config().latency()/10, this);
+    RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer, config().latency()/10);
 
     // init player
     Player      *player = new Player(rtpBuffer, this);
 
     // wire components
+    QObject::connect(rtspServer, &RtspServer::announce, [](){ ofCore->audioOut(); });
+    QObject::connect(rtspServer, &RtspServer::announce, rtpReceiver, &RtpReceiver::announce);
     QObject::connect(rtspServer, &RtspServer::senderSocketAvailable, rtpReceiver, &RtpReceiver::setSenderSocket);
     QObject::connect(rtspServer, &RtspServer::receiverSocketRequired, rtpReceiver, &RtpReceiver::bindSocket);
     //QObject::connect(rtspServer, &RtspServer::record, player, &Player::play);
@@ -68,9 +69,6 @@ void Service::initNetwork()
         QObject::connect(rtspServer, &RtspServer::volume, player, &Player::setVolume);
     }
 
-    QObject::connect(rtspServer, &RtspServer::announce, [](){ ofCore->audioOut(); });
-    QObject::connect(rtspServer, &RtspServer::announce, rtpReceiver, &RtpReceiver::announce);
-
     // startup
     rtspServer->listen(QHostAddress::AnyIPv4, config().port());
 }
@@ -82,7 +80,7 @@ void Service::deinitNetwork()
 void Service::initZeroconf()
 {
     // register service
-    ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd(Util::getMacAddress());
+    ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd();
     dnsSd->registerService(config().name().toLatin1(), config().port());
 }
 

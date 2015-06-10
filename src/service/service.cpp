@@ -45,8 +45,8 @@ void Service::initNetwork()
 {
     // init rtsp/rtp components
     RtspServer  *rtspServer = new RtspServer();
-    RtpBuffer   *rtpBuffer = new RtpBuffer(airtunes::framesPerPacket, config().latency());
-    RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer, config().latency()/10);
+    RtpBuffer   *rtpBuffer = new RtpBuffer(airtunes::framesPerPacket, ofCore->options().latency);
+    RtpReceiver *rtpReceiver = new RtpReceiver(rtpBuffer, ofCore->options().latency/10);
 
     // init player
     Player      *player = new Player(rtpBuffer, this);
@@ -70,7 +70,7 @@ void Service::initNetwork()
     }
 
     // startup
-    rtspServer->listen(QHostAddress::AnyIPv4, config().port());
+    rtspServer->listen(QHostAddress::AnyIPv4, ofCore->options().port);
 }
 
 void Service::deinitNetwork()
@@ -81,7 +81,7 @@ void Service::initZeroconf()
 {
     // register service
     ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd();
-    dnsSd->registerService(config().name().toLatin1(), config().port());
+    dnsSd->registerService(ofCore->options().name.toLatin1(), ofCore->options().port);
 }
 
 void Service::deinitZeroconf()

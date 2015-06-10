@@ -29,9 +29,6 @@ int main(int argc, char *argv[])
 
     ofCore->parseCommandLine(parser);
 
-    AirTunesServiceConfig airTunesServiceConfig;
-    airTunesServiceConfig.parseCommandLine(parser);
-
     parser.process(a);
 
     if (parser.isSet(daemonOption)) {
@@ -42,6 +39,7 @@ int main(int argc, char *argv[])
     initSignalHandler();
 
     // init service
+    AirTunesServiceConfig airTunesServiceConfig;
     Service *service = new Service(airTunesServiceConfig, qApp);
     service->open();
     QObject::connect(&a, &QCoreApplication::aboutToQuit, service, &Service::close);

@@ -9,6 +9,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
+#include <QHostInfo>
 #include <QMutex>
 #include <QTimer>
 #include <QWaitCondition>
@@ -32,6 +33,13 @@ Core *Core::instance()
 
 void Core::parseCommandLine(QCommandLineParser &parser)
 {
+    QString defaultName("OmniFunken@"); defaultName.append(QHostInfo::localHostName());
+    QCommandLineOption nameOption(QStringList() << "n" << "name", "Set propagated name.", "name", defaultName);
+    parser.addOption(nameOption);
+    QCommandLineOption portOption(QStringList() << "p" << "port", "Set RTSP port.", "port", "5002");
+    parser.addOption(portOption);
+    QCommandLineOption latencyOption(QStringList() << "l" << "latency", "Set latency in milliseconds.", "latency", "500");
+    parser.addOption(latencyOption);
     QCommandLineOption audioOutOption(QStringList() << "ao" << "audioout", "Set audio backend.", "audioout", "ao");
     parser.addOption(audioOutOption);
     QCommandLineOption audioDeviceOption(QStringList() << "ad" << "audiodevice", "Set audio device.", "audiodevice", "hw:0");
@@ -39,15 +47,20 @@ void Core::parseCommandLine(QCommandLineParser &parser)
 
     parser.parse(QCoreApplication::arguments());
 
+    m_options.name = parser.value(nameOption);
+    m_options.port = parser.value(portOption).toInt();
+    m_options.latency = parser.value(latencyOption).toInt();
+
     m_audioOutName = parser.value(audioOutOption);
     m_audioDeviceName = parser.value(audioDeviceOption);
 
+    qDebug()<<Q_FUNC_INFO<<"name:"<<m_options.name<<"port:"<<m_options.port<<"latency:"<<m_options.latency;
     qDebug()<<Q_FUNC_INFO<<"audioOut:"<<m_audioOutName<<"audioDevice:"<<m_audioDeviceName;
 }
 
-QSettings *Core::settings()
+const Core::Options &Core::options() const
 {
-    return s_settings;
+    return m_options;
 }
 
 AudioOutAbstract *Core::audioOut()
@@ -101,14 +114,14 @@ bool Core::powerOnDevice(uint time)
     DeviceWatcher *deviceWatcher = new DeviceWatcher();
     DeviceWatcher::UDevProperties properties;
     //properties["ID_MODEL"] = "Primare_I22_v1.0";
-    settings()->beginGroup("device_watcher");
-    QStringList keys = settings()->childKeys();
+    s_settings->beginGroup("device_watcher");
+    QStringList keys = s_settings->childKeys();
     for (const QString &key : keys) {
         if (key.compare("action", Qt::CaseInsensitive) == 0) continue;
-        properties.insert(key, settings()->value(key).toString());
+        properties.insert(key, s_settings->value(key).toString());
     }
-    QString action = settings()->value("action", "add").toString();
-    settings()->endGroup();
+    QString action = s_settings->value("action", "add").toString();
+    s_settings->endGroup();
 
     QEventLoop loop;
     deviceWatcher->start(action, properties);
@@ -145,14 +158,14 @@ bool Core::powerOnDevice2(uint time)
     DeviceWatcher *deviceWatcher = new DeviceWatcher();
     DeviceWatcher::UDevProperties properties;
     //properties["ID_MODEL"] = "Primare_I22_v1.0";
-    settings()->beginGroup("device_watcher");
-    QStringList keys = settings()->childKeys();
+    s_settings->beginGroup("device_watcher");
+    QStringList keys = s_settings->childKeys();
     for (const QString &key : keys) {
         if (key.compare("action", Qt::CaseInsensitive) == 0) continue;
-        properties.insert(key, settings()->value(key).toString());
+        properties.insert(key, s_settings->value(key).toString());
     }
-    QString action = settings()->value("action", "add").toString();
-    settings()->endGroup();
+    QString action = s_settings->value("action", "add").toString();
+    s_settings->endGroup();
 
     QEventLoop loop;
     deviceWatcher->start(action, properties);

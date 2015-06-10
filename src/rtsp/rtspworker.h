@@ -6,6 +6,7 @@
 
 #include <QThread>
 
+class RtpReceiver;
 
 class RtspWorker : public QThread
 {
@@ -24,7 +25,6 @@ signals:
     void flush(quint16 seq);
     void volume(float db);
     void teardown();
-    void disconnected();
 
 private:
     void onRequest();
@@ -42,6 +42,8 @@ private:
     int     m_socketDescriptor;
     quint8  m_macAddress[6];
     ulong   m_dacpId;
+
+    RtpReceiver *m_rtpReceiver;
 };
 
 #endif // RTSPWORKER_H

@@ -1,5 +1,6 @@
 #include "rtspworker.h"
 #include "util.h"
+#include "rtp/rtpreceiver.h"
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>

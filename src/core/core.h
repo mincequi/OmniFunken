@@ -13,6 +13,12 @@ class DeviceControlAbstract;
 class Core : public QObject
 {
     Q_OBJECT
+public:
+    struct Options {
+        QString name;
+        quint16 port;
+        quint16 latency;
+    };
 
 public:
     // This should only be used to acccess the signals, so it could
@@ -23,7 +29,8 @@ public:
     void parseCommandLine(QCommandLineParser &parser);
 
     // Provide settings provided by configuration file
-    QSettings *settings();
+    //QSettings *settings();
+    const Options &options() const;
 
     AudioOutAbstract        *audioOut();
     DeviceControlAbstract   *deviceControl();
@@ -38,10 +45,12 @@ private:
     bool powerOnDevice(uint time = UINT_MAX);
     bool powerOnDevice2(uint time = UINT_MAX);
 
-    QString m_audioOutName;
-    QString m_audioDeviceName;
-    AudioOutAbstract *m_audioOut;
-    DeviceControlAbstract *m_deviceControl;
+private:
+    Options     m_options;
+    QString     m_audioOutName;
+    QString     m_audioDeviceName;
+    AudioOutAbstract    *m_audioOut;
+    DeviceControlAbstract   *m_deviceControl;
 };
 
 #endif // OFCORE_H

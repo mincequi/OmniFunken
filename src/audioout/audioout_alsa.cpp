@@ -10,9 +10,6 @@ AudioOutAlsa::AudioOutAlsa() :
     m_ready(false),
     m_pcm(0),
     m_block(true),
-    m_format(SND_PCM_FORMAT_UNKNOWN),
-    m_bitAccurate(true),
-    m_conversionBuffer(NULL),
     m_volume(0.0)
 {
     AudioOutFactory::registerAudioOut(this);
@@ -32,20 +29,10 @@ bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
 {
     Q_UNUSED(settings)
 
-    qDebug() << __PRETTY_FUNCTION__;
+    qDebug()<<Q_FUNC_INFO;
 
     if (!probeNativeFormat()) {
         return false;
-    }
-
-    // sample size in bytes
-    int sampleSize = snd_pcm_format_width(m_format);
-    if ((sampleSize%8) != 0) {
-        return false;
-    }
-    if (sampleSize > airtunes::sampleSize) {
-        int size = airtunes::framesPerPacket*airtunes::channels*sampleSize/8;
-        m_conversionBuffer = new char[size]();
     }
 
     m_ready = true;
@@ -59,12 +46,9 @@ bool AudioOutAlsa::ready()
 
 void AudioOutAlsa::deinit()
 {
-    qDebug() << __PRETTY_FUNCTION__;
+    qDebug()<<Q_FUNC_INFO;
 
     stop();
-    if (m_conversionBuffer) {
-        delete[] m_conversionBuffer;
-    }
 }
 
 void AudioOutAlsa::start()
@@ -129,7 +113,7 @@ void AudioOutAlsa::start()
 
 void AudioOutAlsa::stop()
 {
-    qDebug() << __PRETTY_FUNCTION__;
+    qDebug()<<Q_FUNC_INFO;
     if (m_pcm) {
         snd_pcm_drain(m_pcm);
         snd_pcm_close(m_pcm);
@@ -139,7 +123,7 @@ void AudioOutAlsa::stop()
 
 void AudioOutAlsa::play(char *data, int bytes)
 {
-    int error = snd_pcm_writei(m_pcm, convertSamplesToNativeFormat(data, bytes/4), bytes/4);
+    int error = snd_pcm_writei(m_pcm, data, bytes/4);
     if (error < 0) {
         error = snd_pcm_recover(m_pcm, error, 1);
     }
@@ -162,27 +146,6 @@ void AudioOutAlsa::setVolume(float volume)
 
 bool AudioOutAlsa::probeNativeFormat()
 {
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof *(a))
-
-    static const snd_pcm_format_t formats[] = {
-        SND_PCM_FORMAT_S16_LE, /** Signed 16 bit Little Endian */
-        //SND_PCM_FORMAT_S16_BE, /** Signed 16 bit Big Endian */
-        //SND_PCM_FORMAT_U16_LE, /** Unsigned 16 bit Little Endian */
-        //SND_PCM_FORMAT_U16_BE, /** Unsigned 16 bit Big Endian */
-        SND_PCM_FORMAT_S24_LE, /** Signed 24 bit Little Endian using low three bytes in 32-bit word */
-        //SND_PCM_FORMAT_S24_BE, /** Signed 24 bit Big Endian */
-        //SND_PCM_FORMAT_U24_LE, /** Unsigned 24 bit Little Endian */
-        //SND_PCM_FORMAT_U24_BE, /** Unsigned 24 bit Big Endian */
-        SND_PCM_FORMAT_S24_3LE, /** Signed 24bit Little Endian in 3bytes format */
-        //SND_PCM_FORMAT_S24_3BE, /** Signed 24bit Big Endian in 3bytes format */
-        //SND_PCM_FORMAT_U24_3LE, /** Unsigned 24bit Little Endian in 3bytes format */
-        //SND_PCM_FORMAT_U24_3BE, /** Unsigned 24bit Big Endian in 3bytes format */
-        SND_PCM_FORMAT_S32_LE, /** Signed 32 bit Little Endian */
-        //SND_PCM_FORMAT_S32_BE, /** Signed 32 bit Big Endian */
-        //SND_PCM_FORMAT_U32_LE, /** Unsigned 32 bit Little Endian */
-        //SND_PCM_FORMAT_U32_BE, /** Unsigned 32 bit Big Endian */
-    };
-
     snd_pcm_t *pcm;
     snd_pcm_hw_params_t *hw_params;
     int error;
@@ -203,13 +166,10 @@ bool AudioOutAlsa::probeNativeFormat()
 
     qDebug("Device: %s (type: %s)\n", m_deviceName.toLatin1().constData(), snd_pcm_type_name(snd_pcm_type(pcm)));
 
-    qDebug("Formats:");
-    for (int i = ARRAY_SIZE(formats)-1; i >= 0; --i) {
-        if (!snd_pcm_hw_params_test_format(pcm, hw_params, formats[i])) {
-            qDebug(" %s", snd_pcm_format_name(formats[i]));
-            m_format = formats[i];
-            break;
-        }
+    if ((error = snd_pcm_hw_params_test_format(pcm, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
+        qWarning("cannot set sample format (%s)\n", snd_strerror(error));
+        //qDebug(" %s", snd_pcm_format_name(formats[i]));
+        return false;
     }
 
     if ((error = snd_pcm_hw_params_test_rate(pcm, hw_params, airtunes::sampleRate, 0)) < 0) {
@@ -231,64 +191,6 @@ bool AudioOutAlsa::probeNativeFormat()
 
     snd_pcm_close(pcm);
     return true;
-}
-
-const char* AudioOutAlsa::convertSamplesToNativeFormat(char *frames, snd_pcm_uframes_t size)
-{
-    if (m_conversionBuffer) {
-        for(snd_pcm_uframes_t i = 0; i < size; ++i) {
-            qint32 left = 0;
-            qint32 right = 0;
-
-            ((qint16*)&left)[1] = ((qint16*)frames)[i*2];
-            ((qint16*)&right)[1] = ((qint16*)frames)[i*2+1];
-
-            // apply volume
-            int shift = abs(m_volume/3.75f);
-            if (shift >= 16) {
-                shift = 16;
-            }
-            if (shift) {
-                left >>= shift;
-                right >>= shift;
-            }
-
-            // Always the higher 3 bytes/24 bits are relevant
-            switch (m_format) {
-            case SND_PCM_FORMAT_S24_3LE:
-                m_conversionBuffer[i*6] = ((qint8*)&left)[1];
-                m_conversionBuffer[i*6+1] = ((qint8*)&left)[2];
-                m_conversionBuffer[i*6+2] = ((qint8*)&left)[3];
-                m_conversionBuffer[i*6+3] = ((qint8*)&right)[1];
-                m_conversionBuffer[i*6+4] = ((qint8*)&right)[2];
-                m_conversionBuffer[i*6+5] = ((qint8*)&right)[3];
-                break;
-            case SND_PCM_FORMAT_S24_LE:
-                m_conversionBuffer[i*8] = ((qint8*)&left)[1];
-                m_conversionBuffer[i*8+1] = ((qint8*)&left)[2];
-                m_conversionBuffer[i*8+2] = ((qint8*)&left)[3];
-                m_conversionBuffer[i*8+4] = ((qint8*)&right)[1];
-                m_conversionBuffer[i*8+5] = ((qint8*)&right)[2];
-                m_conversionBuffer[i*8+6] = ((qint8*)&right)[3];
-                break;
-            case SND_PCM_FORMAT_S32_LE:
-                m_conversionBuffer[i*8] = ((qint8*)&left)[0];
-                m_conversionBuffer[i*8+1] = ((qint8*)&left)[1];
-                m_conversionBuffer[i*8+2] = ((qint8*)&left)[2];
-                m_conversionBuffer[i*8+3] = ((qint8*)&left)[3];
-                m_conversionBuffer[i*8+4] = ((qint8*)&right)[0];
-                m_conversionBuffer[i*8+5] = ((qint8*)&right)[1];
-                m_conversionBuffer[i*8+6] = ((qint8*)&right)[2];
-                m_conversionBuffer[i*8+7] = ((qint8*)&right)[3];
-                break;
-            default:
-                return frames;
-                break;
-            }
-        }
-        return m_conversionBuffer;
-    }
-    return frames;
 }
 
 static AudioOutAlsa s_instance;

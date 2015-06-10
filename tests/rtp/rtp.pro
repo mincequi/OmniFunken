@@ -25,7 +25,7 @@ macx {
 LIBS += -lao
 
 SOURCES += tst_rtptest.cpp \
-    ../../src/rtp/rtpbufferalt.cpp \
+    ../../src/rtp/rtpbuffer.cpp \
     ../../src/rtp/rtpheader.cpp \
     ../../src/util.cpp \
     ../../src/audioout/audioout_ao.cpp \
@@ -33,7 +33,7 @@ SOURCES += tst_rtptest.cpp \
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
 HEADERS += \
-    ../../src/rtp/rtpbufferalt.h \
+    ../../src/rtp/rtpbuffer.h \
     ../../src/rtp/rtpheader.h \
     ../../src/rtp/rtppacket.h \
     ../../src/util.h \

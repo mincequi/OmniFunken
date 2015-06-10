@@ -8,9 +8,8 @@
 #include "devicecontrol/devicecontrolfactory.h"
 #include "devicecontrol/devicewatcher.h"
 #include "rtsp/rtspserver.h"
-#include "rtp/rtpbufferalt.h"
-//#include "rtp/rtpreceiver.h"
-#include "rtp/rtpreceiverboost.h"
+#include "rtp/rtpbuffer.h"
+#include "rtp/rtpreceiver.h"
 //#include "rtp/rtpretransmissionrequester.h"
 #include "zeroconf/zeroconf_dns_sd.h"
 

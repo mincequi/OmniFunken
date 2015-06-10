@@ -1,6 +1,6 @@
 #include "rtspserver_threaded.h"
 
-#include "rtspworker.h"
+#include "rtspsession.h"
 #include "util.h"
 
 RtspServer::RtspServer(QObject *parent)
@@ -11,8 +11,8 @@ RtspServer::RtspServer(QObject *parent)
 
 void RtspServer::incomingConnection(qintptr socketDescriptor)
 {
-    RtspWorker *worker = new RtspWorker(socketDescriptor, this);
-    connect(worker, &RtspWorker::finished, worker, &RtspWorker::deleteLater);
+    RtspSession *worker = new RtspSession(socketDescriptor, this);
+    connect(worker, &RtspSession::finished, worker, &RtspSession::deleteLater);
     worker->start();
 }
 

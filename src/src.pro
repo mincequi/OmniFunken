@@ -45,7 +45,6 @@ SOURCES += main.cpp \
     devicecontrol/devicecontrolfactory.cpp \
     audioout/audiooutfactory.cpp \
     audioout/audioout_ao.cpp \
-    zeroconf/zeroconf_dns_sd.cpp \
     devicecontrol/devicecontrolrs232.cpp \
     devicecontrol/devicewatcher.cpp \
     signalhandler.cpp \
@@ -53,16 +52,15 @@ SOURCES += main.cpp \
     service/service.cpp \
     airtunes/airtunesserviceconfig.cpp \
     core/core.cpp \
+    rtp/rtpbuffer.cpp \
     rtp/rtpheader.cpp \
-    #rtp/rtpbuffer.cpp \
-    rtp/rtpbufferalt.cpp \
-    #rtp/rtpreceiver.cpp \
-    rtp/rtpreceiverboost.cpp \
+    rtp/rtpreceiver.cpp \
     #rtp/rtpretransmissionrequester.cpp \
     rtsp/rtspmessage.cpp \
     rtsp/rtspserver.cpp \
     #rtsp/rtspserver_threaded.cpp \
-    rtsp/rtspworker.cpp
+    rtsp/rtspsession.cpp \
+    zeroconf/zeroconf_dns_sd.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -75,37 +73,35 @@ HEADERS += \
     ratecontrol.h \
     daemon.h \
     omnifunken.h \
+    signalhandler.h \
     util.h \
     airplay/airplay.h \
     airtunes/airtunesconstants.h \
+    airtunes/airtunesserviceconfig.h \
+    audiofilter/audiofilterabstract.h \
+    audioout/audioout_abstract.h \
+    audioout/audioout_ao.h \
+    audioout/audiooutfactory.h \
+    core/core.h \
     devicecontrol/devicecontrolfactory.h \
     devicecontrol/devicecontrolabstract.h \
     devicecontrol/devicecontrolrs232.h \
     devicecontrol/devicewatcher.h \
-    audioout/audioout_abstract.h \
-    audioout/audioout_ao.h \
-    audioout/audiooutfactory.h \
+    rtp/rtpbuffer.h \
+    rtp/rtpheader.h \
     rtp/rtppacket.h \
-    #rtp/rtpbuffer.h \
-    rtp/rtpbufferalt.h \
-    #rtp/rtpreceiver.h \
-    rtp/rtpreceiverboost.h \
+    rtp/rtpreceiver.h \
     #rtp/rtpretransmissionrequester.h \
     rtp/rtpstat.h \
+    rtsp/rtspmessage.h \
     rtsp/rtspserver.h \
     #rtsp/rtspserver_threaded.h \
-    rtsp/rtspmessage.h \
-    signalhandler.h \
-    audiofilter/audiofilterabstract.h \
+    rtsp/rtspsession.h \
     service/service.h \
     service/serviceconfig.h \
-    airtunes/airtunesserviceconfig.h \
-    core/core.h \
     global.h \
     zeroconf/zeroconf.h \
-    zeroconf/zeroconf_dns_sd.h \
-    rtp/rtpheader.h \
-    rtsp/rtspworker.h
+    zeroconf/zeroconf_dns_sd.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

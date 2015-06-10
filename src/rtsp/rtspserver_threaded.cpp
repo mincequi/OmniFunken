@@ -16,9 +16,3 @@ void RtspServer::incomingConnection(qintptr socketDescriptor)
     worker->start();
 }
 
-void RtspServer::reset()
-{
-    if (isListening()) {
-        close();
-    }
-}

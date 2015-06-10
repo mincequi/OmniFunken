@@ -1,5 +1,10 @@
 #include "rtspsession.h"
+
+#include "player.h"
 #include "util.h"
+#include "core/core.h"
+#include "devicecontrol/devicecontrolabstract.h"
+#include "rtp/rtpbuffer.h"
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -56,9 +61,27 @@ void RtspSession::run()
     connect(&tcpSocket, &QTcpSocket::readyRead, this, &RtspSession::onRequest);
     connect(&tcpSocket, &QTcpSocket::disconnected, this, &RtspSession::quit);
 
-    // Create RtpReceiver
-    //RtpReceiver rtpReceiver;
 
+    // Create RTP/Playback components
+    RtpBuffer   rtpBuffer(airtunes::framesPerPacket, ofCore->options().latency);
+    RtpReceiver rtpReceiver(&rtpBuffer, ofCore->options().latency/10);
+    Player      player(&rtpBuffer);
+
+    // wire components
+    //QObject::connect(this, &RtspSession::announce, [](){ ofCore->audioOut(); });
+    QObject::connect(this, &RtspSession::announce, &rtpReceiver, &RtpReceiver::announce);
+    QObject::connect(this, &RtspSession::senderSocketAvailable, &rtpReceiver, &RtpReceiver::setSenderSocket);
+    QObject::connect(this, &RtspSession::receiverSocketRequired, &rtpReceiver, &RtpReceiver::bindSocket);
+    QObject::connect(this, &RtspSession::teardown, &rtpReceiver, &RtpReceiver::teardown);
+    QObject::connect(this, &RtspSession::teardown, &player, &Player::teardown);
+
+    if (ofCore->deviceControl()) {
+        QObject::connect(this, &RtspSession::volume, ofCore->deviceControl(), &DeviceControlAbstract::setVolume);
+    } else {
+        QObject::connect(this, &RtspSession::volume, &player, &Player::setVolume);
+    }
+
+    // Start event loop
     exec();
 }
 

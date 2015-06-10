@@ -1,25 +1,28 @@
 #include "rtpbuffer.h"
 
+#include "rtpheader.h"
 #include "rtppacket.h"
-#include "util.h"
+
+#include <util.h>
+#include <airtunes/airtunesconstants.h>
+
 #include <QtDebug>
+#include <QThread>
 
 RtpBuffer::RtpBuffer(uint framesPerPacket, uint latency, QObject *parent) :
     QObject(parent),
-    m_state(Empty),
-    m_lastEmittedState(Empty),
     m_framesPerPacket(framesPerPacket),
     m_latency(latency),
-    m_desiredFill(0),
-    m_first(0),
-    m_last(0),
+    m_desiredFill((airtunes::sampleRate*m_latency)/(m_framesPerPacket*1000)),
+    m_capacity(Util::roundToPowerOfTwo(m_desiredFill*2)),
     m_data(NULL),
-    m_silence(NULL)
+    m_silence(NULL),
+    m_begin(0),
+    m_end(0),
+    m_ready(false),
+    m_stat(),
+    m_lastPlayed(0)
 {
-    qRegisterMetaType<RtpBuffer::State>();
-
-    m_desiredFill = (44100*m_latency)/(m_framesPerPacket*1000);
-    m_capacity = Util::roundToPowerOfTwo(m_desiredFill*2);
     alloc();
 }
 
@@ -28,120 +31,118 @@ RtpBuffer::~RtpBuffer()
     free();
 }
 
-RtpPacket* RtpBuffer::obtainPacket(quint16 sequenceNumber)
+RtpPacket* RtpBuffer::obtainPacket(const RtpHeader& rtpHeader)
 {
-    // producer wants to put a packet
     m_mutex.lock();
 
-    switch (orderPacket(sequenceNumber)) {
-    case Twice:
-    case TooLate:
-        return NULL;
+    RtpPacket* packet = NULL;
+
+    switch (ratePacket(rtpHeader)) {
+    case Start:
+        m_begin = rtpHeader.sequenceNumber;
+        m_end = rtpHeader.sequenceNumber+1;
         break;
     case Early:
+        // Mark missing packets
+        for (quint16 i = m_end; i != rtpHeader.sequenceNumber; ++i) {
+            m_data[i%m_capacity].status = RtpPacket::PacketMissing;
+            m_data[i%m_capacity].sequenceNumber = i;
+        }
     case Expected:
-        m_last = sequenceNumber % m_capacity;
-    case Late:
-        if (m_state == Empty) {
-            qDebug()<<Q_FUNC_INFO<<": buffer now filling";
-            setState(Filling);
+        //  Check for buffer overflow.
+        if (size() >= (m_capacity-1)) {
+            qWarning()<<Q_FUNC_INFO<< "buffer overflow, clipping front";
+            m_begin = m_end-m_desiredFill;
+            m_stat.overflow++;
         }
-        /*
-        if (m_data[sequenceNumber % m_capacity].status == RtpPacket::PacketOk) {
-            qDebug()<<Q_FUNC_INFO<< "packet already received";
-            return NULL;
-        }
-        */
+        // End is one slot beyond last valid packet
+        m_end = rtpHeader.sequenceNumber+1;
         break;
+    case Late:
+        break;
+    case Duplicate:
+    case TooLate:
     default:
-        qFatal(__func__);
+        m_mutex.unlock();
+        return NULL;
+        break;
     }
 
-    RtpPacket* packet = &(m_data[sequenceNumber % m_capacity]);
-    packet->sequenceNumber  = sequenceNumber;
-    packet->status          = RtpPacket::PacketOk;
+    // Fetch slot from buffer
+    packet = &(m_data[rtpHeader.sequenceNumber%m_capacity]);
+    packet->sequenceNumber  = rtpHeader.sequenceNumber;
 
     return packet;
 }
 
-void RtpBuffer::commitPacket()
+void RtpBuffer::commitPacket(RtpPacket* packet)
 {
-    quint16 fill = (m_data[m_last].sequenceNumber-m_data[m_first].sequenceNumber);
-    if ((m_state == Filling) && (fill >= m_desiredFill)) {
-        qDebug()<<Q_FUNC_INFO<<": start playing at: " << m_data[m_first].sequenceNumber << ", last: " << m_last << ": " << m_data[m_last].sequenceNumber;
-        setState(Ready);
-        m_mutex.unlock();
-        emitStateChanged(Ready);
-        emit ready();
-        return;
-    } else {
-        m_mutex.unlock();
+    // Mark packet as ok
+    packet->status = RtpPacket::PacketOk;
+
+    // Dump buffer size
+    static quint32 count = 0;
+    if ((count%250) == 0) {
+        qDebug()<<Q_FUNC_INFO<<"fill:"<<size();
     }
+    ++count;
+
+    // Wake player thread
+    if (size() >= m_desiredFill) {
+        m_ready = true;
+        emit ready();
+    }
+
+    m_mutex.unlock();
 }
 
 const RtpPacket* RtpBuffer::takePacket()
 {
-    RtpPacket* packet = NULL;
+    QMutexLocker locker(&m_mutex);
 
-    m_mutex.lock();
-    if (m_state == Ready || m_state == Flushing) {
-        // take from top, until free packet or flush
-        packet = &(m_data[m_first]);
+    // If we flushed the buffer before, we return null until buffer is ready again
+    if (!m_ready) return NULL;
 
-        // we might catch a packet which is marked as flush but is not received yet
+    RtpPacket* packet = &(m_data[m_begin%m_capacity]);
+    ++m_begin;
+
+    switch (packet->status) {
+    case RtpPacket::PacketFree:
+        qWarning()<<Q_FUNC_INFO<<"last packet:"<<m_lastPlayed;
+        return NULL;
+        break;
+    case RtpPacket::PacketMissing:
+        qWarning()<<Q_FUNC_INFO<<"missing packet:"<<packet->sequenceNumber;
+        memcpy(packet->payload, m_silence, packet->payloadSize);
+    case RtpPacket::PacketOk:
         if (packet->flush) {
-            qDebug()<<Q_FUNC_INFO<<": flush packet: " << packet->sequenceNumber;
-            setState(Filling);
-            packet->flush = false;
-        } else {
-            switch (packet->status) {
-            case RtpPacket::PacketFree:
-                qWarning()<<Q_FUNC_INFO<<": free packet: " << packet->sequenceNumber;
-                setState(Empty);
-                packet = NULL;
-                break;
-            case RtpPacket::PacketMissing:
-                qWarning()<<Q_FUNC_INFO<< "missing packet: "<<packet->sequenceNumber<<", payload size: "<<packet->payloadSize;
-                memcpy(packet->payload, m_silence, packet->payloadSize);
-            case RtpPacket::PacketOk:
-                if (m_first == m_last) {
-                    qDebug()<<Q_FUNC_INFO<<": buffer empty";
-                    setState(Empty);
-                } else {
-                    m_first = (m_first+1) % m_capacity;
-                }
-                packet->init();
-                break;
-            default:
-                qFatal(__func__);
-                packet = NULL;
-            }
+            qDebug()<<Q_FUNC_INFO<<"flush packet:"<<packet->sequenceNumber;
         }
+        m_lastPlayed = packet->sequenceNumber;
+        packet->init();
+        break;
+    default:
+        qFatal(Q_FUNC_INFO);
     }
-    State currentState = m_state;
-    m_mutex.unlock();
-
-    emitStateChanged(currentState);
 
     return packet;
 }
 
-quint16 RtpBuffer::size() const
+void RtpBuffer::silence(char **silence, int *size) const
 {
-    QMutexLocker locker(&m_mutex);
-
-    return m_data[m_last].sequenceNumber-m_data[m_first].sequenceNumber;
+    *silence = m_silence;
+    *size   = m_framesPerPacket*airtunes::channels*(airtunes::sampleSize/8);
 }
 
 QList<RtpBuffer::Sequence> RtpBuffer::missingSequences() const
 {
-    QList<RtpBuffer::Sequence> missingSequences;
+    QMutexLocker locker(&m_mutex);
 
+    QList<RtpBuffer::Sequence> missingSequences;
     int startOfSequence = -1;
     int endOfSequence   = -1;
 
-    m_mutex.lock();
-    for (int i = m_first; i != m_last; i = (i+1)%m_capacity) {
+    for (int i = m_begin%m_capacity; i != m_end%m_capacity; i = (i+1)%m_capacity) {
         // find startOfSequence of missing packets
         if (m_data[i].status == RtpPacket::PacketMissing && startOfSequence == -1) {
             startOfSequence = m_data[i].sequenceNumber;
@@ -156,65 +157,103 @@ QList<RtpBuffer::Sequence> RtpBuffer::missingSequences() const
             endOfSequence   = -1;
         }
     }
-    m_mutex.unlock();
 
     return missingSequences;
 }
 
-void RtpBuffer::silence(char **silence, int *size) const
+RtpBuffer::PacketRating RtpBuffer::ratePacket(const RtpHeader& rtpHeader)
 {
-    *silence = m_silence;
-    *size   = m_framesPerPacket*4;
-}
+    m_stat.put++;
 
-void RtpBuffer::flush(quint16 sequenceNumber)
-{
-    QMutexLocker locker(&m_mutex);
+    // 1. Check for duplicate (PacketStatus == ok)
+    // 2. Regular packet (always take it)
+    // 2.1 Start (new stream) (m_begin == empty)
+    // 2.2 seqDiff: –32.768 to 32.767
+    // 2.2.1 early (0 < seqDiff < desiredFill(63))
+    // 2.2.2 expected (seqDiff == 0)
+    // 2.2.3 late (seqDiff < 0 && PacketStatus == missing) // also handle retransmission here
+    // 2.2.4 start (new stream here, 'cause (seqDiff > desiredFill || seqDiff < 0)
+    // 3. Retransmitted packet (m_begin <= seqNo < m_end)
 
-    // if flush
-    if (m_state == Ready) {
-        qDebug()<<Q_FUNC_INFO<<": flush at: " << sequenceNumber;
-        setState(Flushing);
+    // Fetch slot from buffer
+    RtpPacket* packet = &(m_data[rtpHeader.sequenceNumber%m_capacity]);
 
-        RtpPacket* packet = &(m_data[sequenceNumber%m_capacity]);
-        packet->sequenceNumber = sequenceNumber;
-        packet->flush = true;
-        if (packet->status != RtpPacket::PacketOk) {
-            packet->status = RtpPacket::PacketMissing;
-        }
+    // 1. Check for duplicate
+    if ((packet->sequenceNumber == rtpHeader.sequenceNumber) && (packet->status == RtpPacket::PacketOk)) {
+        qDebug()<<Q_FUNC_INFO<< "packet already received:"<<packet->sequenceNumber;
+        m_stat.duplicates++;
+        return Duplicate;
     }
+
+    // 2.1 New stream if empty
+    if (m_data[m_begin%m_capacity].status == RtpPacket::PacketFree) {
+        qDebug()<<Q_FUNC_INFO<< "new stream:"<<rtpHeader.sequenceNumber;
+        return Start;
+    }
+
+    // 2.2 Interpret seqDiff
+    qint16 seqDiff = rtpHeader.sequenceNumber-m_end;
+    // 2.2.1 Early (0 < seqDiff < desiredFill(63))
+    if ((seqDiff > 0) && (seqDiff < m_desiredFill)) {
+        qDebug()<<Q_FUNC_INFO<< "missing packets:"<<m_end<<"-"<<(rtpHeader.sequenceNumber-1);
+        m_stat.early++;
+        return Early;
+    }
+    // 2.2.2 Expected (seqDiff == 0)
+    if (seqDiff == 0) {
+        return Expected;
+    }
+    // 2.2.3 late (seqDiff < 0 && PacketStatus == missing) // also handle retransmission here
+    if ((packet->sequenceNumber == rtpHeader.sequenceNumber) && (packet->status == RtpPacket::PacketMissing)) {
+        //qDebug()<<Q_FUNC_INFO<< "late packet:"<<packet->sequenceNumber;
+        m_stat.late++;
+        return Late;
+    }
+    // 3. Retransmitted packet
+    if ((rtpHeader.payloadType == airtunes::RetransmitResponse) /*&& (packet->status != RtpPacket::PacketMissing)*/) {
+        qDebug()<<Q_FUNC_INFO<< "too late packet:"<<rtpHeader.sequenceNumber;
+        m_stat.lost++;
+        return TooLate;
+    }
+
+    qDebug()<<Q_FUNC_INFO<< "flush buffer, end:"<<m_end<<", this:"<<rtpHeader.sequenceNumber;
+    flush();
+    return RtpBuffer::Start;
 }
 
-void RtpBuffer::teardown()
+quint16 RtpBuffer::size()
 {
-    QMutexLocker locker(&m_mutex);
+    return m_end-m_begin-1;
+}
 
-    setState(Empty);
-    m_first = 0;
-    m_last = 0;
-
-    for (int i = 0; i < m_capacity; ++i) {
+void RtpBuffer::flush()
+{
+    for (quint16 i = 0; i < m_capacity; ++i) {
         m_data[i].init();
     }
+    m_ready = false;
+    m_stat.flush++;
 }
 
 void RtpBuffer::alloc()
 {
     free();
 
+    const uint bytesPerPacket = m_framesPerPacket*airtunes::channels*(airtunes::sampleSize/8);
+
     m_data = new RtpPacket[m_capacity];
-    for (int i = 0; i < m_capacity; ++i) {
-        m_data[i].payload = new char[m_framesPerPacket*5]; //should be 4, we put some extra space
+    for (uint i = 0; i < m_capacity; ++i) {
+        m_data[i].payload = new char[bytesPerPacket];
     }
 
-    m_silence = new char[m_framesPerPacket*5];
-    memset(m_silence, 0, m_framesPerPacket*5);
+    m_silence = new char[bytesPerPacket];
+    memset(m_silence, 0, bytesPerPacket);
 }
 
 void RtpBuffer::free()
 {
     if (m_data) {
-        for (int i = 0; i < m_capacity; ++i) {
+        for (uint i = 0; i < m_capacity; ++i) {
             delete[] m_data[i].payload;
         }
         delete[] m_data;
@@ -224,58 +263,5 @@ void RtpBuffer::free()
     if (m_silence) {
         delete[] m_silence;
         m_silence = NULL;
-    }
-}
-
-void RtpBuffer::setState(State state)
-{
-    if (m_state == state) {
-        return;
-    }
-
-    m_state = state;
-}
-
-RtpBuffer::PacketOrder RtpBuffer::orderPacket(quint16 sequenceNumber)
-{
-    // Check for initial packet
-    if (m_state == Empty) {
-        m_first = sequenceNumber % m_capacity;
-        return Expected;
-    }
-
-    // compute sequence diff from previous packet
-    qint16 firstDiff = m_data[m_first].sequenceNumber-sequenceNumber; // shall be negative
-    qint16 diff = sequenceNumber-m_data[m_last].sequenceNumber;
-
-    // if packet is too late. this should happen rarely.
-    if (firstDiff > 0) {
-        qDebug()<<Q_FUNC_INFO<<": packet too late: " << sequenceNumber;
-        return TooLate;
-    } else if (diff == 1) {
-        return Expected;
-    } else if (diff > 1) {
-        //qDebug()<<Q_FUNC_INFO<<": early packet/lost packets";
-        // mark missing
-        for (quint16 i = m_data[m_last].sequenceNumber+1; i != sequenceNumber; ++i) {
-            m_data[i%m_capacity].status = RtpPacket::PacketMissing;
-            m_data[i%m_capacity].sequenceNumber = i;
-        }
-        return Early;
-    } else if (diff == 0) {
-        //qDebug()<<Q_FUNC_INFO<<": packet sent twice: " << sequenceNumber;
-        // TODO memcmp packets
-        return Twice;
-    } else /*if (diff < 0)*/ {
-        //qDebug()<<Q_FUNC_INFO<<": late packet: " << sequenceNumber << ", last: " << m_data[m_last].sequenceNumber;
-        return Late;
-    }
-}
-
-void RtpBuffer::emitStateChanged(RtpBuffer::State state)
-{
-    if (m_lastEmittedState != state) {
-        m_lastEmittedState = state;
-        emit stateChanged(state);
     }
 }

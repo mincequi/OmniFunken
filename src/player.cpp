@@ -2,7 +2,7 @@
 
 #include <audioout/audioout_abstract.h>
 #include "core/core.h"
-#include <rtp/rtpbufferalt.h>
+#include <rtp/rtpbuffer.h>
 #include <rtp/rtppacket.h>
 
 #include <QDebug>

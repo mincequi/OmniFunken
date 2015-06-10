@@ -1,19 +1,18 @@
 #ifndef RTSPWORKER_H
 #define RTSPWORKER_H
 
-#include "airtunes/airtunesconstants.h"
 #include "rtspmessage.h"
+#include "airtunes/airtunesconstants.h"
+#include "rtp/rtpreceiver.h"
 
 #include <QThread>
 
-class RtpReceiver;
-
-class RtspWorker : public QThread
+class RtspSession : public QThread
 {
     Q_OBJECT
 
 public:
-    RtspWorker(int socketDescriptor, QObject *parent);
+    RtspSession(int socketDescriptor, QObject *parent);
     void run() Q_DECL_OVERRIDE;
 
 signals:
@@ -43,7 +42,7 @@ private:
     quint8  m_macAddress[6];
     ulong   m_dacpId;
 
-    RtpReceiver *m_rtpReceiver;
+    //RtpReceiver m_rtpReceiver;
 };
 
 #endif // RTSPWORKER_H

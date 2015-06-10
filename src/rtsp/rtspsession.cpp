@@ -1,6 +1,10 @@
-#include "rtspworker.h"
+#include "rtspsession.h"
+
+#include "player.h"
 #include "util.h"
-#include "rtp/rtpreceiver.h"
+#include "core/core.h"
+#include "devicecontrol/devicecontrolabstract.h"
+#include "rtp/rtpbuffer.h"
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -32,7 +36,7 @@ static char airportRsaPrivateKey[] = "-----BEGIN RSA PRIVATE KEY-----\n"
 "2gG0N5hvJpzwwhbhXqFKA4zaaSrw622wDniAK5MlIE0tIAKKP4yxNGjoD2QYjhBGuhvkWKY=\n"
 "-----END RSA PRIVATE KEY-----";
 
-RtspWorker::RtspWorker(int socketDescriptor, QObject *parent)
+RtspSession::RtspSession(int socketDescriptor, QObject *parent)
     : QThread(parent),
       m_socketDescriptor(socketDescriptor)
 {
@@ -45,21 +49,43 @@ RtspWorker::RtspWorker(int socketDescriptor, QObject *parent)
     }
 }
 
-void RtspWorker::run()
+void RtspSession::run()
 {
+    // Create TCP socket
     QTcpSocket tcpSocket;
     if (!tcpSocket.setSocketDescriptor(m_socketDescriptor)) {
         qCritical()<<Q_FUNC_INFO<<tcpSocket.errorString();
         return;
     }
 
-    connect(&tcpSocket, &QTcpSocket::readyRead, this, &RtspWorker::onRequest);
-    connect(&tcpSocket, &QTcpSocket::disconnected, this, &RtspWorker::quit);
+    connect(&tcpSocket, &QTcpSocket::readyRead, this, &RtspSession::onRequest);
+    connect(&tcpSocket, &QTcpSocket::disconnected, this, &RtspSession::quit);
 
+
+    // Create RTP/Playback components
+    RtpBuffer   rtpBuffer(airtunes::framesPerPacket, ofCore->options().latency);
+    RtpReceiver rtpReceiver(&rtpBuffer, ofCore->options().latency/10);
+    Player      player(&rtpBuffer);
+
+    // wire components
+    //QObject::connect(this, &RtspSession::announce, [](){ ofCore->audioOut(); });
+    QObject::connect(this, &RtspSession::announce, &rtpReceiver, &RtpReceiver::announce);
+    QObject::connect(this, &RtspSession::senderSocketAvailable, &rtpReceiver, &RtpReceiver::setSenderSocket);
+    QObject::connect(this, &RtspSession::receiverSocketRequired, &rtpReceiver, &RtpReceiver::bindSocket);
+    QObject::connect(this, &RtspSession::teardown, &rtpReceiver, &RtpReceiver::teardown);
+    QObject::connect(this, &RtspSession::teardown, &player, &Player::teardown);
+
+    if (ofCore->deviceControl()) {
+        QObject::connect(this, &RtspSession::volume, ofCore->deviceControl(), &DeviceControlAbstract::setVolume);
+    } else {
+        QObject::connect(this, &RtspSession::volume, &player, &Player::setVolume);
+    }
+
+    // Start event loop
     exec();
 }
 
-void RtspWorker::onRequest()
+void RtspSession::onRequest()
 {
     QTcpSocket *tcpSocket = qobject_cast<QTcpSocket*>(sender());
     if (!tcpSocket) {
@@ -97,7 +123,7 @@ void RtspWorker::onRequest()
     }
 }
 
-void RtspWorker::handleOptions(const RtspMessage &request, RtspMessage *response)
+void RtspSession::handleOptions(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(request);
     //qDebug()<<Q_FUNC_INFO;
@@ -105,7 +131,7 @@ void RtspWorker::handleOptions(const RtspMessage &request, RtspMessage *response
     response->insert("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, SET_PARAMETER");
 }
 
-void RtspWorker::handleAnnounce(const RtspMessage &request, RtspMessage *response)
+void RtspSession::handleAnnounce(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
     qDebug()<<Q_FUNC_INFO;
@@ -157,7 +183,7 @@ void RtspWorker::handleAnnounce(const RtspMessage &request, RtspMessage *respons
     emit announce(announcement);
 }
 
-void RtspWorker::handleSetup(const RtspMessage &request, RtspMessage *response)
+void RtspSession::handleSetup(const RtspMessage &request, RtspMessage *response)
 {
     qDebug()<<Q_FUNC_INFO;
 
@@ -204,7 +230,7 @@ void RtspWorker::handleSetup(const RtspMessage &request, RtspMessage *response)
     response->insert("Transport", data);
 }
 
-void RtspWorker::handleRecord(const RtspMessage &request, RtspMessage *response)
+void RtspSession::handleRecord(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
 
@@ -225,7 +251,7 @@ void RtspWorker::handleRecord(const RtspMessage &request, RtspMessage *response)
     }
 }
 
-void RtspWorker::handleFlush(const RtspMessage &request, RtspMessage *response)
+void RtspSession::handleFlush(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
 
@@ -244,7 +270,7 @@ void RtspWorker::handleFlush(const RtspMessage &request, RtspMessage *response)
     emit flush(seq);
 }
 
-void RtspWorker::handleTeardown(const RtspMessage &request, RtspMessage *response)
+void RtspSession::handleTeardown(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
     qDebug()<<Q_FUNC_INFO;
@@ -256,7 +282,7 @@ void RtspWorker::handleTeardown(const RtspMessage &request, RtspMessage *respons
     }
 }
 
-void RtspWorker::handleSetParameter(const RtspMessage &request, RtspMessage *response)
+void RtspSession::handleSetParameter(const RtspMessage &request, RtspMessage *response)
 {
     Q_UNUSED(response);
 
@@ -268,7 +294,7 @@ void RtspWorker::handleSetParameter(const RtspMessage &request, RtspMessage *res
     }
 }
 
-void RtspWorker::handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress)
+void RtspSession::handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress)
 {
     // from https://github.com/joelgibson/go-airplay
     //

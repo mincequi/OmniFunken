@@ -1,87 +1,80 @@
 #ifndef RTPBUFFER_H
 #define RTPBUFFER_H
 
+#include "rtpstat.h"
+
 #include <QList>
 #include <QMutex>
 #include <QObject>
 
+struct RtpHeader;
 struct RtpPacket;
 
 class RtpBuffer : public QObject
 {
     Q_OBJECT
 public:
-    struct Sequence {
-        quint16 first;
-        quint16 count;
-    };
-
-    enum State {
-        Empty,
-        Filling,
-        Ready,
-        Flushing
-    };
-
     // framesPerPacket = stereo frames per second.
     RtpBuffer(uint framesPerPacket, uint latency = 500, QObject *parent = 0);
     ~RtpBuffer();
 
     // producer thread
-    RtpPacket* obtainPacket(quint16 sequenceNumber);
-    void commitPacket();
+    RtpPacket* obtainPacket(const RtpHeader& rtpHeader);
+    void commitPacket(RtpPacket* packet);
+
     // consumer thread
     const RtpPacket* takePacket();
 
-    // size, fill level
-    quint16 size() const;
+    // silence for missing packets
+    void silence(char **silence, int *size) const;
 
     // get missing sequences
+    struct Sequence {
+        quint16 first;
+        quint16 count;
+    };
     QList<Sequence> missingSequences() const;
-
-    void silence(char **silence, int *size) const;
 
 signals:
     void ready();
-    void stateChanged(RtpBuffer::State state);
-
-public slots:
-    void flush(quint16 sequenceNumber);
-    void teardown();
 
 private:
+    enum PacketRating {
+        Start,      // This packet starts a new stream
+        Duplicate,  // packet with this seqno has been sent twice
+        Expected,   // packet is in expected order
+        Early,      // packet is early, missing packets
+        Late,       // packet is late (eventually from retransmit)
+        TooLate,    // packet is too late (from retransmit)
+    };
+    PacketRating ratePacket(const RtpHeader& rtpHeader);
+
+    // Buffer helpers
+    quint16 size();
+    void flush();
+
+    // Memory
     void alloc();
     void free();
 
-    void setState(State state);
-
-    enum PacketOrder {
-        TooLate,    // packet is too late
-        Early,      // missing packets
-        Expected,   // packet is in expected order
-        Late,       // packet is late (eventually from request resend)
-        Twice       // packet with this seqno has been sent twice
-    };
-    PacketOrder orderPacket(quint16);
-
-    void emitStateChanged(RtpBuffer::State state);
-
 private:
-    State       m_state;
-    State       m_lastEmittedState;
+    // General buffer settings and data
+    const uint      m_framesPerPacket;
+    const uint      m_latency;
+    const int       m_desiredFill;
+    const quint16   m_capacity;
+    RtpPacket       *m_data;
+    char            *m_silence;
 
-    const uint  m_framesPerPacket;
-    const uint  m_latency;
-    int         m_desiredFill;
-    int         m_capacity;
-    int         m_first;
-    int         m_last;
-    RtpPacket   *m_data;
-    char        *m_silence;
-
+    quint16     m_begin;
+    quint16     m_end;
     mutable QMutex  m_mutex;
+
+    // Needed to stop consumer
+    bool        m_ready;
+
+    // Statistics
+    RtpStat     m_stat;
+    quint16     m_lastPlayed;
 };
-
-Q_DECLARE_METATYPE(RtpBuffer::State)
-
 #endif // RTPBUFFER_H

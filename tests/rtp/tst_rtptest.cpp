@@ -7,7 +7,7 @@
 
 #include <audioout/audioout_ao.h>
 #include <airtunes/airtunesconstants.h>
-#include <rtp/rtpbufferalt.h>
+#include <rtp/rtpbuffer.h>
 #include <rtp/rtpheader.h>
 #include <rtp/rtppacket.h>
 

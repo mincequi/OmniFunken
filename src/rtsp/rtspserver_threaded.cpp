@@ -4,15 +4,14 @@
 #include "util.h"
 
 RtspServer::RtspServer(QObject *parent)
-    : QTcpServer(parent),
-      m_dacpId(0)
+    : QTcpServer(parent)
 {
 }
 
 void RtspServer::incomingConnection(qintptr socketDescriptor)
 {
-    RtspSession *worker = new RtspSession(socketDescriptor, this);
-    connect(worker, &RtspSession::finished, worker, &RtspSession::deleteLater);
-    worker->start();
+    RtspSession *rtspSession = new RtspSession(socketDescriptor, this);
+    connect(rtspSession, &RtspSession::finished, rtspSession, &RtspSession::deleteLater);
+    rtspSession->start();
 }
 

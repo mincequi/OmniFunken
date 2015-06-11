@@ -7,12 +7,14 @@
 
 #include <QThread>
 
+class QTcpSocket;
+
 class RtspSession : public QThread
 {
     Q_OBJECT
 
 public:
-    RtspSession(int socketDescriptor, QObject *parent);
+    RtspSession(qintptr socketDescriptor, QObject *parent = 0);
     void run() Q_DECL_OVERRIDE;
 
 signals:
@@ -25,9 +27,10 @@ signals:
     void volume(float db);
     void teardown();
 
-private:
+private slots:
     void onRequest();
 
+private:
     void handleOptions(const RtspMessage &request, RtspMessage *response);
     void handleAnnounce(const RtspMessage &request, RtspMessage *response);
     void handleSetup(const RtspMessage &request, RtspMessage *response);
@@ -38,11 +41,11 @@ private:
     void handleAppleChallenge(const RtspMessage &request, RtspMessage *response, quint32 localAddress);
 
 private:
-    int     m_socketDescriptor;
+    qintptr m_socketDescriptor;
+    QTcpSocket *m_socket;
+
     quint8  m_macAddress[6];
     ulong   m_dacpId;
-
-    //RtpReceiver m_rtpReceiver;
 };
 
 #endif // RTSPWORKER_H

@@ -12,10 +12,13 @@ int main(int argc, char *argv[])
     // suppress avahi warning
     setenv("AVAHI_COMPAT_NOWARN", "1", 1);
 
+    // install qt message handler
     //qInstallMsgHandler(logOutput);
+
+    // init app
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("OmniFunken");
-    QCoreApplication::setApplicationVersion("0.0.1");
+    QCoreApplication::setApplicationVersion("0.0.2");
 
     // command line options
     QCommandLineParser parser;
@@ -26,11 +29,10 @@ int main(int argc, char *argv[])
     //parser.addOption(verboseOption);
     QCommandLineOption daemonOption(QStringList() << "d" << "daemon", "Start as daemon.");
     parser.addOption(daemonOption);
-
     ofCore->parseCommandLine(parser);
-
     parser.process(a);
 
+    // daemonize
     if (parser.isSet(daemonOption)) {
         daemonize();
     }

@@ -36,7 +36,7 @@ static char airportRsaPrivateKey[] = "-----BEGIN RSA PRIVATE KEY-----\n"
 "2gG0N5hvJpzwwhbhXqFKA4zaaSrw622wDniAK5MlIE0tIAKKP4yxNGjoD2QYjhBGuhvkWKY=\n"
 "-----END RSA PRIVATE KEY-----";
 
-RtspSession::RtspSession(int socketDescriptor, QObject *parent)
+RtspSession::RtspSession(qintptr socketDescriptor, QObject *parent)
     : QThread(parent),
       m_socketDescriptor(socketDescriptor)
 {
@@ -51,16 +51,19 @@ RtspSession::RtspSession(int socketDescriptor, QObject *parent)
 
 void RtspSession::run()
 {
+    qDebug()<<Q_FUNC_INFO<<"enter";
+
     // Create TCP socket
-    QTcpSocket tcpSocket;
-    if (!tcpSocket.setSocketDescriptor(m_socketDescriptor)) {
-        qCritical()<<Q_FUNC_INFO<<tcpSocket.errorString();
+    m_socket = new QTcpSocket();
+    if (!m_socket->setSocketDescriptor(m_socketDescriptor)) {
+        qCritical()<<Q_FUNC_INFO<<m_socket->errorString();
+        m_socket->deleteLater();
         return;
     }
 
-    connect(&tcpSocket, &QTcpSocket::readyRead, this, &RtspSession::onRequest);
-    connect(&tcpSocket, &QTcpSocket::disconnected, this, &RtspSession::quit);
-
+    connect(m_socket, SIGNAL(readyRead()), this, SLOT(onRequest()), Qt::DirectConnection); // @TODO: This is a hack. See https://wiki.qt.io/Threads_Events_QObjects#DOs_and_DON.27Ts
+    connect(m_socket, SIGNAL(disconnected()), this, SLOT(quit()));
+    connect(m_socket, SIGNAL(disconnected()), m_socket, SLOT(deleteLater()));
 
     // Create RTP/Playback components
     RtpBuffer   rtpBuffer(airtunes::framesPerPacket, ofCore->options().latency);
@@ -83,22 +86,18 @@ void RtspSession::run()
 
     // Start event loop
     exec();
+
+    qDebug()<<Q_FUNC_INFO<<"exit";
 }
 
 void RtspSession::onRequest()
 {
-    QTcpSocket *tcpSocket = qobject_cast<QTcpSocket*>(sender());
-    if (!tcpSocket) {
-        qFatal("onRequest: no valid sender");
-        return;
-    }
-
-    QByteArray buffer = tcpSocket->readAll();
+    QByteArray buffer = m_socket->readAll();
 
     RtspMessage request, response;
     request.parse(buffer);
 
-    handleAppleChallenge(request, &response, qToBigEndian(tcpSocket->localAddress().toIPv4Address()));
+    handleAppleChallenge(request, &response, qToBigEndian(m_socket->localAddress().toIPv4Address()));
     response.insert("CSeq", request.header("CSeq"));
 
     if (buffer.startsWith("OPTIONS"))
@@ -119,7 +118,7 @@ void RtspSession::onRequest()
         qWarning("RtspWorker::onRequest: unknown RtspRequest: \n%s", buffer.constData());
 
     if (response.valid()) {
-        tcpSocket->write(response.data());
+        m_socket->write(response.data());
     }
 }
 

@@ -58,7 +58,8 @@ SOURCES += main.cpp \
     rtsp/rtspserver.cpp \
     #rtsp/rtspserver_threaded.cpp \
     rtsp/rtspsession.cpp \
-    zeroconf/zeroconf_dns_sd.cpp
+    zeroconf/zeroconf_dns_sd.cpp \
+    audioout/audioout_pipe.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -96,7 +97,8 @@ HEADERS += \
     service/serviceconfig.h \
     global.h \
     zeroconf/zeroconf.h \
-    zeroconf/zeroconf_dns_sd.h
+    zeroconf/zeroconf_dns_sd.h \
+    audioout/audioout_pipe.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

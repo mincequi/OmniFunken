@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include "serviceconfig.h"
+#include "zeroconf/zeroconf_dns_sd.h"
 
 class Service : public QObject
 {
@@ -22,10 +23,11 @@ protected:
     virtual void initNetwork();
     virtual void deinitNetwork();
     virtual void initZeroconf();
-    virtual void deinitZeroconf();
 
 private:
     ServiceConfig m_config;
+    ZeroconfDnsSd m_dnsSd;
+
 };
 
 #endif // SERVICE_H

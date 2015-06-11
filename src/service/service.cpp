@@ -8,10 +8,11 @@
 #include "devicecontrol/devicecontrolfactory.h"
 #include "devicecontrol/devicewatcher.h"
 #include "rtsp/rtspserver.h"
+//#include "rtsp/rtspserver_threaded.h"
 #include "rtp/rtpbuffer.h"
 #include "rtp/rtpreceiver.h"
 //#include "rtp/rtpretransmissionrequester.h"
-#include "zeroconf/zeroconf_dns_sd.h"
+
 
 Service::Service(const ServiceConfig &serviceConfig, QObject *parent) :
     QObject(parent),
@@ -31,7 +32,6 @@ void Service::open()
 
 void Service::close()
 {
-    deinitZeroconf();
     deinitNetwork();
 }
 
@@ -79,11 +79,5 @@ void Service::deinitNetwork()
 void Service::initZeroconf()
 {
     // register service
-    ZeroconfDnsSd *dnsSd = new ZeroconfDnsSd();
-    dnsSd->registerService(ofCore->options().name.toLatin1(), ofCore->options().port);
+    m_dnsSd.registerService(ofCore->options().name.toLatin1(), ofCore->options().port);
 }
-
-void Service::deinitZeroconf()
-{
-}
-

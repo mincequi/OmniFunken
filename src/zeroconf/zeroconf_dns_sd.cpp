@@ -5,12 +5,16 @@
 #include <dns_sd.h>
 #include <QtEndian>
 
-ZeroconfDnsSd::ZeroconfDnsSd(QObject *parent) :
-    QObject(parent),
+ZeroconfDnsSd::ZeroconfDnsSd() :
     m_dnssref(0)
 {
     m_macAddress = Util::getMacAddress();
     m_macAddress.remove(QChar(':'));
+}
+
+ZeroconfDnsSd::~ZeroconfDnsSd()
+{
+    unregisterService();
 }
 
 int ZeroconfDnsSd::registerService(const QString &name, quint16 port)
@@ -55,7 +59,6 @@ int ZeroconfDnsSd::registerService(const QString &name, quint16 port)
                                buf,
                                NULL,
                                NULL);
-
     free(buf);
 
     if (error == kDNSServiceErr_NoError) {
@@ -68,4 +71,8 @@ int ZeroconfDnsSd::registerService(const QString &name, quint16 port)
 
 void ZeroconfDnsSd::unregisterService()
 {
+    if (m_dnssref) {
+        DNSServiceRefDeallocate(m_dnssref);
+        m_dnssref = 0;
+    }
 }

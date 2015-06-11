@@ -38,7 +38,6 @@ CONFIG(release, debug|release) {
 SOURCES += main.cpp \
     player.cpp \
     alac.c \
-    omnifunken.cpp \
     daemon.c \
     util.cpp \
     devicecontrol/devicecontrolfactory.cpp \
@@ -70,7 +69,6 @@ HEADERS += \
     player.h \
     alac.h \
     daemon.h \
-    omnifunken.h \
     signalhandler.h \
     util.h \
     airtunes/airtunesconstants.h \

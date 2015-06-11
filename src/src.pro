@@ -38,7 +38,6 @@ CONFIG(release, debug|release) {
 SOURCES += main.cpp \
     player.cpp \
     alac.c \
-    ratecontrol.cpp \
     omnifunken.cpp \
     daemon.c \
     util.cpp \
@@ -70,12 +69,10 @@ unix:!macx {
 HEADERS += \
     player.h \
     alac.h \
-    ratecontrol.h \
     daemon.h \
     omnifunken.h \
     signalhandler.h \
     util.h \
-    airplay/airplay.h \
     airtunes/airtunesconstants.h \
     airtunes/airtunesserviceconfig.h \
     audiofilter/audiofilterabstract.h \

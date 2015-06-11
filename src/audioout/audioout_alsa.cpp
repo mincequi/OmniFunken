@@ -78,7 +78,7 @@ void AudioOutAlsa::start()
         qCritical("cannot set access type (%s)\n", snd_strerror(error));
         return;
     }
-    if ((error = snd_pcm_hw_params_set_format(m_pcm, hw_params, m_format)) < 0) {
+    if ((error = snd_pcm_hw_params_set_format(m_pcm, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
         qCritical("cannot set sample format (%s)\n", snd_strerror(error));
         return;
     }

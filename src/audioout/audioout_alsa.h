@@ -24,16 +24,11 @@ private:
     virtual void setVolume(float volume) Q_DECL_OVERRIDE;
 
     bool probeNativeFormat();
-    const char* convertSamplesToNativeFormat(char *frames, snd_pcm_uframes_t size);
 
     QString	m_deviceName;
     bool    m_ready;
     snd_pcm_t   *m_pcm;
     bool        m_block;
-    snd_pcm_format_t    m_format;
-    
-    bool    m_bitAccurate;
-    char    *m_conversionBuffer;
 
     float m_volume;
 };

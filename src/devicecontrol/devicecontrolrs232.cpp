@@ -36,11 +36,11 @@ bool DeviceControlRs232::init(const QString &device, const QString &group, QSett
 
     m_serialPort.setPortName(m_device);
 
-    /*
     if (!m_serialPort.open(QIODevice::WriteOnly)) {
         qWarning() << __func__ << ": unable to open device: " << m_device;
         return false;
     }
+    /*
     if (!m_serialPort.setBaudRate(m_baudRate)) {
         qWarning() << __func__ << ": unable to set baud rate: " << m_baudRate;
         close();

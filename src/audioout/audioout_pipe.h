@@ -24,7 +24,7 @@ private:
     ao_option   *m_aoOptions;
     int         m_driverId;
 
-    FILE        *fh;
+    int         m_fd;
 };
 
 #endif // AUDIOOUTPIPE_H

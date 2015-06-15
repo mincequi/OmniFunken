@@ -1,15 +1,16 @@
 #include "audioout_ao.h"
 #include "audiooutfactory.h"
 
-#include <QtMath>
+#include <ao/ao.h>
 
 AudioOutAo::AudioOutAo() :
     m_driverId(-1),
     m_aoDevice(NULL),
     m_aoOptions(NULL)
 {
-    AudioOutFactory::registerAudioOut(this);
     ao_append_option(&m_aoOptions, "buffer_time", "125");
+
+    AudioOutFactory::registerAudioOut(this);
 }
 
 const char *AudioOutAo::name() const

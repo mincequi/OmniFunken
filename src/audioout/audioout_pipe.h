@@ -3,6 +3,9 @@
 
 #include "audioout_abstract.h"
 
+struct ao_device;
+struct ao_option;
+
 
 class AudioOutPipe : public AudioOutAbstract
 {
@@ -16,6 +19,12 @@ private:
     virtual void start() Q_DECL_OVERRIDE;
     virtual void stop() Q_DECL_OVERRIDE;
     virtual void play(char *data, int samples) Q_DECL_OVERRIDE;
+
+    ao_device   *m_aoDevice;
+    ao_option   *m_aoOptions;
+    int         m_driverId;
+
+    FILE        *fh;
 };
 
 #endif // AUDIOOUTPIPE_H

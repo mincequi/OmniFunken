@@ -3,7 +3,8 @@
 
 #include "audioout_abstract.h"
 
-#include <ao/ao.h>
+struct ao_device;
+struct ao_option;
 
 
 class AudioOutAo : public AudioOutAbstract

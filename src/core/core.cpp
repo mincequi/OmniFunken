@@ -71,7 +71,7 @@ AudioOutAbstract *Core::audioOut()
         m_audioOut = AudioOutFactory::createAudioOut(m_audioOutName);
         m_audioOut->setDevice(m_audioDeviceName);
         QSettings::SettingsMap settings;
-        m_audioOut->init(settings);
+        bool success = m_audioOut->init(settings);
     }
 
     // If device not ready, try to power it on

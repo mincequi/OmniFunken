@@ -25,7 +25,7 @@ macx {
 # Needed for qt serial port
 INCLUDEPATH += "/usr/include/qt5"
 
-LIBS += -lcrypto -lao -lboost_system
+LIBS += -lcrypto -lao -lboost_system -ljack
 
 unix:!macx {
     LIBS += -ldns_sd -lasound -ludev
@@ -59,7 +59,8 @@ SOURCES += main.cpp \
     #rtsp/rtspserver_threaded.cpp \
     rtsp/rtspsession.cpp \
     zeroconf/zeroconf_dns_sd.cpp \
-    audioout/audioout_pipe.cpp
+    audioout/audioout_pipe.cpp \
+    audioout/audioout_jack.cpp
 
 unix:!macx {
     SOURCES += audioout/audioout_alsa.cpp
@@ -98,7 +99,8 @@ HEADERS += \
     global.h \
     zeroconf/zeroconf.h \
     zeroconf/zeroconf_dns_sd.h \
-    audioout/audioout_pipe.h
+    audioout/audioout_pipe.h \
+    audioout/audioout_jack.h
 
 unix:!macx {
     HEADERS += audioout/audioout_alsa.h

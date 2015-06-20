@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <ao/ao.h>
+#include <QDebug>
 
 #ifndef F_LINUX_SPECIFIC_BASE
 #define F_LINUX_SPECIFIC_BASE       1024
@@ -32,72 +33,76 @@ const char *AudioOutPipe::name() const
     return "pipe";
 }
 
-//bool AudioOutPipe::init(const QSettings::SettingsMap &settings)
-//{
-//    Q_UNUSED(settings)
+bool AudioOutPipe::init(const QSettings::SettingsMap &settings)
+{
+    Q_UNUSED(settings)
+    qDebug()<<Q_FUNC_INFO;
 
-//    ao_initialize();
+    ao_initialize();
 
-//// MACOS wants the audio device to be opened from the main thread
-//#ifdef Q_OS_MAC
-//    if (!m_aoDevice) {
-//        ao_sample_format format;
-//        memset(&format, 0, sizeof(format));
+// MACOS wants the audio device to be opened from the main thread
+#ifdef Q_OS_MAC
+    if (!m_aoDevice) {
+        ao_sample_format format;
+        memset(&format, 0, sizeof(format));
 
-//        format.bits = 16;
-//        format.rate = 44100;
-//        format.channels = 2;
-//        format.byte_format = AO_FMT_NATIVE;
+        format.bits = 16;
+        format.rate = 44100;
+        format.channels = 2;
+        format.byte_format = AO_FMT_NATIVE;
 
-//        m_aoDevice = ao_open_file(m_driverId, "-" /*stdout*/, 1 /*overwrite*/, &format, m_aoOptions);
-//    }
-//#endif
+        m_aoDevice = ao_open_file(m_driverId, "-" /*stdout*/, 1 /*overwrite*/, &format, m_aoOptions);
+    }
+#endif
 
-//    return true;
-//}
+    return true;
+}
 
-//void AudioOutPipe::deinit()
-//{
-//    if (m_aoDevice) {
-//        ao_close(m_aoDevice);
-//        m_aoDevice = NULL;
-//    }
+void AudioOutPipe::deinit()
+{
+    qDebug()<<Q_FUNC_INFO;
 
-//    ao_shutdown();
-//}
+    if (m_aoDevice) {
+        ao_close(m_aoDevice);
+        m_aoDevice = NULL;
+    }
 
-//void AudioOutPipe::start()
-//{
-//#ifndef Q_OS_MAC
-//    if (!m_aoDevice) {
-//        ao_sample_format format;
-//        memset(&format, 0, sizeof(format));
+    ao_shutdown();
+}
 
-//        format.bits = 16;
-//        format.rate = 44100;
-//        format.channels = 2;
-//        format.byte_format = AO_FMT_NATIVE;
+void AudioOutPipe::start()
+{
+#ifndef Q_OS_MAC
+    if (!m_aoDevice) {
+        ao_sample_format format;
+        memset(&format, 0, sizeof(format));
 
-//        m_aoDevice = ao_open_file(m_driverId, "-" /*stdout*/, 1 /*overwrite*/, &format, m_aoOptions);
-//    }
-//#endif
-//}
+        format.bits = 16;
+        format.rate = 44100;
+        format.channels = 2;
+        format.byte_format = AO_FMT_NATIVE;
 
-//void AudioOutPipe::stop()
-//{
-//#ifndef Q_OS_MAC
-//    if (m_aoDevice) {
-//        ao_close(m_aoDevice);
-//        m_aoDevice = NULL;
-//    }
-//#endif
-//}
+        m_aoDevice = ao_open_file(m_driverId, "-" /*stdout*/, 1 /*overwrite*/, &format, m_aoOptions);
+    }
+#endif
+}
 
-//void AudioOutPipe::play(char *data, int bytes)
-//{
-//    ao_play(m_aoDevice, data, bytes);
-//}
+void AudioOutPipe::stop()
+{
+#ifndef Q_OS_MAC
+    if (m_aoDevice) {
+        ao_close(m_aoDevice);
+        m_aoDevice = NULL;
+    }
+#endif
+}
 
+void AudioOutPipe::play(char *data, int bytes)
+{
+    ao_play(m_aoDevice, data, bytes);
+}
+
+/*
 bool AudioOutPipe::init(const QSettings::SettingsMap &settings)
 {
     Q_UNUSED(settings)
@@ -141,5 +146,6 @@ void AudioOutPipe::play(char *data, int bytes)
 {
     write(m_fd, data, bytes);
 }
+*/
 
 static AudioOutPipe s_instance;

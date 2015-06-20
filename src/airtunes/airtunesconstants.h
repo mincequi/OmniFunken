@@ -1,5 +1,5 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef AIRTUNES_H
+#define AIRTUNES_H
 
 #include <sys/types.h>
 
@@ -20,4 +20,4 @@ namespace airtunes
     };
 } // namespace airtunes
 
-#endif // COMMON_H
+#endif // AIRTUNES_H

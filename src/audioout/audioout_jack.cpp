@@ -178,6 +178,7 @@ int AudioOutJack::onProcess(jack_nframes_t nframes, void *arg)
             for (size_t j = readFrames; j < nframes; j++) {
                 out[j] = 0.0f;
             }
+            instance->stop();
         }
     }
 

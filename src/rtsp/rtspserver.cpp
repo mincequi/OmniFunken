@@ -116,7 +116,7 @@ void RtspServer::handleAnnounce(const RtspMessage &request, RtspMessage *respons
     qDebug()<<Q_FUNC_INFO;
 
     bool ok;
-    m_dacpId = request.header("dacp-id").toULong(&ok, 16);
+    m_dacpId = request.header("dacp-id").toULongLong(&ok, 16);
 
     RtspMessage::Announcement announcement;
 
@@ -256,7 +256,7 @@ void RtspServer::handleTeardown(const RtspMessage &request, RtspMessage *respons
 
     // only teardown if it is announced client
     bool ok;
-    if (m_dacpId == request.header("dacp-id").toULong(&ok, 16) && ok) {
+    if (m_dacpId == request.header("dacp-id").toULongLong(&ok, 16) && ok) {
         emit teardown();
     }
 }

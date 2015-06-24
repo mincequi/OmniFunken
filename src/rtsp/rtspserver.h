@@ -43,7 +43,7 @@ private:
 
 private:
     quint8      m_macAddress[6];
-    ulong       m_dacpId;
+    quint64     m_dacpId;
 };
 
 #endif // RTSPSERVER_H

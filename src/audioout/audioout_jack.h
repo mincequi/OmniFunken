@@ -5,6 +5,7 @@
 #include <airtunes/airtunesconstants.h>
 #include <jack/types.h>
 #include <jack/ringbuffer.h>
+#include <QMutex>
 #include <QWaitCondition>
 
 

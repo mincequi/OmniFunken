@@ -22,7 +22,9 @@ const char *AudioOutAlsa::name() const
 
 void AudioOutAlsa::setDevice(const QString &device)
 {
-    m_deviceName = device;
+    if (!device.isEmpty()) {
+        m_deviceName = device;
+    }
 }
 
 bool AudioOutAlsa::init(const QSettings::SettingsMap &settings)
@@ -167,17 +169,16 @@ bool AudioOutAlsa::probeNativeFormat()
     qDebug("Device: %s (type: %s)\n", m_deviceName.toLatin1().constData(), snd_pcm_type_name(snd_pcm_type(pcm)));
 
     if ((error = snd_pcm_hw_params_test_format(pcm, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
-        qWarning("cannot set sample format (%s)\n", snd_strerror(error));
-        //qDebug(" %s", snd_pcm_format_name(formats[i]));
+        qFatal("cannot set sample format (%s)\n", snd_strerror(error));
         return false;
     }
 
     if ((error = snd_pcm_hw_params_test_rate(pcm, hw_params, airtunes::sampleRate, 0)) < 0) {
-        qWarning("cannot set sample rate (%s)\n", snd_strerror(error));
+        qFatal("cannot set sample rate (%s)\n", snd_strerror(error));
         return false;
     }
     if ((error = snd_pcm_hw_params_test_channels(pcm, hw_params, airtunes::channels)) < 0) {
-        qWarning("cannot set channel count (%s)\n", snd_strerror(error));
+        qFatal("cannot set channel count (%s)\n", snd_strerror(error));
         return false;
     }
     if ((error = snd_pcm_hw_params_test_period_size(pcm, hw_params, airtunes::framesPerPacket, 0)) < 0) {

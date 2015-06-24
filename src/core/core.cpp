@@ -42,7 +42,7 @@ void Core::parseCommandLine(QCommandLineParser &parser)
     parser.addOption(latencyOption);
     QCommandLineOption audioOutOption(QStringList() << "ao" << "audioout", "Set audio backend.", "audioout", "ao");
     parser.addOption(audioOutOption);
-    QCommandLineOption audioDeviceOption(QStringList() << "ad" << "audiodevice", "Set audio device.", "audiodevice", "hw:0");
+    QCommandLineOption audioDeviceOption(QStringList() << "ad" << "audiodevice", "Set audio device.", "audiodevice", "");
     parser.addOption(audioDeviceOption);
 
     parser.parse(QCoreApplication::arguments());
@@ -71,6 +71,7 @@ AudioOutAbstract *Core::audioOut()
         m_audioOut = AudioOutFactory::createAudioOut(m_audioOutName);
         m_audioOut->setDevice(m_audioDeviceName);
         QSettings::SettingsMap settings;
+        settings["device"] = m_audioDeviceName;
         bool success = m_audioOut->init(settings);
     }
 

@@ -30,6 +30,8 @@ private:
     jack_client_t       *m_client;
     jack_port_t         *m_ports[airtunes::channels];
     jack_ringbuffer_t   *m_buffers[airtunes::channels];
+    QStringList         m_destinationPorts;
+    bool                m_portsConnected;
 
     QMutex          m_mutex;
     QWaitCondition  m_waitCondition;

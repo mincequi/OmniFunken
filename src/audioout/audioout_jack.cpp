@@ -8,7 +8,8 @@
 typedef jack_default_audio_sample_t sample_t;
 
 AudioOutJack::AudioOutJack() :
-    m_client(NULL)
+    m_client(NULL),
+    m_portsConnected(false)
 {
     for (uint i = 0; i < airtunes::channels; ++i) {
         m_ports[i] = NULL;
@@ -26,9 +27,11 @@ const char *AudioOutJack::name() const
     return "jack";
 }
 
-bool AudioOutJack::init(const QSettings::SettingsMap &/*settings*/)
+bool AudioOutJack::init(const QSettings::SettingsMap &settings)
 {
     qDebug()<<Q_FUNC_INFO;
+
+    m_destinationPorts = settings["device"].toString().split(",");
 
     if (m_client) {
         return true;
@@ -88,6 +91,7 @@ void AudioOutJack::stop()
     if (jack_deactivate(m_client)) {
         qWarning()<<Q_FUNC_INFO<<"cannot deactivate client";
     }
+    m_portsConnected = false;
 }
 
 void AudioOutJack::play(char *data, int bytes)
@@ -135,7 +139,22 @@ void AudioOutJack::doStart()
         qWarning()<<Q_FUNC_INFO<<"cannot activate client";
     }
 
-    // Connect ports
+    if (!m_portsConnected) {
+        // if output port count does not match our channel count, do not connect.
+        if (m_destinationPorts.size() != airtunes::channels) {
+            qWarning()<<Q_FUNC_INFO<<"destination port count does not match:"<<m_destinationPorts.size();
+            m_portsConnected = true; // set to true anyway, since we do not want to retry.
+            return;
+        }
+
+        for (uint i = 0; i < airtunes::channels; ++i) {
+            if (jack_connect(m_client, QString("omnifunken:output_%1").arg(i+1).toLatin1(), m_destinationPorts[i].toLatin1())) {
+                qWarning()<<Q_FUNC_INFO<<"cannot connect to destination port:"<<m_destinationPorts[i];
+            }
+        }
+
+        m_portsConnected = true;
+    }
 }
 
 // The process callback called in a realtime thread.

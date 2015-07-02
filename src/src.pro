@@ -53,11 +53,12 @@ SOURCES += main.cpp \
     rtp/rtpbuffer.cpp \
     rtp/rtpheader.cpp \
     rtp/rtpreceiver.cpp \
+    #rtp/rtpreceiver_qt.cpp \
     #rtp/rtpretransmissionrequester.cpp \
     rtsp/rtspmessage.cpp \
     rtsp/rtspserver.cpp \
     #rtsp/rtspserver_threaded.cpp \
-    rtsp/rtspsession.cpp \
+    #rtsp/rtspsession.cpp \
     zeroconf/zeroconf_dns_sd.cpp \
     audioout/audioout_pipe.cpp \
     audioout/audioout_jack.cpp
@@ -88,12 +89,13 @@ HEADERS += \
     rtp/rtpheader.h \
     rtp/rtppacket.h \
     rtp/rtpreceiver.h \
+    #rtp/rtpreceiver_qt.h \
     #rtp/rtpretransmissionrequester.h \
     rtp/rtpstat.h \
     rtsp/rtspmessage.h \
     rtsp/rtspserver.h \
     #rtsp/rtspserver_threaded.h \
-    rtsp/rtspsession.h \
+    #rtsp/rtspsession.h \
     service/service.h \
     service/serviceconfig.h \
     global.h \

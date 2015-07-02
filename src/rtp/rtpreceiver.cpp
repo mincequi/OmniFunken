@@ -146,8 +146,6 @@ void RtpReceiver::UdpWorker::onReceive(const boost::system::error_code& error, s
             }
         }
         case airtunes::AudioData: {
-//            unsigned char packet[2048];
-//            decrypt(payload, packet, payloadSize);
             RtpPacket* rtpPacket = m_rtpBuffer->obtainPacket(header);
             if (rtpPacket) {
                 unsigned char packet[2048];

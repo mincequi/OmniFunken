@@ -1,6 +1,5 @@
 #include "rtspserver.h"
 
-#include "rtspsession.h"
 #include "util.h"
 
 #include <QRegExp>

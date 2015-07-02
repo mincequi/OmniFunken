@@ -11,26 +11,14 @@
 #include <QObject>
 
 class QElapsedTimer;
+class QTimer;
 class QUdpSocket;
 
 class RtpReceiver : public QObject
 {
     Q_OBJECT
 public:
-    struct RtpHeader {
-        quint8  version;
-        bool    padding;
-        bool    extension;
-        quint8  csrcCount;
-        bool    marker;
-        airtunes::PayloadType payloadType;
-        quint16 sequenceNumber;
-        quint32 timestamp;
-        quint32 ssrc;
-    };
-
     explicit RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval = 25, QObject *parent = 0);
-    QUdpSocket* socket() { return m_udpSocket; }
 
 public slots:
     void announce(const RtspMessage::Announcement &announcement);
@@ -58,8 +46,8 @@ private:
 
     RtpBuffer   *m_rtpBuffer;
 
-    quint16         m_retryInterval;
-    QElapsedTimer   *m_elapsedTimer;
+    // retry members
+    QTimer  *m_retryTimer;
 };
 
 #endif // RTPRECEIVER_H

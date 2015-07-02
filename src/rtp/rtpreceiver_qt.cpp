@@ -1,11 +1,14 @@
-#include "rtpreceiver.h"
-#include "rtppacket.h"
+#include "rtpreceiver_qt.h"
+
+#include <rtp/rtpheader.h>
+#include <rtp/rtppacket.h>
 #include "alac.h"
 
 #include <assert.h>
 
 #include <QElapsedTimer>
 #include <QtEndian>
+#include <QTimer>
 #include <QUdpSocket>
 
 
@@ -13,21 +16,22 @@ RtpReceiver::RtpReceiver(RtpBuffer *rtpBuffer, quint16 retryInterval, QObject *p
     QObject(parent),
     m_senderControlPort(0),
     m_alac(NULL),
-    m_rtpBuffer(rtpBuffer),
-    m_retryInterval(retryInterval)
-
+    m_rtpBuffer(rtpBuffer)
 {
     m_udpSocket = new QUdpSocket(this);
-    m_elapsedTimer = new QElapsedTimer();
-
     connect(m_udpSocket, &QUdpSocket::readyRead, this, &RtpReceiver::readPendingDatagrams);
+
+    // retry timer
+    m_retryTimer = new QTimer(this);
+    m_retryTimer->setInterval(retryInterval);
+    connect(m_retryTimer, &QTimer::timeout, this, &RtpReceiver::requestRetransmit);
 }
 
 void RtpReceiver::announce(const RtspMessage::Announcement &announcement)
 {
     teardown();
 
-    m_elapsedTimer->start();
+    m_retryTimer->start();
     m_announcement = announcement;
     AES_set_decrypt_key(reinterpret_cast<const unsigned char*>(announcement.rsaAesKey.data()), 128, &m_aesKey);
     initAlac(announcement.fmtp);
@@ -63,6 +67,8 @@ void RtpReceiver::teardown()
         alac_free(m_alac);
         m_alac = NULL;
     }
+
+    m_retryTimer->stop();
 }
 
 void RtpReceiver::readPendingDatagrams()
@@ -71,14 +77,11 @@ void RtpReceiver::readPendingDatagrams()
         QByteArray datagram;
         datagram.resize(m_udpSocket->pendingDatagramSize());
         m_udpSocket->readDatagram(datagram.data(), datagram.size());
+
         RtpHeader header;
         readHeader(datagram.data(), &header);
         const char* payload = (datagram.data()+12);
         int payloadSize = datagram.size()-12;
-        if (payloadSize < 16) {
-            //qDebug() << Q_FUNC_INFO << ": illegal payload size";
-            continue;
-        }
 
         switch (header.payloadType) {
         case airtunes::Sync:
@@ -87,26 +90,25 @@ void RtpReceiver::readPendingDatagrams()
             header.sequenceNumber = qFromBigEndian(*((quint16*)(datagram.data()+6)));
             payload = payload+4;
             payloadSize = payloadSize-4;
+            // need to check payloadSize, since we get broken payloads from time to time
+            if (payloadSize < 0) {
+                break;
+            }
         }
         case airtunes::AudioData: {
-            unsigned char packet[2048];
-            decrypt(payload, packet, payloadSize);
-            RtpPacket* rtpPacket = m_rtpBuffer->obtainPacket(header.sequenceNumber);
+            RtpPacket* rtpPacket = m_rtpBuffer->obtainPacket(header);
             if (rtpPacket) {
+                unsigned char packet[2048];
+                decrypt(payload, packet, payloadSize);
                 alac_decode_frame(m_alac, packet, rtpPacket->payload, &(rtpPacket->payloadSize));
+                m_rtpBuffer->commitPacket(rtpPacket);
             }
-            m_rtpBuffer->commitPacket();
             break;
         }
         default:
             qCritical("RtpReceiver::readPendingDatagrams: illegal payload type: %d", header.payloadType);
             break;
         }
-    }
-
-    if (m_elapsedTimer->elapsed() > m_retryInterval) {
-        requestRetransmit();
-        m_elapsedTimer->restart();
     }
 }
 
